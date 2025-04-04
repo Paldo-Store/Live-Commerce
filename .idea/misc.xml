@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/client/ai" />
+    <file type="web" url="file://$PROJECT_DIR$/client/chat" />
+    <file type="web" url="file://$PROJECT_DIR$/client/company" />
+    <file type="web" url="file://$PROJECT_DIR$/client/coupon" />
+    <file type="web" url="file://$PROJECT_DIR$/client/live-broadcast" />
+    <file type="web" url="file://$PROJECT_DIR$/client/notification" />
+    <file type="web" url="file://$PROJECT_DIR$/client/order" />
+    <file type="web" url="file://$PROJECT_DIR$/client/payment" />
+    <file type="web" url="file://$PROJECT_DIR$/client/product" />
+    <file type="web" url="file://$PROJECT_DIR$/client/user" />
+    <file type="web" url="file://$PROJECT_DIR$/server/config" />
+    <file type="web" url="file://$PROJECT_DIR$/server/eureka" />
+    <file type="web" url="file://$PROJECT_DIR$/server/gateway" />
+  </component>
+  <component name="ProjectRootManager">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
