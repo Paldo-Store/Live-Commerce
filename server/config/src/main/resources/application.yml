@@ -1,0 +1,19 @@
+server:
+  port: 18080
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations:
+            - classpath:/config-repo # 설정 파일을 가져올 저장소
+logging:
+  level:
+    root: INFO
+    feign: DEBUG
+    feign.client: DEBUG

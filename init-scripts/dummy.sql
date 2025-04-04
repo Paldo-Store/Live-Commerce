@@ -1,0 +1,64 @@
+-- SET search_path TO hubs;
+-- INSERT INTO p_hub (id, hub_name, hub_address, latitude, longitude, hub_manager_user_id) VALUES
+-- ('11e98756-d7a2-f948-b1b1-0242ac120001', '서울특별시 센터', '서울특별시 송파구 송파대로 55', 37.4742027808565, 127.123621185562, 1),
+-- ('11e98756-d7a2-f948-b1b1-0242ac120002', '경기 북부 센터', '경기도 고양시 덕양구 권율대로 570', 37.6403771056018, 126.87379545786, 2);
+--
+-- SET search_path TO companies;
+-- INSERT INTO p_company (id, name, address, type, hub_id) VALUES
+-- -- 공급업체들 (SUPPLIER)
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac121001', '한국수산물유통(주)', '서울특별시 강남구 테헤란로 123', 'SUPPLIER', '11e98756-d7a2-f948-b1b1-0242ac120001'),
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac121002', '바다마을영어조합법인', '부산광역시 서구 충무대로 256', 'SUPPLIER', '11e98756-d7a2-f948-b1b1-0242ac120002'),
+--
+-- -- 수령업체들 (RECEIVER)
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac121011', '광동제약(주)', '서울특별시 서초구 바우뫼로 27', 'RECEIVER', '11e98756-d7a2-f948-b1b1-0242ac120001'),
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac121012', '삼성전자(주)', '경기도 수원시 영통구 삼성로 129', 'RECEIVER', '11e98756-d7a2-f948-b1b1-0242ac120002');
+--
+-- SET search_path TO products;
+-- INSERT INTO p_product (id, name, quantity, hub_id, company_id) VALUES
+-- -- 한국수산물유통(주) 제품 (SUPPLIER)
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac131001', '고등어', 500, '11e98756-d7a2-f948-b1b1-0242ac120001', '11e9-8756-d7a2-f948-b1b1-0242ac121001'),
+--
+-- -- 바다마을영어조합법인 제품 (SUPPLIER)
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac131004', '갈치', 250, '11e98756-d7a2-f948-b1b1-0242ac120004', '11e9-8756-d7a2-f948-b1b1-0242ac121002'),
+--
+-- -- 광동제약(주) 제품 (RECEIVER)
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac131016', '비타500', 1000, '11e98756-d7a2-f948-b1b1-0242ac120001', '11e9-8756-d7a2-f948-b1b1-0242ac121011'),
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac131017', '핸드폰케이스', 5000, '11e98756-d7a2-f948-b1b1-0242ac120002', '11e9-8756-d7a2-f948-b1b1-0242ac120002');
+--
+-- SET search_path TO hubs;
+-- INSERT INTO p_hub_manager (id, user_id, hub_id) VALUES
+-- -- 서울특별시 센터
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac141001', 1, '11e98756-d7a2-f948-b1b1-0242ac120001'),
+-- -- 경기 북부 센터
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac141002', 2, '11e98756-d7a2-f948-b1b1-0242ac120002');
+--
+-- INSERT INTO p_hub_route (id, duration, distance, departure_hub_id, arrival_hub_id) VALUES
+-- -- 서울특별시 센터 -> 경기 북부 센터
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac130001', 90, 120.5, '11e98756-d7a2-f948-b1b1-0242ac120001', '11e98756-d7a2-f948-b1b1-0242ac120002'),
+-- -- 경기 북부 센터 -> 서울특별시 센터
+-- ('11e9-8756-d7a2-f948-b1b1-0242ac130017', 90, 120.5, '11e98756-d7a2-f948-b1b1-0242ac120002', '11e98756-d7a2-f948-b1b1-0242ac120001');
+--
+-- SET search_path TO deliveries;
+-- -- 배송 담당자 데이터 삽입
+-- INSERT INTO p_delivery_agent (user_id, type, delivery_sequence, hub_id, slack_id) VALUES
+-- -- 서울특별시 센터
+-- -- 업체 배송 담당자 (COMPANY 타입)
+-- (3, 'COMPANY', 0, '11e98756-d7a2-f948-b1b1-0242ac120002', 'hu1852@naver.com'),
+-- -- 서울특별시 센터 허브 배송 담당자 (HUB 타입)
+-- (4, 'HUB', 0, '11e98756-d7a2-f948-b1b1-0242ac120001', 'hu1853@naver.com'),
+-- -- 경기 북부 센터
+-- -- 업체 배송 담당자 (COMPANY 타입)
+-- (5, 'COMPANY', 0, '11e98756-d7a2-f948-b1b1-0242ac141002', 'hu1854@naver.com'),
+-- -- 경기 북부 센터 허브 배송 담당자 (HUB 타입)
+-- (6, 'HUB', 0, '11e98756-d7a2-f948-b1b1-0242ac141002', 'hu1855@naver.com');
+--
+-- SET search_path TO users;
+-- ALTER SEQUENCE users.p_users_id_seq RESTART WITH 7;
+-- -- 회원 데이터 삽입
+-- INSERT INTO p_users (id, username, password, role, slack_id) VALUES
+-- (1, 'hub1', '$2a$10$dGq8O5RmfBcxTT2KwcTJ3.aXSRz0TW6KxsMIINxdPTn5ux9hBX4Ke', 'HUB_MANAGER', 'hu185@naver.com'),
+-- (2, 'hub2', '$2a$10$dGq8O5RmfBcxTT2KwcTJ3.aXSRz0TW6KxsMIINxdPTn5ux9hBX4Ke', 'HUB_MANAGER', 'hu1851@naver.com'),
+-- (3, 'deliver1', '$2a$10$dGq8O5RmfBcxTT2KwcTJ3.aXSRz0TW6KxsMIINxdPTn5ux9hBX4Ke', 'DELIVERY_AGENT', 'hu1852@naver.com'),
+-- (4, 'deliver2', '$2a$10$dGq8O5RmfBcxTT2KwcTJ3.aXSRz0TW6KxsMIINxdPTn5ux9hBX4Ke', 'DELIVERY_AGENT', 'hu1853@naver.com'),
+-- (5, 'deliver3', '$2a$10$dGq8O5RmfBcxTT2KwcTJ3.aXSRz0TW6KxsMIINxdPTn5ux9hBX4Ke', 'DELIVERY_AGENT', 'hu1854@naver.com'),
+-- (6, 'deliver4', '$2a$10$dGq8O5RmfBcxTT2KwcTJ3.aXSRz0TW6KxsMIINxdPTn5ux9hBX4Ke', 'DELIVERY_AGENT', 'hu1855@naver.com');

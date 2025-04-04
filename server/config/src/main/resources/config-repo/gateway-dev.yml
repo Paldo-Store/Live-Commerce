@@ -1,0 +1,143 @@
+server:
+  port: 19091
+
+spring:
+  webflux:
+    static-path-pattern: /swagger-ui/**
+  main:
+    web-application-type: reactive
+  application:
+    name: gateway-server
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      forwarded-headers-strategy: framework
+      discovery: # 서비스 디스커버리를 통해 동적으로 라우트를 생성항도록 설정
+        locator:
+          enabled: true
+        default-filters:
+          - PreserveHostHeader=true # 헤더 유지
+          - AddRequestHeader=Authorization, {Authorization}
+      routes:
+        - id: swagger-static
+          uri: http://localhost:19091
+          predicates:
+            - Path=/swagger-ui/**, /webjars/**, /swagger-resources/**
+
+        - id: user-service-user # 라우트 식별자
+          uri: lb://user-service # 'user-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/users/**, /v3/api-docs/user, /api-docs-user-service
+            # /users/** 경로로 들어오는 요청을 이 라우트로 처리
+
+        - id: user-service-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/auth/**
+
+        - id: user-service-auth-swagger
+          uri: lb://user-service
+          predicates:
+            - Path=/auth/v3/api-docs/**
+
+        - id: hub-service
+          uri: lb://hub-service
+          predicates:
+            - Path=/hubs/**, /api-docs-hub-service
+
+        - id: company-service
+          uri: lb://company-service
+          predicates:
+            - Path=/companies/**, /api-docs-company-service
+
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/products/**, /api-docs-product-service
+
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/orders/**, /api-docs-order-service
+
+        - id: delivery-service
+          uri: lb://delivery-service
+          predicates:
+            - Path=/deliveries/**, /api-docs-delivery-service
+
+        - id: slack-ai-service-slack
+          uri: lb://slack-ai-service
+          predicates:
+            - Path=/api/slack/**, /api-docs-slack-ai-service
+
+        - id: slack-ai-service-ai
+          uri: lb://slack-ai-service
+          predicates:
+            - Path=/api/ai/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
+
+#service:
+#  jwt:
+#    secret-key: ${SECRET_KEY}
+service:
+  jwt:
+    secret-key: "401b09eab3c013d4ca54922bb802bec8fd5318192b0a75f201d8b3727429080fb337591abd3e44453b954555b7a0812e1081c39b740293f765eae731f5a65ed1"
+  whitelist:
+    paths:
+      - "/api-docs-user-service"
+      - "/api-docs-hub-service"
+      - "/api-docs-company-service"
+      - "/api-docs-product-service"
+      - "/api-docs-order-service"
+      - "/api-docs-delivery-service"
+      - "/api-docs-slack-ai-service"
+      - "/auth/signIn"
+      - "/users/signUp"
+      - "/swagger-ui/**"
+      - "/swagger-ui.html"
+      - "/v3/api-docs/**"
+      - "/v3/api-docs/user"
+      - "/swagger-resources/**"
+      - "/webjars/**"
+
+
+
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    urls:
+      - name: user-service
+        url: /v3/api-docs/user
+        # url: /api-docs-user-service
+      - name: hub-service
+        url: /api-docs-hub-service
+      - name: company-service
+        url: /api-docs-company-service
+      - name: product-service
+        url: /api-docs-product-service
+      - name: order-service
+        url: /api-docs-order-service
+      - name: delivery-service
+        url: /api-docs-delivery-service
+      - name: slack-ai-service
+        url: /api-docs-slack-ai-service
+

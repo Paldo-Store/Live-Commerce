@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: user
+  profiles:
+    active: dev
+  config:
+    import: "configserver:http://localhost:18080"
+
+server:
+  port: 0
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
+message: "default message" # config server를 통과하지 않을 때
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+
+#springdoc:
+#  swagger-ui:
+#    enabled: true
+#    path: /docs
+#    operations-sorter: alpha
+#    tags-sorter: alpha
+#  api-docs:
+#    enabled: true
+#    path: /v3/api-docs/user
