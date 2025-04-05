@@ -1,6 +1,6 @@
 spring:
   application:
-    name: live-broadcast
+    name: livebroadcast
   profiles:
     active: dev
   config:

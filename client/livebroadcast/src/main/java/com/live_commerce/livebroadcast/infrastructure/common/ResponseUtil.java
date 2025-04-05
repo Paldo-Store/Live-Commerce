@@ -1,4 +1,4 @@
-package com.live_commerce.live_broadcast.infrastructure.common;
+package com.live_commerce.livebroadcast.infrastructure.common;
 
 import com.live_commerce.ai.presentation.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
