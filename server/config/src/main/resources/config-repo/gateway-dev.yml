@@ -90,6 +90,10 @@ management:
     gateway:
       enabled: true
 
+service:
+  jwt:
+    secret-key: piGhz+G1SCtvDWv/sVXxOd4iSnhCyo6S0GkzwuF9wbs=
+
 #service:
 #  jwt:
 #    secret-key: ${SECRET_KEY}
