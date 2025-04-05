@@ -1,0 +1,43 @@
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
+build/
+services/**/build/
+services/**/out/
+infra/**/build/
+infra/**/out/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+.env
+**/.env
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+# macOS 시스템 파일 제외
+.DS_Store
