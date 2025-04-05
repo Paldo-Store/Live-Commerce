@@ -24,61 +24,57 @@ spring:
           - PreserveHostHeader=true # 헤더 유지
           - AddRequestHeader=Authorization, {Authorization}
       routes:
-        - id: swagger-static
-          uri: http://localhost:19091
+        - id: ai
+          uri: lb://ai
           predicates:
-            - Path=/swagger-ui/**, /webjars/**, /swagger-resources/**
+            - Path=/api/v1/ai/**, /api-docs-ai
 
-        - id: user-service-user # 라우트 식별자
-          uri: lb://user-service # 'user-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+        - id: chat
+          uri: lb://chat
           predicates:
-            - Path=/users/**, /v3/api-docs/user, /api-docs-user-service
-            # /users/** 경로로 들어오는 요청을 이 라우트로 처리
+            - Path=/api/v1/chattings/**, /api-docs-chat
 
-        - id: user-service-auth
-          uri: lb://user-service
+        - id: company
+          uri: lb://company
           predicates:
-            - Path=/auth/**
+            - Path=/api/v1/companies/**, /api-docs-company
 
-        - id: user-service-auth-swagger
-          uri: lb://user-service
+        - id: coupon
+          uri: lb://coupon
           predicates:
-            - Path=/auth/v3/api-docs/**
+            - Path=/api/v1/coupon-policies, /api/v1/issued-coupons, /api-docs-coupon
 
-        - id: hub-service
-          uri: lb://hub-service
+        - id: live-broadcast
+          uri: lb://live-broadcast
           predicates:
-            - Path=/hubs/**, /api-docs-hub-service
+            - Path=/api/v1/shoppinglives/**, /api-docs-live-broadcast
 
-        - id: company-service
-          uri: lb://company-service
+        - id: notification
+          uri: lb://notification
           predicates:
-            - Path=/companies/**, /api-docs-company-service
+            - Path=/api/v1/notifications/**, /api-docs-notification
 
-        - id: product-service
-          uri: lb://product-service
+        - id: order
+          uri: lb://order
           predicates:
-            - Path=/products/**, /api-docs-product-service
+            - Path=/api/v1/orders/**, /api-docs-order
 
-        - id: order-service
-          uri: lb://order-service
+        - id: payment
+          uri: lb://payment
           predicates:
-            - Path=/orders/**, /api-docs-order-service
+            - Path=/api/v1/payments/**, /api-docs-payment
 
-        - id: delivery-service
-          uri: lb://delivery-service
+        - id: product
+          uri: lb://product
           predicates:
-            - Path=/deliveries/**, /api-docs-delivery-service
+            - Path=/api/v1/products/**, /api-docs-product
 
-        - id: slack-ai-service-slack
-          uri: lb://slack-ai-service
+        - id: user
+          uri: lb://user
           predicates:
-            - Path=/api/slack/**, /api-docs-slack-ai-service
+            - Path=/api/v1/users/**, /api/v1/auth/**, /v3/api-docs/user, /api-docs-user
 
-        - id: slack-ai-service-ai
-          uri: lb://slack-ai-service
-          predicates:
-            - Path=/api/ai/**
+
 
 eureka:
   client:
@@ -97,47 +93,53 @@ management:
 #service:
 #  jwt:
 #    secret-key: ${SECRET_KEY}
-service:
-  jwt:
-    secret-key: "401b09eab3c013d4ca54922bb802bec8fd5318192b0a75f201d8b3727429080fb337591abd3e44453b954555b7a0812e1081c39b740293f765eae731f5a65ed1"
-  whitelist:
-    paths:
-      - "/api-docs-user-service"
-      - "/api-docs-hub-service"
-      - "/api-docs-company-service"
-      - "/api-docs-product-service"
-      - "/api-docs-order-service"
-      - "/api-docs-delivery-service"
-      - "/api-docs-slack-ai-service"
-      - "/auth/signIn"
-      - "/users/signUp"
-      - "/swagger-ui/**"
-      - "/swagger-ui.html"
-      - "/v3/api-docs/**"
-      - "/v3/api-docs/user"
-      - "/swagger-resources/**"
-      - "/webjars/**"
+#service:
+#  jwt:
+#    secret-key: "401b09eab3c013d4ca54922bb802bec8fd5318192b0a75f201d8b3727429080fb337591abd3e44453b954555b7a0812e1081c39b740293f765eae731f5a65ed1"
+#  service:
+#    whitelist:
+#      paths:
+#        - "/auth/**"
+#        - "/users/**"
+#        - "/api-docs-user"
+#        - "/api-docs-hub"
+#        - "/api-docs-company"
+#        - "/api-docs-product"
+#        - "/api-docs-order"
+#        - "/api-docs-delivery"
+#        - "/api-docs-coupon"
+#        - "/api-docs-payment"
+#        - "/api-docs-chat"
+#        - "/api-docs-ai"
+#        - "/api-docs-notification"
+#        - "/api-docs-live-broadcast"
+#        - "/swagger-ui/**"
+#        - "/swagger-ui.html"
+#        - "/v3/api-docs/**"
+#        - "/swagger-resources/**"
+#        - "/webjars/**"
 
-
-
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui
-    urls:
-      - name: user-service
-        url: /v3/api-docs/user
-        # url: /api-docs-user-service
-      - name: hub-service
-        url: /api-docs-hub-service
-      - name: company-service
-        url: /api-docs-company-service
-      - name: product-service
-        url: /api-docs-product-service
-      - name: order-service
-        url: /api-docs-order-service
-      - name: delivery-service
-        url: /api-docs-delivery-service
-      - name: slack-ai-service
-        url: /api-docs-slack-ai-service
-
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui
+#    urls:
+#      - name: user
+#        url: /v3/api-docs/user
+#      - name: company
+#        url: /api-docs-company
+#      - name: coupon
+#        url: /api-docs-coupon
+#      - name: live-broadcast
+#        url: /api-docs-live-broadcast
+#      - name: notification
+#        url: /api-docs-notification
+#      - name: order
+#        url: /api-docs-order
+#      - name: payment
+#        url: /api-docs-payment
+#      - name: product
+#        url: /api-docs-product
+#      - name: chat
+#        url: /api-docs-chat
+#      - name: ai
+#        url: /api-docs-ai
