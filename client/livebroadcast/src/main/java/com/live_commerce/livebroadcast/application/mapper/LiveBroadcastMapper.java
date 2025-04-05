@@ -23,6 +23,7 @@ public class LiveBroadcastMapper {
         return LiveBroadcastCreateResponseDto.builder()
                 .id(entity.getId())
                 .broadcastName(entity.getBroadcastName())
+                .broadcastStatus(entity.getBroadcastStatus())
                 .startTime(entity.getStartTime())
                 .endTime(entity.getEndTime())
                 .totalViewerCount(entity.getTotalViewerCount())
