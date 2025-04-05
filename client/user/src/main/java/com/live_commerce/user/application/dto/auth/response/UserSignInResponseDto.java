@@ -1,6 +1,5 @@
 package com.live_commerce.user.application.dto.auth.response;
 
-import com.live_commerce.user.domain.model.User;
 import lombok.Builder;
 import lombok.Getter;
 

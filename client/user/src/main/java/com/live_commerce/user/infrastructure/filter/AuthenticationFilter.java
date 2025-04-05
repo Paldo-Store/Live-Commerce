@@ -1,10 +1,8 @@
 package com.live_commerce.user.infrastructure.filter;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.List;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,12 +11,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.live_commerce.user.infrastructure.security.RequestUserDetails;
 
-@Slf4j
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 @Component
 public class AuthenticationFilter extends OncePerRequestFilter {
 
@@ -59,10 +58,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		UsernamePasswordAuthenticationToken authentication =
 			new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		log.info("✅ 유저 인증 정보:");
-		log.info("   - username: {}", userDetails.getUsername());
-		log.info("   - authorities: {}", userDetails.getAuthorities());
 
 		// 필터 체인으로 넘김
 		filterChain.doFilter(request, response);
