@@ -3,12 +3,15 @@ package com.live_commerce.user.application.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.live_commerce.user.application.dto.auth.request.UserSignInRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignUpRequestDto;
+import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignUpResponseDto;
 import com.live_commerce.user.application.exception.CustomException;
 import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
 import com.live_commerce.user.domain.repository.UserRepository;
+import com.live_commerce.user.infrastructure.common.JwtUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ public class AuthService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final JwtUtil jwtUtil;
 
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
@@ -26,15 +30,34 @@ public class AuthService {
 		validateUsername(request.getUsername());
 		validateEmail(request.getEmail());
 
-		// 비밀번호 암호화
 		String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-		// DTO가 암호화된 비밀번호 받아서 엔티티 생성
 		User user = request.toEntity(encodedPassword);
 
 		User savedUser = userRepository.save(user);
 
 		return UserSignUpResponseDto.from(savedUser);
+	}
+
+	@Transactional
+	public UserSignInResponseDto signIn(UserSignInRequestDto requestDto) {
+
+		User user = userRepository.findByUsername(requestDto.getUsername())
+			.filter(u -> passwordEncoder.matches(requestDto.getPassword(), u.getPassword()))
+			.orElseThrow(() -> new CustomException(UserExceptionCode.INVALID_CREDENTIALS));
+
+		checkDeletedUser(user);
+
+		String accessToken = jwtUtil.createAccessToken(user.getUsername(), user.getUserRole());
+		String refreshToken = jwtUtil.createRefreshToken(user.getUsername());
+
+		return UserSignInResponseDto.from(accessToken, refreshToken);
+	}
+
+	private void checkDeletedUser(User user) {
+		if (user.isDeletedStatus()) {
+			throw new CustomException(UserExceptionCode.DELETED_USER);
+		}
 	}
 
 	private void validateUsername(String username) {
@@ -48,6 +71,5 @@ public class AuthService {
 			throw new CustomException(UserExceptionCode.DUPLICATE_EMAIL);
 		}
 	}
-
 
 }

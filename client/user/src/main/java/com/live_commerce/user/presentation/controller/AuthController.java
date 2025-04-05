@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.live_commerce.user.application.dto.auth.request.UserSignInRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignUpRequestDto;
+import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignUpResponseDto;
 import com.live_commerce.user.application.service.AuthService;
+import com.live_commerce.user.infrastructure.common.ResponseUtil;
 import com.live_commerce.user.presentation.common.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -28,8 +31,14 @@ public class AuthController {
 	) {
 		UserSignUpResponseDto response = authService.signUp(requestDto);
 
-		ApiResponse<UserSignUpResponseDto> apiResponse = new ApiResponse<>("success", response);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+		return ResponseUtil.success(response);
 	}
+
+	@PostMapping("/signIn")
+	public ResponseEntity<ApiResponse<UserSignInResponseDto>> signIn(@RequestBody UserSignInRequestDto requestDto) {
+		UserSignInResponseDto response = authService.signIn(requestDto);
+
+		return ResponseUtil.success(response);
+	}
+
 }
