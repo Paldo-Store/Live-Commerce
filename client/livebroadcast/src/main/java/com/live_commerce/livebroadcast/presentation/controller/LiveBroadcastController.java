@@ -21,7 +21,7 @@ public class LiveBroadcastController {
 
     private final LiveBroadcastService liveBroadcastService;
 
-    @PostMapping()
+    @PostMapping
     public ResponseEntity<ApiResponse<LiveBroadcastCreateResponseDto>> createBroadcast(@RequestBody LiveBroadcastCreateRequestDto requestDto) {
 
         LiveBroadcastCreateResponseDto responseDto = liveBroadcastService.createBroadcast(requestDto);
