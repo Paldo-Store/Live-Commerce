@@ -19,3 +19,10 @@ spring:
     username: postgres
     password: 8dostore
     driver-class-name: org.postgresql.Driver
+
+
+service:
+  jwt:
+    access-expiration: 3600000
+    refresh-expiration: 10800000
+    secret-key: piGhz+G1SCtvDWv/sVXxOd4iSnhCyo6S0GkzwuF9wbs=
