@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: live-broadcast
+    name: livebroadcast
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -13,7 +13,7 @@ spring:
         show_sql: true
         format_sql: true
         use_sql_comments: true
-        default_schema: live-broadcast
+        default_schema: livebroadcast
   datasource:
     url: jdbc:postgresql://localhost:5432/livecommerce
     username: postgres
