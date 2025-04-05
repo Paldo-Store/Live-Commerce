@@ -1,4 +1,4 @@
-package com.live_commerce.live_broadcast;
+package com.live_commerce.livebroadcast;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

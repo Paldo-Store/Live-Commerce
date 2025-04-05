@@ -1,4 +1,4 @@
-package com.live_commerce.live_broadcast.application.exception;
+package com.live_commerce.livebroadcast.application.exception;
 
 
 import lombok.Getter;

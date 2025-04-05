@@ -1,4 +1,4 @@
-package com.live_commerce.live_broadcast;
+package com.live_commerce.livebroadcast;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

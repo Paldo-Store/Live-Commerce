@@ -1,4 +1,4 @@
-package com.live_commerce.live_broadcast.presentation.common;
+package com.live_commerce.livebroadcast.presentation.common;
 
 
 import lombok.AllArgsConstructor;
