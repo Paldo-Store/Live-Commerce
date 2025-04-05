@@ -2,7 +2,9 @@ package com.live_commerce.user.domain.model;
 
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -28,10 +30,11 @@ public abstract class BaseEntity {
 
 	private LocalDateTime deletedAt;
 
+	@CreatedBy
 	@Column(updatable = false)
 	private String createdBy;
 
-	@Column(nullable = true)
+	@LastModifiedBy
 	private String updatedBy;
 
 	private String deletedBy;
