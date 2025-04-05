@@ -1,6 +1,6 @@
 package com.live_commerce.coupon.infrastructure.common;
 
-import com.live_commerce.ai.presentation.common.ApiResponse;
+import com.live_commerce.coupon.presentation.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
