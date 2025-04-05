@@ -40,11 +40,11 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/client/live-broadcast" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/client/livebroadcast" />
         <option name="gradleJvm" value="#GRADLE_JAVA_HOME" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/client/live-broadcast" />
+            <option value="$PROJECT_DIR$/client/livebroadcast" />
           </set>
         </option>
       </GradleProjectSettings>

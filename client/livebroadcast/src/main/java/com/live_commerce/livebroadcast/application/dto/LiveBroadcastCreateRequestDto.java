@@ -1,0 +1,29 @@
+package com.live_commerce.livebroadcast.application.dto;
+
+import com.live_commerce.livebroadcast.domain.model.BroadcastStatus;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Getter
+public class LiveBroadcastCreateRequestDto {
+
+    private String broadcastName;
+
+    private LocalDateTime startTime;
+
+    private LocalDateTime endTime;
+
+    private BroadcastStatus broadcastStatus;
+
+    // 방송 생성하는 사람을 사용자 정보에서 자동 추론
+    private UUID hostId;
+
+    private UUID companyId;
+
+    private Integer totalViewerCount;
+
+}
