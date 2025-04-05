@@ -1,9 +1,10 @@
 package com.live_commerce.user.infrastructure.common;
 
-import com.live_commerce.ai.presentation.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import com.live_commerce.user.presentation.common.ApiResponse;
 
 @Slf4j
 public class ResponseUtil {
