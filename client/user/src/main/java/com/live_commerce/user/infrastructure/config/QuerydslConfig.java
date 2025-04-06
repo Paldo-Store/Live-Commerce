@@ -1,4 +1,4 @@
-package com.live_commerce.user.config;
+package com.live_commerce.user.infrastructure.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
