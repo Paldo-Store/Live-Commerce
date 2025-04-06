@@ -5,12 +5,14 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Builder
 @Getter
+@ToString
 public class LiveBroadcastCreateResponseDto {
 
     private UUID id;
