@@ -15,7 +15,9 @@ public enum UserExceptionCode implements ExceptionCode {
   EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
   UNSUPPORTED_TOKEN(HttpStatus.BAD_REQUEST, "지원하지 않는 토큰입니다."),
   INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 일치하지 않습니다."),
-  DELETED_USER(HttpStatus.FORBIDDEN, "탈퇴한 사용자입니다.");
+  DELETED_USER(HttpStatus.FORBIDDEN, "탈퇴한 사용자입니다."),
+  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");  // ✅ 새로 추가한 항목
+
 
 
 
