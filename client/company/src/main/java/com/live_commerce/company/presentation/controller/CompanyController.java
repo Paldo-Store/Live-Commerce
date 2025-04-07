@@ -3,6 +3,7 @@ package com.live_commerce.company.presentation.controller;
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
 import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
+import com.live_commerce.company.application.dto.response.CompanyGetResponse;
 import com.live_commerce.company.application.service.CompanyService;
 import com.live_commerce.company.infrastructure.common.ResponseUtil;
 import com.live_commerce.company.presentation.common.ApiResponse;
@@ -40,6 +41,14 @@ public class CompanyController {
     }
 
     //업체 조회 API
+    @GetMapping("/getCompanies")
+    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompanies (
+            @RequestParam final int page,
+            @RequestParam final int size,
+            @RequestParam(required = false) final String sort) {
+        CompanyGetResponse response = companyService.getCompanies(page, size, sort);
+        return ResponseUtil.success(response);
+    }
 
     //업체 수정 API
 
