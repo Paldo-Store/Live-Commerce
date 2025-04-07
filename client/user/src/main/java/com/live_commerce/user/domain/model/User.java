@@ -51,5 +51,13 @@ public class User extends BaseEntity {
 		this.userRole = userRole;
 	}
 
+	public void updateUser(String password, String email, String nickname, boolean alarmConsent, UserRole userRole) {
+		this.password = password;
+		this.email = email;
+		this.nickname = nickname;
+		this.alarmConsent = alarmConsent;
+		this.userRole = userRole;
+	}
+
 }
 
