@@ -12,6 +12,7 @@ import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
 import com.live_commerce.user.domain.repository.UserRepository;
 import com.live_commerce.user.infrastructure.common.JwtUtil;
+import com.live_commerce.user.infrastructure.common.RedisUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,8 @@ public class AuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtUtil jwtUtil;
+	private final RedisUtil redisUtil;
+	private final MailService mailService;
 
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
@@ -52,6 +55,35 @@ public class AuthService {
 		String refreshToken = jwtUtil.createRefreshToken(user.getUsername());
 
 		return UserSignInResponseDto.from(accessToken, refreshToken);
+	}
+
+	@Transactional
+	public void sendFindUsernameCode(String email) {
+		User user = userRepository.findByEmail(email)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+		checkDeletedUser(user);
+
+		mailService.sendVerificationCode(email);
+	}
+
+	@Transactional
+	public String confirmFindUsernameCode(String email, String inputCode) {
+		String storedCode = redisUtil.getData(email);
+
+		if (storedCode == null) {
+			throw new CustomException(UserExceptionCode.VERIFICATION_CODE_EXPIRED);
+		}
+
+		if (!storedCode.equals(inputCode)) {
+			throw new CustomException(UserExceptionCode.INVALID_VERIFICATION_CODE);
+		}
+
+		User user = userRepository.findByEmail(email)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+		checkDeletedUser(user);
+
+		redisUtil.deleteData(email);
+		return user.getUsername();
 	}
 
 	private void checkDeletedUser(User user) {

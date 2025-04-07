@@ -18,7 +18,10 @@ public enum UserExceptionCode implements ExceptionCode {
     DELETED_USER(HttpStatus.FORBIDDEN, "탈퇴한 사용자입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "해당 작업을 수행할 권한이 없습니다."),
-    ROLE_CHANGE_FORBIDDEN(HttpStatus.FORBIDDEN, "권한(Role)은 마스터만 수정할 수 있습니다.");
+    ROLE_CHANGE_FORBIDDEN(HttpStatus.FORBIDDEN, "권한(Role)은 마스터만 수정할 수 있습니다."),
+    VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "인증번호가 만료되었습니다. 다시 시도해주세요."),
+    INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "인증번호가 일치하지 않습니다."),
+    MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "메일 전송에 실패했습니다.");
 
 
     private final HttpStatus httpStatus;
