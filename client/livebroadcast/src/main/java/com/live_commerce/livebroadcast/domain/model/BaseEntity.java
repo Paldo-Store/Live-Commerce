@@ -37,6 +37,10 @@ public abstract class BaseEntity{
 
     private Boolean deletedStatus;
 
+    protected BaseEntity() {
+        this.deletedStatus = false;
+    }
+
     public void delete(String deletedBy) {
         this.deletedStatus = Boolean.TRUE;
         this.deletedAt = LocalDateTime.now();

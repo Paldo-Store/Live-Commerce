@@ -1,8 +1,6 @@
 package com.live_commerce.livebroadcast.application.dto;
 
 import com.live_commerce.livebroadcast.domain.model.BroadcastStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -13,7 +11,7 @@ import java.util.UUID;
 @Builder
 @Getter
 @ToString
-public class LiveBroadcastCreateResponseDto {
+public class LiveBroadcastResponseDto {
 
     private UUID id;
 
