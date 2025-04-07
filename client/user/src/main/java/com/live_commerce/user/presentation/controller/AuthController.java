@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.live_commerce.user.application.dto.auth.request.UserFindUsernameRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserFindUsernameVerifyRequestDto;
+import com.live_commerce.user.application.dto.auth.request.UserResetPasswordRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignInRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignUpRequestDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
@@ -59,6 +60,14 @@ public class AuthController {
 	) {
 		String username = authService.confirmFindUsernameCode(request.email(), request.code());
 		return ResponseUtil.success(username);
+	}
+
+	@PostMapping("/reset-password")
+	public ResponseEntity<ApiResponse<String>> resetPasswordAndSendTempPassword(
+		@RequestBody @Valid UserResetPasswordRequestDto request
+	) {
+		authService.resetPasswordAndSendTempPassword(request.username(), request.email());
+		return ResponseUtil.success("임시 비밀번호가 이메일로 전송되었습니다.");
 	}
 
 

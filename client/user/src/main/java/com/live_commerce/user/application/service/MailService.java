@@ -43,6 +43,28 @@ public class MailService {
 		}
 	}
 
+	public void sendTemporaryPassword(String email, String tempPassword) {
+		try {
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+			helper.setTo(email);
+			helper.setSubject("[LiveCommerce] 임시 비밀번호 안내");
+			helper.setText(buildTempPasswordBody(tempPassword));
+
+			mailSender.send(message);
+
+		} catch (MessagingException e) {
+			throw new CustomException(UserExceptionCode.MAIL_SEND_FAILED);
+		}
+	}
+
+	private String buildTempPasswordBody(String tempPassword) {
+		return "요청하신 임시 비밀번호는 다음과 같습니다:\n\n" +
+			tempPassword + "\n\n로그인 후 반드시 비밀번호를 변경해주세요.";
+	}
+
+
 	private void saveVerificationCode(String email, String code) {
 		redisUtil.setDataExpire(email, code, 300);
 	}

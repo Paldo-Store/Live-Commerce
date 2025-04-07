@@ -1,5 +1,7 @@
 package com.live_commerce.user.application.service;
 
+import java.security.SecureRandom;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
 import com.live_commerce.user.domain.repository.UserRepository;
 import com.live_commerce.user.infrastructure.common.JwtUtil;
+import com.live_commerce.user.infrastructure.common.PasswordGenerator;
 import com.live_commerce.user.infrastructure.common.RedisUtil;
 
 import jakarta.transaction.Transactional;
@@ -59,10 +62,7 @@ public class AuthService {
 
 	@Transactional
 	public void sendFindUsernameCode(String email) {
-		User user = userRepository.findByEmail(email)
-			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
-		checkDeletedUser(user);
-
+		findActiveUserByEmail(email);
 		mailService.sendVerificationCode(email);
 	}
 
@@ -78,12 +78,31 @@ public class AuthService {
 			throw new CustomException(UserExceptionCode.INVALID_VERIFICATION_CODE);
 		}
 
-		User user = userRepository.findByEmail(email)
+		User user = findActiveUserByEmail(email);
+		redisUtil.deleteData(email);
+		return user.getUsername();
+	}
+
+
+	@Transactional
+	public void resetPasswordAndSendTempPassword(String username, String email) {
+		User user = userRepository.findByUsernameAndEmail(username, email)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
 		checkDeletedUser(user);
 
-		redisUtil.deleteData(email);
-		return user.getUsername();
+		String tempPassword = PasswordGenerator.generateTempPassword(10);
+		String encoded = passwordEncoder.encode(tempPassword);
+
+		user.changePassword(encoded);
+		mailService.sendTemporaryPassword(email, tempPassword);
+	}
+
+
+	private User findActiveUserByEmail(String email) {
+		User user = userRepository.findByEmail(email)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+		checkDeletedUser(user);
+		return user;
 	}
 
 	private void checkDeletedUser(User user) {
