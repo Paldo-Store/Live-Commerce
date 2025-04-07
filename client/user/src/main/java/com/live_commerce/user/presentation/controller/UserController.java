@@ -33,33 +33,24 @@ public class UserController {
 
 	private final UserService userService;
 
-	// 본인 정보 조회 (/me)
-	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<UserGetResponseDto>> getMyInfo(
+	@GetMapping("/{username}")
+	@PreAuthorize("#username == authentication.principal.username or hasRole('MASTER')")
+	public ResponseEntity<ApiResponse<UserGetResponseDto>> getUser(
+		@PathVariable String username,
 		@AuthenticationPrincipal RequestUserDetails requestUserDetails
 	) {
-		UserGetResponseDto response = userService.getUser(requestUserDetails.getUsername());
-
+		UserGetResponseDto response = userService.getUser(username, requestUserDetails);
 		return ResponseUtil.success(response);
 	}
 
-	// 관리자용 특정 유저 조회 (/users/{username})
-	@GetMapping("/{username}")
-	@PreAuthorize("hasRole('MASTER')")
-	public ResponseEntity<ApiResponse<UserGetResponseDto>> getUserByAdmin(@PathVariable String username) {
-		UserGetResponseDto response = userService.getUser(username);
-
-		return ResponseUtil.success(response);
-	}
-
-	// 관리자용 전체 유저 조회
 	@GetMapping("/search")
 	@PreAuthorize("hasRole('MASTER')")
 	public ResponseEntity<ApiResponse<Page<UserGetResponseDto>>> searchUsers(
 		@ModelAttribute UserSearchCondition condition,
-		@PageableDefault(size = 10) Pageable pageable
+		@PageableDefault(size = 10) Pageable pageable,
+		@AuthenticationPrincipal RequestUserDetails requestUserDetails
 	) {
-		Page<UserGetResponseDto> response = userService.searchUser(condition, pageable);
+		Page<UserGetResponseDto> response = userService.searchUser(condition, pageable, requestUserDetails);
 
 		return ResponseUtil.success(response);
 	}

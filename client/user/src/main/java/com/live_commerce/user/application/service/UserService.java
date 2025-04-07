@@ -30,14 +30,18 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 
 	@Transactional(readOnly = true)
-	public UserGetResponseDto getUser(String username) {
+	public UserGetResponseDto getUser(String username, RequestUserDetails userDetails) {
+		validateUserGetPermission(username, userDetails);
+
 		User user = findUserByUsername(username);
 
 		return UserGetResponseDto.from(user);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<UserGetResponseDto> searchUser(UserSearchCondition condition, Pageable pageable) {
+	public Page<UserGetResponseDto> searchUser(UserSearchCondition condition, Pageable pageable, RequestUserDetails userDetails) {
+		validateUserSearchPermission(userDetails);
+
 		int size = pageable.getPageSize();
 		if (size != 10 && size != 30 && size != 50) {
 			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
@@ -53,18 +57,7 @@ public class UserService {
 
 	@Transactional
 	public UserUpdateResponseDto updateUser(String username, UserUpdateRequestDto requestDto, RequestUserDetails userDetails) {
-		boolean isSelf = username.equals(userDetails.getUsername());
-		boolean isMaster = hasMasterRole(userDetails);
-
-		// 본인이나 마스터만 정보 수정 가능
-		if (!isSelf && !isMaster) {
-			throw new CustomException(UserExceptionCode.FORBIDDEN);
-		}
-
-		// 마스터 권한 유저만 권한 수정 가능
-		if (!isMaster && requestDto.getUserRole() != null) {
-			throw new CustomException(UserExceptionCode.ROLE_CHANGE_FORBIDDEN);
-		}
+		validateUserUpdatePermission(username, requestDto, userDetails);
 
 		User user = findUserByUsername(username);
 		String updatedPassword = requestDto.getPassword() != null
@@ -81,6 +74,28 @@ public class UserService {
 		return UserUpdateResponseDto.from(user);
 	}
 
+
+	private void validateUserGetPermission(String username, RequestUserDetails userDetails) {
+		if (!isSelf(username, userDetails) && !hasMasterRole(userDetails)) {
+			throw new CustomException(UserExceptionCode.FORBIDDEN);
+		}
+	}
+
+	private void validateUserSearchPermission(RequestUserDetails userDetails) {
+		if (!hasMasterRole(userDetails)) {
+			throw new CustomException(UserExceptionCode.FORBIDDEN);
+		}
+	}
+
+	private void validateUserUpdatePermission(String username, UserUpdateRequestDto dto, RequestUserDetails userDetails) {
+		if (!isSelf(username, userDetails) && !hasMasterRole(userDetails)) {
+			throw new CustomException(UserExceptionCode.FORBIDDEN);
+		}
+		if (!hasMasterRole(userDetails) && dto.getUserRole() != null) {
+			throw new CustomException(UserExceptionCode.ROLE_CHANGE_FORBIDDEN);
+		}
+	}
+
 	private User findUserByUsername(String username) {
 		return userRepository.findByUsername(username)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
@@ -90,5 +105,10 @@ public class UserService {
 		return userDetails.getAuthorities().stream()
 			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
 	}
+
+	private boolean isSelf(String username, RequestUserDetails userDetails) {
+		return username.equals(userDetails.getUsername());
+	}
+
 
 }
