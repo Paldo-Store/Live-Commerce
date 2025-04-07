@@ -23,9 +23,10 @@ logs/
 .DS_Store
 
 # Windows
-Thumbs.db
-ehthumbs.db
-desktop.ini
 
-# ========== 테스트 ==========
+
+# ========== 테스트 실행결과 로그,캐시 ==========
 test-output/
+
+# ========== 환경변수 ==========
+.env
