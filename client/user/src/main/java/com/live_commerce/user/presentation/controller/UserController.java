@@ -9,16 +9,21 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.live_commerce.user.application.dto.auth.request.UserSearchCondition;
+import com.live_commerce.user.application.dto.auth.request.UserUpdateRequestDto;
+import com.live_commerce.user.application.dto.auth.response.UserUpdateResponseDto;
 import com.live_commerce.user.application.dto.user.response.UserGetResponseDto;
 import com.live_commerce.user.application.service.UserService;
 import com.live_commerce.user.infrastructure.common.ResponseUtil;
 import com.live_commerce.user.infrastructure.security.RequestUserDetails;
 import com.live_commerce.user.presentation.common.ApiResponse;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -55,6 +60,18 @@ public class UserController {
 		@PageableDefault(size = 10) Pageable pageable
 	) {
 		Page<UserGetResponseDto> response = userService.searchUser(condition, pageable);
+
+		return ResponseUtil.success(response);
+	}
+
+	@PutMapping("/{username}")
+	@PreAuthorize("#username == authentication.principal.username or hasRole('MASTER')")
+	public ResponseEntity<ApiResponse<UserUpdateResponseDto>> updateUser(
+		@PathVariable String username,
+		@RequestBody @Valid UserUpdateRequestDto requestDto,
+		@AuthenticationPrincipal RequestUserDetails requestUserDetails
+	) {
+		UserUpdateResponseDto response = userService.updateUser(username, requestDto, requestUserDetails);
 
 		return ResponseUtil.success(response);
 	}
