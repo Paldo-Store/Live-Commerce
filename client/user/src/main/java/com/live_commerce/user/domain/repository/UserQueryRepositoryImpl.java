@@ -20,20 +20,20 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
 		QUser user = QUser.user;
 		BooleanBuilder builder = new BooleanBuilder();
 
-		if (condition.getUsername() != null) {
-			builder.and(user.username.eq(condition.getUsername()));
+		if (condition.username() != null) {
+			builder.and(user.username.eq(condition.username()));
 		}
-		if (condition.getEmail() != null) {
-			builder.and(user.email.eq(condition.getEmail()));
+		if (condition.email() != null) {
+			builder.and(user.email.eq(condition.email()));
 		}
-		if (condition.getNickname() != null) {
-			builder.and(user.nickname.containsIgnoreCase(condition.getNickname()));
+		if (condition.nickname() != null) {
+			builder.and(user.nickname.containsIgnoreCase(condition.nickname()));
 		}
-		if (condition.getUserRole() != null) {
-			builder.and(user.userRole.eq(condition.getUserRole()));
+		if (condition.userRole() != null) {
+			builder.and(user.userRole.eq(condition.userRole()));
 		}
-		if (condition.getAlarmConsent() != null) {
-			builder.and(user.alarmConsent.eq(condition.getAlarmConsent()));
+		if (condition.alarmConsent() != null) {
+			builder.and(user.alarmConsent.eq(condition.alarmConsent()));
 		}
 
 		return queryFactory

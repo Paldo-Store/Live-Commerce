@@ -38,4 +38,11 @@ public abstract class BaseEntity {
 	private String updatedBy;
 
 	private String deletedBy;
+
+	public void markAsDeleted(String deletedBy) {
+		this.deletedStatus = true;
+		this.deletedAt = LocalDateTime.now();
+		this.deletedBy = deletedBy;
+	}
+
 }
