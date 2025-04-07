@@ -74,6 +74,14 @@ public class UserService {
 		return UserUpdateResponseDto.from(user);
 	}
 
+	@Transactional
+	public void deleteUser(String username, RequestUserDetails userDetails) {
+		validateUserDeletePermission(userDetails);
+
+		User user = findUserByUsername(username);
+		user.markAsDeleted(userDetails.getUsername());
+	}
+
 
 	private void validateUserGetPermission(String username, RequestUserDetails userDetails) {
 		if (!isSelf(username, userDetails) && !hasMasterRole(userDetails)) {
@@ -93,6 +101,12 @@ public class UserService {
 		}
 		if (!hasMasterRole(userDetails) && dto.getUserRole() != null) {
 			throw new CustomException(UserExceptionCode.ROLE_CHANGE_FORBIDDEN);
+		}
+	}
+
+	private void validateUserDeletePermission(RequestUserDetails userDetails) {
+		if (!hasMasterRole(userDetails)) {
+			throw new CustomException(UserExceptionCode.FORBIDDEN);
 		}
 	}
 
