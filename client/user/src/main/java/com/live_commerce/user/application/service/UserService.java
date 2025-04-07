@@ -60,19 +60,20 @@ public class UserService {
 		validateUserUpdatePermission(username, requestDto, userDetails);
 
 		User user = findUserByUsername(username);
-		String updatedPassword = requestDto.getPassword() != null
-			? passwordEncoder.encode(requestDto.getPassword()) : user.getPassword();
+		String updatedPassword = requestDto.password() != null
+			? passwordEncoder.encode(requestDto.password()) : user.getPassword();
 
 		user.updateUser(
 			updatedPassword,
-			requestDto.getEmail() != null ? requestDto.getEmail() : user.getEmail(),
-			requestDto.getNickname() != null ? requestDto.getNickname() : user.getNickname(),
-			requestDto.getAlarmConsent() != null ? requestDto.getAlarmConsent() : user.isAlarmConsent(),
-			requestDto.getUserRole() != null ? requestDto.getUserRole() : user.getUserRole()
+			requestDto.email() != null ? requestDto.email() : user.getEmail(),
+			requestDto.nickname() != null ? requestDto.nickname() : user.getNickname(),
+			requestDto.alarmConsent() != null ? requestDto.alarmConsent() : user.isAlarmConsent(),
+			requestDto.userRole() != null ? requestDto.userRole() : user.getUserRole()
 		);
 
 		return UserUpdateResponseDto.from(user);
 	}
+
 
 	@Transactional
 	public void deleteUser(String username, RequestUserDetails userDetails) {
@@ -99,7 +100,7 @@ public class UserService {
 		if (!isSelf(username, userDetails) && !hasMasterRole(userDetails)) {
 			throw new CustomException(UserExceptionCode.FORBIDDEN);
 		}
-		if (!hasMasterRole(userDetails) && dto.getUserRole() != null) {
+		if (!hasMasterRole(userDetails) && dto.userRole() != null) {
 			throw new CustomException(UserExceptionCode.ROLE_CHANGE_FORBIDDEN);
 		}
 	}

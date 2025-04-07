@@ -27,10 +27,10 @@ public class AuthService {
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
 
-		validateUsername(request.getUsername());
-		validateEmail(request.getEmail());
+		validateUsername(request.username());
+		validateEmail(request.email());
 
-		String encodedPassword = passwordEncoder.encode(request.getPassword());
+		String encodedPassword = passwordEncoder.encode(request.password());
 
 		User user = request.toEntity(encodedPassword);
 
@@ -42,8 +42,8 @@ public class AuthService {
 	@Transactional
 	public UserSignInResponseDto signIn(UserSignInRequestDto requestDto) {
 
-		User user = userRepository.findByUsername(requestDto.getUsername())
-			.filter(u -> passwordEncoder.matches(requestDto.getPassword(), u.getPassword()))
+		User user = userRepository.findByUsername(requestDto.username())
+			.filter(u -> passwordEncoder.matches(requestDto.password(), u.getPassword()))
 			.orElseThrow(() -> new CustomException(UserExceptionCode.INVALID_CREDENTIALS));
 
 		checkDeletedUser(user);
