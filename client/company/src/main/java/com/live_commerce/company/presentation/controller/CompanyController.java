@@ -44,7 +44,7 @@ public class CompanyController {
     }
 
     //업체 전체 조회 API
-    @GetMapping("/getCompanies")
+    @GetMapping("/")
     public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompanies (
             @RequestParam final int page,
             @RequestParam final int size,
