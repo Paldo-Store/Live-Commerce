@@ -29,12 +29,12 @@ public class CouponPolicyService {
     }
 
     if (request.discountType() == DISCOUNT_TYPE.FIXED
-        || request.discountValue().compareTo(request.maxOrderAmt()) > 0) {
+        && request.discountValue().compareTo(request.maxOrderAmt()) > 0) {
       CouponPolicyException.forDiscountGreaterThanMaxOrderAmount();
     }
 
     if (request.discountType() == DISCOUNT_TYPE.RATE
-        || request.discountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
+        && request.discountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
       CouponPolicyException.forDiscountGreaterThan100();
     }
 
