@@ -11,7 +11,8 @@ public record CompanyGetOneResponse  (
         UUID owner,
         CompanyType type,
         String address,
-        String number
+        String number,
+        String description
 ) {
 
     public static CompanyGetOneResponse of(Company company) {
@@ -21,7 +22,8 @@ public record CompanyGetOneResponse  (
                 company.getOwner(),
                 company.getType(),
                 company.getAddress(),
-                company.getNumber()
+                company.getNumber(),
+                company.getDescription()
         );
     }
 }
