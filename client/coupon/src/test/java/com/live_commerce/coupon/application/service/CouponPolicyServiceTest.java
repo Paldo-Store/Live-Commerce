@@ -56,7 +56,7 @@ public class CouponPolicyServiceTest {
         .maxOrderAmt(BigDecimal.valueOf(1000))
         .startAt(LocalDateTime.now().plusDays(1))
         .endAt(LocalDateTime.now().plusDays(30))
-        .isActive(false)
+        .isActive(true)
         .build();
 
   }
@@ -158,4 +158,33 @@ public class CouponPolicyServiceTest {
     verify(couponPolicyRepository, times(1)).findByCodeAndDeletedStatusFalse(invalidCouponId);
 
   }
+
+  @Test
+  @DisplayName("쿠폰 정책 삭제 시 소프트 delete 적용 확인")
+  void deleteCouponPolicySoftDelete() {
+    // given
+    UUID validCouponId = couponPolicy.getCode();
+
+    // when
+    when(couponPolicyRepository.findById(validCouponId))
+        .thenReturn(Optional.of(couponPolicy));
+
+    couponPolicyService.deleteCouponPolicy(validCouponId);
+
+    // then
+    assertThat(couponPolicy.getDeletedStatus()).isTrue();
+    assertThat(couponPolicy.getDeletedBy()).isNotNull();
+    assertThat(couponPolicy.getDeletedAt()).isNotNull();
+
+    when(couponPolicyRepository.findById(validCouponId))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> couponPolicyService.getCouponPolicy(validCouponId))
+        .isInstanceOf(CouponPolicyException.class)
+        .hasMessageContaining("쿠폰 정책이 없거나 모두 삭제되었습니다.");
+
+    verify(couponPolicyRepository, times(1)).save(couponPolicy);
+  }
+
+
 }

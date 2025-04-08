@@ -1,6 +1,5 @@
 package com.live_commerce.coupon.application.service;
 
-import com.live_commerce.coupon.application.exception.CouponExceptionCode;
 import com.live_commerce.coupon.domain.exception.CouponPolicyException;
 import com.live_commerce.coupon.domain.model.CouponPolicy;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
