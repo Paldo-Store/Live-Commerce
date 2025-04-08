@@ -10,6 +10,8 @@ import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResp
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,4 +54,10 @@ public class CouponPolicyService {
     return ReadCouponPolicyResponse.fromCouponPolicy(couponPolicy);
   }
 
+  public List<ReadCouponPolicyResponse> getCouponPolicies() {
+    List<CouponPolicy> couponPolicyList = couponRepository.findByDeletedStatusFalse();
+    return couponPolicyList.stream()
+        .map(ReadCouponPolicyResponse::fromCouponPolicy)
+        .collect(Collectors.toList());
+  }
 }

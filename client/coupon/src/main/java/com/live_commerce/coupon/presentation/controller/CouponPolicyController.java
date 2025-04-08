@@ -8,6 +8,7 @@ import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResp
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,12 @@ public class CouponPolicyController {
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(@PathVariable("id") UUID id){
     ReadCouponPolicyResponse response = couponService.getCouponPolicy(id);
+    return ResponseUtil.success(response);
+  }
+
+  @GetMapping("/")
+  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies(){
+    List<ReadCouponPolicyResponse> response = couponService.getCouponPolicies();
     return ResponseUtil.success(response);
   }
 
