@@ -1,6 +1,7 @@
 package com.live_commerce.user.application.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,11 +31,9 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 
 	@Transactional(readOnly = true)
-	public UserGetResponseDto getUser(String username, RequestUserDetails userDetails) {
-		validateUserGetPermission(username, userDetails);
-
-		User user = findUserByUsername(username);
-
+	public UserGetResponseDto getUser(UUID userId, RequestUserDetails userDetails) {
+		validateUserGetPermission(userId, userDetails);
+		User user = findUserById(userId);
 		return UserGetResponseDto.from(user);
 	}
 
@@ -56,10 +55,9 @@ public class UserService {
 	}
 
 	@Transactional
-	public UserUpdateResponseDto updateUser(String username, UserUpdateRequestDto requestDto, RequestUserDetails userDetails) {
-		validateUserUpdatePermission(username, requestDto, userDetails);
-
-		User user = findUserByUsername(username);
+	public UserUpdateResponseDto updateUser(UUID userId, UserUpdateRequestDto requestDto, RequestUserDetails userDetails) {
+		validateUserUpdatePermission(userId, requestDto, userDetails);
+		User user = findUserById(userId);
 		String updatedPassword = requestDto.password() != null
 			? passwordEncoder.encode(requestDto.password()) : user.getPassword();
 
@@ -74,18 +72,15 @@ public class UserService {
 		return UserUpdateResponseDto.from(user);
 	}
 
-
 	@Transactional
-	public void deleteUser(String username, RequestUserDetails userDetails) {
+	public void deleteUser(UUID userId, RequestUserDetails userDetails) {
 		validateUserDeletePermission(userDetails);
-
-		User user = findUserByUsername(username);
+		User user = findUserById(userId);
 		user.markAsDeleted(userDetails.getUsername());
 	}
 
-
-	private void validateUserGetPermission(String username, RequestUserDetails userDetails) {
-		if (!isSelf(username, userDetails) && !hasMasterRole(userDetails)) {
+	private void validateUserGetPermission(UUID userId, RequestUserDetails userDetails) {
+		if (!isSelf(userId, userDetails) && !hasMasterRole(userDetails)) {
 			throw new CustomException(UserExceptionCode.FORBIDDEN);
 		}
 	}
@@ -96,8 +91,8 @@ public class UserService {
 		}
 	}
 
-	private void validateUserUpdatePermission(String username, UserUpdateRequestDto dto, RequestUserDetails userDetails) {
-		if (!isSelf(username, userDetails) && !hasMasterRole(userDetails)) {
+	private void validateUserUpdatePermission(UUID userId, UserUpdateRequestDto dto, RequestUserDetails userDetails) {
+		if (!isSelf(userId, userDetails) && !hasMasterRole(userDetails)) {
 			throw new CustomException(UserExceptionCode.FORBIDDEN);
 		}
 		if (!hasMasterRole(userDetails) && dto.userRole() != null) {
@@ -111,8 +106,8 @@ public class UserService {
 		}
 	}
 
-	private User findUserByUsername(String username) {
-		return userRepository.findByUsername(username)
+	private User findUserById(UUID userId) {
+		return userRepository.findById(userId)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
 	}
 
@@ -121,9 +116,7 @@ public class UserService {
 			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
 	}
 
-	private boolean isSelf(String username, RequestUserDetails userDetails) {
-		return username.equals(userDetails.getUsername());
+	private boolean isSelf(UUID userId, RequestUserDetails userDetails) {
+		return userId.equals(userDetails.getUserId());
 	}
-
-
 }

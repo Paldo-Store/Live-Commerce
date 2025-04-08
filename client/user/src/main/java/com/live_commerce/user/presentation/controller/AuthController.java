@@ -31,25 +31,22 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final AuthService authService;
-	private final MailService mailService;
 
 	@PostMapping("/signup")
 	public ResponseEntity<ApiResponse<UserSignUpResponseDto>> signUp(
 		@RequestBody @Valid UserSignUpRequestDto requestDto
 	) {
 		UserSignUpResponseDto response = authService.signUp(requestDto);
-
 		return ResponseUtil.success(response);
 	}
 
 	@PostMapping("/signin")
 	public ResponseEntity<ApiResponse<UserSignInResponseDto>> signIn(@RequestBody UserSignInRequestDto requestDto) {
 		UserSignInResponseDto response = authService.signIn(requestDto);
-
 		return ResponseUtil.success(response);
 	}
 
-	@PostMapping("/find-username/send")
+	@PostMapping("/code")
 	public ResponseEntity<ApiResponse<String>> sendFindUsernameCode(
 		@RequestBody @Valid UserFindUsernameRequestDto request
 	) {
@@ -57,7 +54,7 @@ public class AuthController {
 		return ResponseUtil.success("인증번호가 이메일로 전송되었습니다.");
 	}
 
-	@PostMapping("/find-username/verify")
+	@PostMapping("/verify")
 	public ResponseEntity<ApiResponse<String>> confirmFindUsernameCode(
 		@RequestBody @Valid UserFindUsernameVerifyRequestDto request
 	) {
@@ -77,8 +74,7 @@ public class AuthController {
 	public ResponseEntity<ApiResponse<String>> logout(
 		@AuthenticationPrincipal RequestUserDetails userDetails
 	) {
-		authService.logout(userDetails.getUsername());
-
+		authService.logout(userDetails.getUserId());
 		return ResponseUtil.success("로그아웃 되었습니다.");
 	}
 
@@ -87,8 +83,6 @@ public class AuthController {
 		@RequestBody @Valid TokenReissueRequestDto request
 	) {
 		TokenReissueResponseDto response = authService.reissueToken(request.refreshToken());
-
 		return ResponseUtil.success(response);
 	}
-
 }

@@ -1,5 +1,7 @@
 package com.live_commerce.user.presentation.controller;
 
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -34,13 +36,13 @@ public class UserController {
 
 	private final UserService userService;
 
-	@GetMapping("/{username}")
-	@PreAuthorize("#username == authentication.principal.username or hasRole('MASTER')")
+	@GetMapping("/{userId}")
+	@PreAuthorize("#userId == authentication.principal.userId or hasRole('MASTER')")
 	public ResponseEntity<ApiResponse<UserGetResponseDto>> getUser(
-		@PathVariable String username,
+		@PathVariable UUID userId,
 		@AuthenticationPrincipal RequestUserDetails requestUserDetails
 	) {
-		UserGetResponseDto response = userService.getUser(username, requestUserDetails);
+		UserGetResponseDto response = userService.getUser(userId, requestUserDetails);
 		return ResponseUtil.success(response);
 	}
 
@@ -52,30 +54,27 @@ public class UserController {
 		@AuthenticationPrincipal RequestUserDetails requestUserDetails
 	) {
 		Page<UserGetResponseDto> response = userService.searchUser(condition, pageable, requestUserDetails);
-
 		return ResponseUtil.success(response);
 	}
 
-	@PutMapping("/{username}")
-	@PreAuthorize("#username == authentication.principal.username or hasRole('MASTER')")
+	@PutMapping("/{userId}")
+	@PreAuthorize("#userId == authentication.principal.userId or hasRole('MASTER')")
 	public ResponseEntity<ApiResponse<UserUpdateResponseDto>> updateUser(
-		@PathVariable String username,
+		@PathVariable UUID userId,
 		@RequestBody @Valid UserUpdateRequestDto requestDto,
 		@AuthenticationPrincipal RequestUserDetails requestUserDetails
 	) {
-		UserUpdateResponseDto response = userService.updateUser(username, requestDto, requestUserDetails);
-
+		UserUpdateResponseDto response = userService.updateUser(userId, requestDto, requestUserDetails);
 		return ResponseUtil.success(response);
 	}
 
-	@DeleteMapping("/{username}")
+	@DeleteMapping("/{userId}")
 	@PreAuthorize("hasRole('MASTER')")
 	public ResponseEntity<ApiResponse<Void>> deleteUser(
-		@PathVariable String username,
+		@PathVariable UUID userId,
 		@AuthenticationPrincipal RequestUserDetails requestUserDetails
 	) {
-		userService.deleteUser(username, requestUserDetails);
-
+		userService.deleteUser(userId, requestUserDetails);
 		return ResponseUtil.noContent();
 	}
 }

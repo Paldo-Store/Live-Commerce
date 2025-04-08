@@ -1,5 +1,9 @@
 package com.live_commerce.user.domain.model;
 
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +20,10 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_user")
 public class User extends BaseEntity {
 	@Id
+	@UuidGenerator
+	private UUID userId;
+
+	@Column(nullable = false)
 	private String username; // 사용자 ID
 
 	@Column(nullable = false)

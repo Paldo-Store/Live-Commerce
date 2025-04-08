@@ -1,5 +1,7 @@
 package com.live_commerce.user.application.service;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,12 +40,9 @@ public class AuthService {
 
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
-		validateUsername(request.username());
 		validateEmail(request.email());
-
 		String encodedPassword = passwordEncoder.encode(request.password());
 		User user = request.toEntity(encodedPassword);
-
 		User savedUser = userRepository.save(user);
 		return UserSignUpResponseDto.from(savedUser);
 	}
@@ -55,10 +54,11 @@ public class AuthService {
 			.map(this::validateActiveUser)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.INVALID_CREDENTIALS));
 
-		String accessToken = jwtUtil.createAccessToken(user.getUsername(), user.getUserRole());
-		String refreshToken = jwtUtil.createRefreshToken(user.getUsername());
+		UUID userId = user.getUserId();
+		String accessToken = jwtUtil.createAccessToken(userId, user.getUsername(), user.getUserRole());
+		String refreshToken = jwtUtil.createRefreshToken(userId);
 
-		String redisKey = REFRESH_KEY_PREFIX + user.getUsername();
+		String redisKey = REFRESH_KEY_PREFIX + userId;
 		redisUtil.setDataExpire(redisKey, refreshToken, refreshTokenExpirationMillis);
 
 		return UserSignInResponseDto.from(accessToken, refreshToken);
@@ -69,30 +69,28 @@ public class AuthService {
 		jwtUtil.validateToken(refreshToken);
 		Claims token = jwtUtil.parseClaims(refreshToken);
 
-		String username = token.get("username", String.class);
-
-		String redisKey = REFRESH_KEY_PREFIX + username;
+		UUID userId = UUID.fromString(token.get("userId", String.class));
+		String redisKey = REFRESH_KEY_PREFIX + userId;
 		String storedRefreshToken = redisUtil.getData(redisKey);
 
 		if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
 			throw new CustomException(UserExceptionCode.INVALID_REFRESH_TOKEN);
 		}
 
-		User user = userRepository.findByUsername(username)
+		User user = userRepository.findById(userId)
 			.map(this::validateActiveUser)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
 
-		String newAccessToken = jwtUtil.createAccessToken(username, user.getUserRole());
-		String newRefreshToken = jwtUtil.createRefreshToken(username);
+		String newAccessToken = jwtUtil.createAccessToken(userId, user.getUsername(), user.getUserRole());
+		String newRefreshToken = jwtUtil.createRefreshToken(userId);
 
 		redisUtil.setDataExpire(redisKey, newRefreshToken, refreshTokenExpirationMillis);
-
 		return new TokenReissueResponseDto(newAccessToken, newRefreshToken);
 	}
 
 	@Transactional
-	public void logout(String username) {
-		String redisKey = REFRESH_KEY_PREFIX + username;
+	public void logout(UUID userId) {
+		String redisKey = REFRESH_KEY_PREFIX + userId;
 		redisUtil.deleteData(redisKey);
 	}
 
@@ -122,15 +120,11 @@ public class AuthService {
 	@Transactional
 	public void resetPasswordAndSendTempPassword(String username, String email) {
 		User user = findActiveUserByUsernameAndEmail(username, email);
-
 		String tempPassword = PasswordGenerator.generateTempPassword(10);
 		String encoded = passwordEncoder.encode(tempPassword);
-
 		user.changePassword(encoded);
 		mailService.sendTemporaryPassword(email, tempPassword);
 	}
-
-	// =================== 공통 로직 ===================
 
 	private User findActiveUserByEmail(String email) {
 		return userRepository.findByEmail(email)
@@ -149,10 +143,6 @@ public class AuthService {
 			throw new CustomException(UserExceptionCode.DELETED_USER);
 		}
 		return user;
-	}
-
-	private void validateUsername(String username) {
-		validateDuplicate(userRepository.existsByUsername(username), UserExceptionCode.DUPLICATE_USERNAME);
 	}
 
 	private void validateEmail(String email) {

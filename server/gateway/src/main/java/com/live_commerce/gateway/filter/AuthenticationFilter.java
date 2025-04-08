@@ -32,12 +32,13 @@ public class AuthenticationFilter implements GlobalFilter {
 		}
 
 		Claims claims = jwtUtil.parseClaims(token);
+		String userId = claims.get("userId", String.class);
 		String username = claims.get("username", String.class);
 		String role = claims.get("role", String.class);
 
-		// 내부 마이크로서비스로 사용자 정보 전달
 		ServerWebExchange modifiedExchange = exchange.mutate()
 			.request(exchange.getRequest().mutate()
+				.header("X-User-Id", userId)
 				.header("X-User-Username", username)
 				.header("X-User-Role", role)
 				.build())
