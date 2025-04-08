@@ -31,7 +31,7 @@ public abstract class BaseEntity {
 
   private LocalDateTime deletedAt;
 
-  private boolean deletedStatus;
+  private Boolean deletedStatus = false;
 
   public void markAsDeleted(String deletedBy){
     if(this.deletedStatus){
