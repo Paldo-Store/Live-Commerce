@@ -1,5 +1,6 @@
 package com.live_commerce.user.application.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -7,6 +8,7 @@ import com.live_commerce.user.application.dto.auth.request.UserSignInRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignUpRequestDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignUpResponseDto;
+import com.live_commerce.user.application.dto.auth.response.TokenReissueResponseDto;
 import com.live_commerce.user.application.exception.CustomException;
 import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
@@ -15,6 +17,7 @@ import com.live_commerce.user.infrastructure.common.JwtUtil;
 import com.live_commerce.user.infrastructure.common.PasswordGenerator;
 import com.live_commerce.user.infrastructure.common.RedisUtil;
 
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +30,11 @@ public class AuthService {
 	private final JwtUtil jwtUtil;
 	private final RedisUtil redisUtil;
 	private final MailService mailService;
+
+	private static final String REFRESH_KEY_PREFIX = "RT:";
+
+	@Value("${service.jwt.refresh-expiration}")
+	private long refreshTokenExpirationMillis;
 
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
@@ -50,7 +58,18 @@ public class AuthService {
 		String accessToken = jwtUtil.createAccessToken(user.getUsername(), user.getUserRole());
 		String refreshToken = jwtUtil.createRefreshToken(user.getUsername());
 
+		String redisKey = REFRESH_KEY_PREFIX + user.getUsername();
+		redisUtil.setDataExpire(redisKey, refreshToken, refreshTokenExpirationMillis);
+
 		return UserSignInResponseDto.from(accessToken, refreshToken);
+	}
+
+
+
+	@Transactional
+	public void logout(String username) {
+		String redisKey = REFRESH_KEY_PREFIX + username;
+		redisUtil.deleteData(redisKey);
 	}
 
 	@Transactional
@@ -87,6 +106,7 @@ public class AuthService {
 		mailService.sendTemporaryPassword(email, tempPassword);
 	}
 
+	// =================== 공통 로직 ===================
 
 	private User findActiveUserByEmail(String email) {
 		return userRepository.findByEmail(email)
