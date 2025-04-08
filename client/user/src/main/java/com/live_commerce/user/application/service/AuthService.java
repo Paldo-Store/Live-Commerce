@@ -30,27 +30,22 @@ public class AuthService {
 
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
-
 		validateUsername(request.username());
 		validateEmail(request.email());
 
 		String encodedPassword = passwordEncoder.encode(request.password());
-
 		User user = request.toEntity(encodedPassword);
 
 		User savedUser = userRepository.save(user);
-
 		return UserSignUpResponseDto.from(savedUser);
 	}
 
 	@Transactional
 	public UserSignInResponseDto signIn(UserSignInRequestDto requestDto) {
-
 		User user = userRepository.findByUsername(requestDto.username())
 			.filter(u -> passwordEncoder.matches(requestDto.password(), u.getPassword()))
+			.map(this::validateActiveUser)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.INVALID_CREDENTIALS));
-
-		checkDeletedUser(user);
 
 		String accessToken = jwtUtil.createAccessToken(user.getUsername(), user.getUserRole());
 		String refreshToken = jwtUtil.createRefreshToken(user.getUsername());
@@ -81,12 +76,9 @@ public class AuthService {
 		return user.getUsername();
 	}
 
-
 	@Transactional
 	public void resetPasswordAndSendTempPassword(String username, String email) {
-		User user = userRepository.findByUsernameAndEmail(username, email)
-			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
-		checkDeletedUser(user);
+		User user = findActiveUserByUsernameAndEmail(username, email);
 
 		String tempPassword = PasswordGenerator.generateTempPassword(10);
 		String encoded = passwordEncoder.encode(tempPassword);
@@ -97,28 +89,35 @@ public class AuthService {
 
 
 	private User findActiveUserByEmail(String email) {
-		User user = userRepository.findByEmail(email)
+		return userRepository.findByEmail(email)
+			.map(this::validateActiveUser)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
-		checkDeletedUser(user);
-		return user;
 	}
 
-	private void checkDeletedUser(User user) {
+	private User findActiveUserByUsernameAndEmail(String username, String email) {
+		return userRepository.findByUsernameAndEmail(username, email)
+			.map(this::validateActiveUser)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+	}
+
+	private User validateActiveUser(User user) {
 		if (user.isDeletedStatus()) {
 			throw new CustomException(UserExceptionCode.DELETED_USER);
 		}
+		return user;
 	}
 
 	private void validateUsername(String username) {
-		if (userRepository.existsByUsername(username)) {
-			throw new CustomException(UserExceptionCode.DUPLICATE_USERNAME);
-		}
+		validateDuplicate(userRepository.existsByUsername(username), UserExceptionCode.DUPLICATE_USERNAME);
 	}
 
 	private void validateEmail(String email) {
-		if (userRepository.existsByEmail(email)) {
-			throw new CustomException(UserExceptionCode.DUPLICATE_EMAIL);
-		}
+		validateDuplicate(userRepository.existsByEmail(email), UserExceptionCode.DUPLICATE_EMAIL);
 	}
 
+	private void validateDuplicate(boolean exists, UserExceptionCode exceptionCode) {
+		if (exists) {
+			throw new CustomException(exceptionCode);
+		}
+	}
 }
