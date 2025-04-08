@@ -31,5 +31,5 @@ public abstract class BaseEntity {
 
   private LocalDateTime deletedAt;
 
-  private boolean deleted_status;
+  private boolean deletedStatus;
 }
