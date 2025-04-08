@@ -63,4 +63,14 @@ public class CouponPolicyService {
         .map(ReadCouponPolicyResponse::fromCouponPolicy)
         .collect(Collectors.toList());
   }
+
+  public void deleteCouponPolicy(UUID id) {
+    CouponPolicy couponPolicy = couponRepository.findById(id)
+        .orElseThrow(() -> {
+          CouponPolicyException.forCouponPolicyNotFound();
+          return null;
+        });
+    couponPolicy.markCouponAsDeleted(couponPolicy.getName());
+    couponRepository.save(couponPolicy);
+  }
 }

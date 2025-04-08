@@ -72,4 +72,8 @@ public class CouponPolicy extends BaseEntity {
 
   }
 
+  public void markCouponAsDeleted(String deletedBy){
+    markAsDeleted(deletedBy);
+  }
+
 }
