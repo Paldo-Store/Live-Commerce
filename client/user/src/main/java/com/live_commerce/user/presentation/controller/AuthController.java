@@ -1,21 +1,25 @@
 package com.live_commerce.user.presentation.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.live_commerce.user.application.dto.auth.request.TokenReissueRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserFindUsernameRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserFindUsernameVerifyRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserResetPasswordRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignInRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignUpRequestDto;
+import com.live_commerce.user.application.dto.auth.response.TokenReissueResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignUpResponseDto;
 import com.live_commerce.user.application.service.AuthService;
 import com.live_commerce.user.application.service.MailService;
 import com.live_commerce.user.infrastructure.common.ResponseUtil;
+import com.live_commerce.user.infrastructure.security.RequestUserDetails;
 import com.live_commerce.user.presentation.common.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -27,25 +31,22 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final AuthService authService;
-	private final MailService mailService;
 
-	@PostMapping("/signUp")
+	@PostMapping("/signup")
 	public ResponseEntity<ApiResponse<UserSignUpResponseDto>> signUp(
 		@RequestBody @Valid UserSignUpRequestDto requestDto
 	) {
 		UserSignUpResponseDto response = authService.signUp(requestDto);
-
 		return ResponseUtil.success(response);
 	}
 
-	@PostMapping("/signIn")
+	@PostMapping("/signin")
 	public ResponseEntity<ApiResponse<UserSignInResponseDto>> signIn(@RequestBody UserSignInRequestDto requestDto) {
 		UserSignInResponseDto response = authService.signIn(requestDto);
-
 		return ResponseUtil.success(response);
 	}
 
-	@PostMapping("/find-username/send")
+	@PostMapping("/code")
 	public ResponseEntity<ApiResponse<String>> sendFindUsernameCode(
 		@RequestBody @Valid UserFindUsernameRequestDto request
 	) {
@@ -53,7 +54,7 @@ public class AuthController {
 		return ResponseUtil.success("인증번호가 이메일로 전송되었습니다.");
 	}
 
-	@PostMapping("/find-username/verify")
+	@PostMapping("/verify")
 	public ResponseEntity<ApiResponse<String>> confirmFindUsernameCode(
 		@RequestBody @Valid UserFindUsernameVerifyRequestDto request
 	) {
@@ -69,5 +70,19 @@ public class AuthController {
 		return ResponseUtil.success("임시 비밀번호가 이메일로 전송되었습니다.");
 	}
 
+	@PostMapping("/logout")
+	public ResponseEntity<ApiResponse<String>> logout(
+		@AuthenticationPrincipal RequestUserDetails userDetails
+	) {
+		authService.logout(userDetails.getUserId());
+		return ResponseUtil.success("로그아웃 되었습니다.");
+	}
 
+	@PostMapping("/reissue")
+	public ResponseEntity<ApiResponse<TokenReissueResponseDto>> reissue(
+		@RequestBody @Valid TokenReissueRequestDto request
+	) {
+		TokenReissueResponseDto response = authService.reissueToken(request.refreshToken());
+		return ResponseUtil.success(response);
+	}
 }

@@ -32,12 +32,13 @@ public class AuthenticationFilter implements GlobalFilter {
 		}
 
 		Claims claims = jwtUtil.parseClaims(token);
+		String userId = claims.get("userId", String.class);
 		String username = claims.get("username", String.class);
 		String role = claims.get("role", String.class);
 
-		// 내부 마이크로서비스로 사용자 정보 전달
 		ServerWebExchange modifiedExchange = exchange.mutate()
 			.request(exchange.getRequest().mutate()
+				.header("X-User-Id", userId)
 				.header("X-User-Username", username)
 				.header("X-User-Role", role)
 				.build())
@@ -47,9 +48,13 @@ public class AuthenticationFilter implements GlobalFilter {
 	}
 
 	private boolean isPublicPath(String path) {
-		return path.startsWith("/api/v1/auth/") ||
-			path.startsWith("/swagger-ui/") ||
-			path.startsWith("/v3/api-docs/") ||
-			path.startsWith("/actuator");
+		// /api/v1/auth/logout 은 인증 필요하므로 제외시킴
+		return !path.equals("/api/v1/auth/logout") && (
+			path.startsWith("/api/v1/auth/") ||
+				path.startsWith("/swagger-ui/") ||
+				path.startsWith("/v3/api-docs/") ||
+				path.startsWith("/actuator")
+		);
 	}
+
 }

@@ -1,5 +1,8 @@
 package com.live_commerce.user.application.service;
 
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -7,6 +10,7 @@ import com.live_commerce.user.application.dto.auth.request.UserSignInRequestDto;
 import com.live_commerce.user.application.dto.auth.request.UserSignUpRequestDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignUpResponseDto;
+import com.live_commerce.user.application.dto.auth.response.TokenReissueResponseDto;
 import com.live_commerce.user.application.exception.CustomException;
 import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
@@ -15,6 +19,7 @@ import com.live_commerce.user.infrastructure.common.JwtUtil;
 import com.live_commerce.user.infrastructure.common.PasswordGenerator;
 import com.live_commerce.user.infrastructure.common.RedisUtil;
 
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -28,14 +33,16 @@ public class AuthService {
 	private final RedisUtil redisUtil;
 	private final MailService mailService;
 
+	private static final String REFRESH_KEY_PREFIX = "RT:";
+
+	@Value("${service.jwt.refresh-expiration}")
+	private long refreshTokenExpirationMillis;
+
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
-		validateUsername(request.username());
 		validateEmail(request.email());
-
 		String encodedPassword = passwordEncoder.encode(request.password());
 		User user = request.toEntity(encodedPassword);
-
 		User savedUser = userRepository.save(user);
 		return UserSignUpResponseDto.from(savedUser);
 	}
@@ -47,10 +54,44 @@ public class AuthService {
 			.map(this::validateActiveUser)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.INVALID_CREDENTIALS));
 
-		String accessToken = jwtUtil.createAccessToken(user.getUsername(), user.getUserRole());
-		String refreshToken = jwtUtil.createRefreshToken(user.getUsername());
+		UUID userId = user.getUserId();
+		String accessToken = jwtUtil.createAccessToken(userId, user.getUsername(), user.getUserRole());
+		String refreshToken = jwtUtil.createRefreshToken(userId);
+
+		String redisKey = REFRESH_KEY_PREFIX + userId;
+		redisUtil.setDataExpire(redisKey, refreshToken, refreshTokenExpirationMillis);
 
 		return UserSignInResponseDto.from(accessToken, refreshToken);
+	}
+
+	@Transactional
+	public TokenReissueResponseDto reissueToken(String refreshToken) {
+		jwtUtil.validateToken(refreshToken);
+		Claims token = jwtUtil.parseClaims(refreshToken);
+
+		UUID userId = UUID.fromString(token.get("userId", String.class));
+		String redisKey = REFRESH_KEY_PREFIX + userId;
+		String storedRefreshToken = redisUtil.getData(redisKey);
+
+		if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+			throw new CustomException(UserExceptionCode.INVALID_REFRESH_TOKEN);
+		}
+
+		User user = userRepository.findById(userId)
+			.map(this::validateActiveUser)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+
+		String newAccessToken = jwtUtil.createAccessToken(userId, user.getUsername(), user.getUserRole());
+		String newRefreshToken = jwtUtil.createRefreshToken(userId);
+
+		redisUtil.setDataExpire(redisKey, newRefreshToken, refreshTokenExpirationMillis);
+		return new TokenReissueResponseDto(newAccessToken, newRefreshToken);
+	}
+
+	@Transactional
+	public void logout(UUID userId) {
+		String redisKey = REFRESH_KEY_PREFIX + userId;
+		redisUtil.deleteData(redisKey);
 	}
 
 	@Transactional
@@ -79,14 +120,11 @@ public class AuthService {
 	@Transactional
 	public void resetPasswordAndSendTempPassword(String username, String email) {
 		User user = findActiveUserByUsernameAndEmail(username, email);
-
 		String tempPassword = PasswordGenerator.generateTempPassword(10);
 		String encoded = passwordEncoder.encode(tempPassword);
-
 		user.changePassword(encoded);
 		mailService.sendTemporaryPassword(email, tempPassword);
 	}
-
 
 	private User findActiveUserByEmail(String email) {
 		return userRepository.findByEmail(email)
@@ -105,10 +143,6 @@ public class AuthService {
 			throw new CustomException(UserExceptionCode.DELETED_USER);
 		}
 		return user;
-	}
-
-	private void validateUsername(String username) {
-		validateDuplicate(userRepository.existsByUsername(username), UserExceptionCode.DUPLICATE_USERNAME);
 	}
 
 	private void validateEmail(String email) {

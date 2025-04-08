@@ -1,6 +1,7 @@
 package com.live_commerce.user.infrastructure.security;
 
 import java.util.Collection;
+import java.util.UUID;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,12 +9,18 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 public class RequestUserDetails implements UserDetails {
 
+	private final UUID userId;
 	private final String username;
 	private final Collection<? extends GrantedAuthority> authorities;
 
-	public RequestUserDetails(String username, Collection<? extends GrantedAuthority> authorities) {
+	public RequestUserDetails(UUID userId, String username, Collection<? extends GrantedAuthority> authorities) {
+		this.userId = userId;
 		this.username = username;
 		this.authorities = authorities;
+	}
+
+	public UUID getUserId() {
+		return userId;
 	}
 
 	@Override
