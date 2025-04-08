@@ -33,7 +33,7 @@ public abstract class BaseEntity{
 
     private String deletedBy;
 
-    private Boolean deletedStatus;
+    protected  Boolean deletedStatus;
 
     public void delete(String deletedBy) {
         this.deletedStatus = Boolean.TRUE;

@@ -2,6 +2,7 @@ package com.live_commerce.company.application.service;
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
 import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
+import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetResponse;
 import com.live_commerce.company.domain.model.Company;
 import com.live_commerce.company.domain.repository.CompanyQueryRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -73,5 +75,22 @@ public class CompanyService {
         }
         Sort sortObj = Sort.by(orders);
         return PageRequest.of(page, size, sortObj);
+    }
+
+    //업체 단건 조회 service
+    public CompanyGetOneResponse getCompany(final UUID id) {
+        Company company = companyRepository.findById(id).orElseThrow();
+        return CompanyGetOneResponse.of(company);
+    }
+
+    //업체 이름 검색 service
+    public CompanyGetResponse getCompaniesByKeyword(String keyword, int page, int size, String sort) {
+        Pageable pageable = getPageable(page, size, sort);
+
+        //업체 이름으로 필터링
+        if(keyword != null || !keyword.isBlank()) {
+            return CompanyGetResponse.of(companyQueryRepository.getCompaniesByKeyword(pageable, keyword));
+        }
+        return CompanyGetResponse.of(companyQueryRepository.findAll(pageable));
     }
 }

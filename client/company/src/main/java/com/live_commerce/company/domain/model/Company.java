@@ -32,9 +32,10 @@ public class Company extends BaseEntity {
 
     public Company(String name, UUID owner, CompanyType type, String address, String number) {
         this.name = name;
-        this.type = type;
         this.owner = owner;
+        this.type = type;
         this.address = address;
         this.number = number;
+        this.deletedStatus = false;
     }
 }

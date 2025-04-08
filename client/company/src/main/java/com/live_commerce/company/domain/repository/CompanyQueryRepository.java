@@ -35,4 +35,26 @@ public class CompanyQueryRepository {
 
         return new PageImpl<>(companies, pageable, total);
     }
+
+    //업체 검색 쿼리 DSL
+    public Page<Company> getCompaniesByKeyword(Pageable pageable, String keyword) {
+        List<Company> companies = queryFactory
+                .selectFrom(company)
+                .where(company.name.containsIgnoreCase(keyword)  // 상품 이름에 이름이 포함된 데이터를 조회
+                        .and(company.deletedAt.isNull())
+                        .and(company.deletedStatus.eq(false))
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();  // 결과 리스트 반환
+
+        long total = queryFactory
+                .select(company.count())
+                .from(company)
+                .where(company.name.containsIgnoreCase(keyword)
+                        .and(company.deletedStatus.eq(false))
+                )
+                .fetchOne();  // fetchOne()은 단일 값 반환
+        return new PageImpl<>(companies, pageable, total);
+    }
 }
