@@ -2,9 +2,11 @@ package com.live_commerce.company.presentation.controller;
 
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
+import com.live_commerce.company.application.dto.request.CompanyUpdateRequest;
 import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetResponse;
+import com.live_commerce.company.application.dto.response.CompanyUpdateResponse;
 import com.live_commerce.company.application.service.CompanyService;
 import com.live_commerce.company.infrastructure.common.ResponseUtil;
 import com.live_commerce.company.presentation.common.ApiResponse;
@@ -73,7 +75,21 @@ public class CompanyController {
     }
 
     //업체 수정 API
+    @PutMapping("/{companyId}")
+    public ResponseEntity<ApiResponse<CompanyUpdateResponse>> updateCompany(
+            @PathVariable final UUID companyId,
+            @Valid @RequestBody CompanyUpdateRequest request){
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName(); // == username
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+
+        CompanyUpdateResponse response = companyService.updateCompany(companyId, request, userId, role);
+        return ResponseUtil.success(response);
+    }
 
     //업체 삭제 API
 }

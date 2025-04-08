@@ -1,9 +1,11 @@
 package com.live_commerce.company.application.service;
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
+import com.live_commerce.company.application.dto.request.CompanyUpdateRequest;
 import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetResponse;
+import com.live_commerce.company.application.dto.response.CompanyUpdateResponse;
 import com.live_commerce.company.domain.model.Company;
 import com.live_commerce.company.domain.repository.CompanyQueryRepository;
 import com.live_commerce.company.domain.repository.CompanyRepository;
@@ -32,7 +34,7 @@ public class CompanyService {
         //TODO 권한 검증 추가
         
         //업체 생성 저장
-        Company company = new Company(request.name(), request.owner(), request.type(), request.address(), request.number());
+        Company company = new Company(request.name(), request.owner(), request.type(), request.address(), request.number(), request.description());
         Company saved = companyRepository.save(company);
         return CompanyCreateResponse.of(saved);
     }
@@ -92,5 +94,14 @@ public class CompanyService {
             return CompanyGetResponse.of(companyQueryRepository.getCompaniesByKeyword(pageable, keyword));
         }
         return CompanyGetResponse.of(companyQueryRepository.findAll(pageable));
+    }
+
+    //업체 수정 service
+    public CompanyUpdateResponse updateCompany(UUID id, CompanyUpdateRequest request, String userId, String role) {
+        //TODO 권한 검증 추가
+
+        final Company company = companyRepository.findById(id).orElseThrow();
+        company.update(request);
+        return CompanyUpdateResponse.of(company);
     }
 }
