@@ -64,7 +64,31 @@ public class AuthService {
 		return UserSignInResponseDto.from(accessToken, refreshToken);
 	}
 
+	@Transactional
+	public TokenReissueResponseDto reissueToken(String refreshToken) {
+		jwtUtil.validateToken(refreshToken);
+		Claims token = jwtUtil.parseClaims(refreshToken);
 
+		String username = token.get("username", String.class);
+
+		String redisKey = REFRESH_KEY_PREFIX + username;
+		String storedRefreshToken = redisUtil.getData(redisKey);
+
+		if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+			throw new CustomException(UserExceptionCode.INVALID_REFRESH_TOKEN);
+		}
+
+		User user = userRepository.findByUsername(username)
+			.map(this::validateActiveUser)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+
+		String newAccessToken = jwtUtil.createAccessToken(username, user.getUserRole());
+		String newRefreshToken = jwtUtil.createRefreshToken(username);
+
+		redisUtil.setDataExpire(redisKey, newRefreshToken, refreshTokenExpirationMillis);
+
+		return new TokenReissueResponseDto(newAccessToken, newRefreshToken);
+	}
 
 	@Transactional
 	public void logout(String username) {

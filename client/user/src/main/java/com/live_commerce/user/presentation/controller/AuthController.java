@@ -82,4 +82,13 @@ public class AuthController {
 		return ResponseUtil.success("로그아웃 되었습니다.");
 	}
 
+	@PostMapping("/reissue")
+	public ResponseEntity<ApiResponse<TokenReissueResponseDto>> reissue(
+		@RequestBody @Valid TokenReissueRequestDto request
+	) {
+		TokenReissueResponseDto response = authService.reissueToken(request.refreshToken());
+
+		return ResponseUtil.success(response);
+	}
+
 }
