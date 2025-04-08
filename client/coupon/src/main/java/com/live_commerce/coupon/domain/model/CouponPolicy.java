@@ -61,4 +61,15 @@ public class CouponPolicy extends BaseEntity {
     this.isActive = isActive;
   }
 
+  public void validateDiscountType() {
+    if (this.discountType == DISCOUNT_TYPE.FIXED && this.minOrderAmt == null) {
+      CouponDiscountTypeException.forFixedDiscount();
+    }
+
+    if (this.discountType == DISCOUNT_TYPE.RATE && this.maxOrderAmt == null) {
+      CouponDiscountTypeException.forRateDiscount();
+    }
+
+  }
+
 }
