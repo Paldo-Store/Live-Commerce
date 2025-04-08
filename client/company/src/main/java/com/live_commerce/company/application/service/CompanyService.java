@@ -6,6 +6,8 @@ import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
 import com.live_commerce.company.application.dto.response.CompanyGetResponse;
 import com.live_commerce.company.application.dto.response.CompanyUpdateResponse;
+import com.live_commerce.company.application.exception.CompanyException;
+import com.live_commerce.company.application.exception.CompanyExceptionCode;
 import com.live_commerce.company.domain.model.Company;
 import com.live_commerce.company.domain.repository.CompanyQueryRepository;
 import com.live_commerce.company.domain.repository.CompanyRepository;
@@ -97,11 +99,24 @@ public class CompanyService {
     }
 
     //업체 수정 service
-    public CompanyUpdateResponse updateCompany(UUID id, CompanyUpdateRequest request, String userId, String role) {
+    public CompanyUpdateResponse updateCompany(UUID companyId, CompanyUpdateRequest request, String userId, String role) {
         //TODO 권한 검증 추가
 
-        final Company company = companyRepository.findById(id).orElseThrow();
+        final Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
+
         company.update(request);
         return CompanyUpdateResponse.of(company);
     }
+
+    //업체 삭제 service
+    public void deleteCompany(UUID companyId, String userId, String role) {
+        //TODO 권한 검증 추가
+
+        final Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
+
+        company.delete(userId);
+    }
+
 }

@@ -92,4 +92,17 @@ public class CompanyController {
     }
 
     //업체 삭제 API
+    @DeleteMapping("/{companyId}")
+    public ResponseEntity<ApiResponse<String>> deleteCompany (
+            @PathVariable final UUID companyId){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName(); // == username
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+        companyService.deleteCompany(companyId, userId, role);
+        return ResponseEntity.ok(new ApiResponse<>("success", "업체 삭제가 완료되었습니다."));
+    }
 }
