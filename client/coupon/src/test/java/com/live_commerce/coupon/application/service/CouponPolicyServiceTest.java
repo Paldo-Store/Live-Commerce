@@ -71,7 +71,7 @@ public class CouponPolicyServiceTest {
         request.discountValue(),
         request.minOrderAmt(),
         request.maxOrderAmt(),
-        LocalDateTime.now().plusDays(10), // 시작일(startAt)이 종료일(endAt)보다 나중
+        LocalDateTime.now().plusDays(10),
         LocalDateTime.now().plusDays(5),
         request.isActive()
     );
@@ -89,7 +89,7 @@ public class CouponPolicyServiceTest {
     request = new CreateCouponPolicyRequest(
         request.name(),
         request.discountType(),
-        BigDecimal.valueOf(2000), // 할인 금액을 최대 주문 금액보다 크게 설정
+        BigDecimal.valueOf(2000),
         request.minOrderAmt(),
         BigDecimal.valueOf(500),
         request.startAt(),
@@ -106,8 +106,8 @@ public class CouponPolicyServiceTest {
   void throwExceptionForRateDiscountGreaterThan100() {
     request = new CreateCouponPolicyRequest(
         request.name(),
-        DISCOUNT_TYPE.RATE, // 할인 유형 RATE로 설정
-        BigDecimal.valueOf(110), // 할인율이 100을 초과
+        DISCOUNT_TYPE.RATE,
+        BigDecimal.valueOf(110),
         request.minOrderAmt(),
         request.maxOrderAmt(),
         request.startAt(),
