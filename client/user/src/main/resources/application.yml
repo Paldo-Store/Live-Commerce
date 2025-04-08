@@ -5,6 +5,15 @@ spring:
     active: dev
   config:
     import: "configserver:http://localhost:18080"
+  # 안 넣으면 'JavaMailSender' Bean을 찾지못함
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 
 server:
   port: 0
