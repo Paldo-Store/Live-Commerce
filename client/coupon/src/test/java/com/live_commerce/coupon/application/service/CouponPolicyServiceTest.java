@@ -1,13 +1,21 @@
 package com.live_commerce.coupon.application.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.live_commerce.coupon.domain.exception.CouponPolicyException;
+import com.live_commerce.coupon.domain.model.CouponPolicy;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.domain.repository.CouponPolicyRepository;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
+import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -24,6 +32,8 @@ public class CouponPolicyServiceTest {
 
   private CreateCouponPolicyRequest request;
 
+  private CouponPolicy couponPolicy;
+
   @BeforeEach
   void setUp() {
     request = new CreateCouponPolicyRequest(
@@ -36,6 +46,19 @@ public class CouponPolicyServiceTest {
         LocalDateTime.now().plusDays(30),
         true
     );
+
+    couponPolicy = CouponPolicy.builder()
+        .code(UUID.randomUUID())
+        .name("테스트 쿠폰")
+        .discountType(DISCOUNT_TYPE.FIXED)
+        .discountValue(BigDecimal.valueOf(100))
+        .minOrderAmt(BigDecimal.valueOf(500))
+        .maxOrderAmt(BigDecimal.valueOf(1000))
+        .startAt(LocalDateTime.now().plusDays(1))
+        .endAt(LocalDateTime.now().plusDays(30))
+        .isActive(false)
+        .build();
+
   }
 
   @Test
@@ -95,5 +118,44 @@ public class CouponPolicyServiceTest {
     assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request))
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("정률 할인 비율은 100을 넘을 수 없습니다.");
+  }
+
+  @Test
+  @DisplayName("존재하는 쿠폰 정책 조회 성공")
+  void getCouponPolicySuccess() {
+    // given
+    UUID validCouponId = couponPolicy.getCode();
+
+    // when
+    when(couponPolicyRepository.findByCodeAndDeletedStatusFalse(validCouponId)).thenReturn(
+        Optional.of(couponPolicy));
+
+    ReadCouponPolicyResponse response = couponPolicyService.getCouponPolicy(validCouponId);
+
+    // then
+    assertThat(response).isNotNull();
+    assertThat(response.id()).isEqualTo(validCouponId);
+    assertThat(response.name()).isEqualTo("테스트 쿠폰");
+    verify(couponPolicyRepository, times(1)).findByCodeAndDeletedStatusFalse(validCouponId);
+
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 쿠폰 정책 조회 시 예외 발생")
+  void getCouponPolicyNotFound() {
+    // given
+    UUID invalidCouponId = UUID.randomUUID();
+
+    // when
+    when(couponPolicyRepository.findByCodeAndDeletedStatusFalse(invalidCouponId)).thenReturn(
+        Optional.empty());
+
+    // then
+    assertThatThrownBy(() -> couponPolicyService.getCouponPolicy(invalidCouponId))
+        .isInstanceOf(CouponPolicyException.class)
+        .hasMessageContaining("쿠폰 정책이 없거나 모두 삭제되었습니다.");
+
+    verify(couponPolicyRepository, times(1)).findByCodeAndDeletedStatusFalse(invalidCouponId);
+
   }
 }
