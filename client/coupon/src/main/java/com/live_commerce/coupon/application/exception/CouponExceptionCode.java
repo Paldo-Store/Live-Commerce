@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum CouponExceptionCode implements ExceptionCode {
 
-  NOT_FOUND(HttpStatus.NOT_FOUND, "Coupon Not Found");
+  MISSING_MAX_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "정률 할인 유형에는 최대 주문 금액이 필수입니다."),
+  MISSING_MIN_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "고정 할인 유형에는 최소 주문 금액이 필수입니다.");
 
 
   private final HttpStatus httpStatus;
