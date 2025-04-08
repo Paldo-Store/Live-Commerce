@@ -1,7 +1,5 @@
 package com.live_commerce.user.application.service;
 
-import java.security.SecureRandom;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

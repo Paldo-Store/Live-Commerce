@@ -4,6 +4,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.live_commerce.user.application.exception.CustomException;
@@ -21,47 +22,45 @@ public class MailService {
 	private final JavaMailSender mailSender;
 	private final RedisUtil redisUtil;
 
+	@Async
 	public void sendVerificationCode(String email) {
 		String code = generateCode();
 		saveVerificationCode(email, code);
-		sendEmail(email, code);
-	}
 
-	private void sendEmail(String toEmail, String code) {
-		try {
-			MimeMessage message = mailSender.createMimeMessage();
-			MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+		String subject = "[LiveCommerce] 아이디 찾기 인증번호 안내";
+		String body = buildTextBody(code);
 
-			helper.setTo(toEmail);
-			helper.setSubject("[LiveCommerce] 아이디 찾기 인증번호 안내");
-			helper.setText(buildTextBody(code));
-
-			mailSender.send(message);
-
-		} catch (MessagingException e) {
-			throw new CustomException(UserExceptionCode.MAIL_SEND_FAILED);
-		}
-	}
-
-	public void sendTemporaryPassword(String email, String tempPassword) {
 		try {
 			MimeMessage message = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
 
 			helper.setTo(email);
-			helper.setSubject("[LiveCommerce] 임시 비밀번호 안내");
-			helper.setText(buildTempPasswordBody(tempPassword));
+			helper.setSubject(subject);
+			helper.setText(body);
 
 			mailSender.send(message);
-
 		} catch (MessagingException e) {
 			throw new CustomException(UserExceptionCode.MAIL_SEND_FAILED);
 		}
 	}
 
-	private String buildTempPasswordBody(String tempPassword) {
-		return "요청하신 임시 비밀번호는 다음과 같습니다:\n\n" +
-			tempPassword + "\n\n로그인 후 반드시 비밀번호를 변경해주세요.";
+	@Async
+	public void sendTemporaryPassword(String email, String tempPassword) {
+		String subject = "[LiveCommerce] 임시 비밀번호 안내";
+		String body = buildTempPasswordBody(tempPassword);
+
+		try {
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+			helper.setTo(email);
+			helper.setSubject(subject);
+			helper.setText(body);
+
+			mailSender.send(message);
+		} catch (MessagingException e) {
+			throw new CustomException(UserExceptionCode.MAIL_SEND_FAILED);
+		}
 	}
 
 
@@ -76,5 +75,10 @@ public class MailService {
 
 	private String buildTextBody(String code) {
 		return "인증번호는 다음과 같습니다:\n\n" + code + "\n\n5분 내로 입력해주세요.";
+	}
+
+	private String buildTempPasswordBody(String tempPassword) {
+		return "요청하신 임시 비밀번호는 다음과 같습니다:\n\n" +
+			tempPassword + "\n\n로그인 후 반드시 비밀번호를 변경해주세요.";
 	}
 }
