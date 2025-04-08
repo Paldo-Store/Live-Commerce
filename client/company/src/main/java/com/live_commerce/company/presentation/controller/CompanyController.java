@@ -3,6 +3,8 @@ package com.live_commerce.company.presentation.controller;
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
 import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
+import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
+import com.live_commerce.company.application.dto.response.CompanyGetResponse;
 import com.live_commerce.company.application.service.CompanyService;
 import com.live_commerce.company.infrastructure.common.ResponseUtil;
 import com.live_commerce.company.presentation.common.ApiResponse;
@@ -15,6 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RequestMapping("/api/v1/companies")
 @RestController
@@ -39,9 +43,37 @@ public class CompanyController {
         return ResponseUtil.success(response);
     }
 
-    //업체 조회 API
+    //업체 전체 조회 API
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompanies (
+            @RequestParam final int page,
+            @RequestParam final int size,
+            @RequestParam(required = false) final String sort) {
+        CompanyGetResponse response = companyService.getCompanies(page, size, sort);
+        return ResponseUtil.success(response);
+    }
+
+    //업체 단건 조회 API
+    @GetMapping("/{companyId}")
+    public ResponseEntity<ApiResponse<CompanyGetOneResponse>> getCompany (
+            @PathVariable final UUID companyId) {
+        CompanyGetOneResponse response = companyService.getCompany(companyId);
+        return ResponseUtil.success(response);
+    }
+
+    //업체 이름 검색 API
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompaniesByKeyword (
+            @PathVariable final String keyword,
+            @RequestParam final int page,
+            @RequestParam final int size,
+            @RequestParam(required = false) final String sort){
+        CompanyGetResponse response = companyService.getCompaniesByKeyword(keyword, page, size, sort);
+        return ResponseUtil.success(response);
+    }
 
     //업체 수정 API
+
 
     //업체 삭제 API
 }
