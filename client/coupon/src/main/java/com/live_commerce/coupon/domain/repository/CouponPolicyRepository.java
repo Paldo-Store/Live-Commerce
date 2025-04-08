@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, UUID> {
 
+  Boolean existsByName(String name);
 }
