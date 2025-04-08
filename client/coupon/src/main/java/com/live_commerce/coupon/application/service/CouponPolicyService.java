@@ -50,7 +50,10 @@ public class CouponPolicyService {
 
   public ReadCouponPolicyResponse getCouponPolicy(UUID id) {
     CouponPolicy couponPolicy = couponRepository.findByCodeAndDeletedStatusFalse(id)
-        .orElseThrow(() -> new CouponPolicyException(CouponExceptionCode.COUPON_POLICY_NOT_FOUND));
+        .orElseThrow(() -> {
+          CouponPolicyException.forCouponPolicyNotFound();
+          return null;
+        });
     return ReadCouponPolicyResponse.fromCouponPolicy(couponPolicy);
   }
 
