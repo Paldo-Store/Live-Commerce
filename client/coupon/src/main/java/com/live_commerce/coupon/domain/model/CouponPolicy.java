@@ -61,6 +61,8 @@ public class CouponPolicy extends BaseEntity {
     this.startAt = startAt;
     this.endAt = endAt;
     this.isActive = isActive;
+
+    validateDiscountType();
   }
 
   public void updateCouponPolicy(String name, DISCOUNT_TYPE discountType, BigDecimal discountValue,
