@@ -11,6 +11,7 @@ import com.live_commerce.coupon.domain.model.CouponPolicy;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.domain.repository.CouponPolicyRepository;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
+import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -183,6 +184,40 @@ public class CouponPolicyServiceTest {
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("쿠폰 정책이 없거나 모두 삭제되었습니다.");
 
+    verify(couponPolicyRepository, times(1)).save(couponPolicy);
+  }
+
+  @Test
+  @DisplayName("쿠폰 정책 수정 성공")
+  void updateCouponPolicySuccess() {
+    // given
+    UUID validCouponId = couponPolicy.getCode();
+
+    UpdateCouponPolicyRequest updateRequest = new UpdateCouponPolicyRequest(
+        "수정된 쿠폰",
+        DISCOUNT_TYPE.FIXED,
+        BigDecimal.valueOf(200),
+        BigDecimal.valueOf(500),
+        BigDecimal.valueOf(1000),
+        LocalDateTime.now().plusDays(2),
+        LocalDateTime.now().plusDays(60),
+        true
+    );
+
+    // when
+    when(couponPolicyRepository.findByCodeAndDeletedStatusFalse(validCouponId))
+        .thenReturn(Optional.of(couponPolicy));
+    when(couponPolicyRepository.save(couponPolicy)).thenReturn(couponPolicy);
+
+    couponPolicyService.updateCouponPolicy(validCouponId, updateRequest);
+
+    // then
+    assertThat(couponPolicy.getName()).isEqualTo("수정된 쿠폰");
+    assertThat(couponPolicy.getDiscountValue()).isEqualTo(BigDecimal.valueOf(200));
+    assertThat(couponPolicy.getStartAt()).isEqualTo(updateRequest.startAt());
+    assertThat(couponPolicy.getEndAt()).isEqualTo(updateRequest.endAt());
+
+    verify(couponPolicyRepository, times(1)).findByCodeAndDeletedStatusFalse(validCouponId);
     verify(couponPolicyRepository, times(1)).save(couponPolicy);
   }
 
