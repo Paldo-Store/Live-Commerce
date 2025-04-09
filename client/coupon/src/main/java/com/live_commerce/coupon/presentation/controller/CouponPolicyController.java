@@ -4,6 +4,7 @@ import com.live_commerce.coupon.application.service.CouponPolicyService;
 import com.live_commerce.coupon.infrastructure.common.ResponseUtil;
 import com.live_commerce.coupon.presentation.common.ApiResponse;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
+import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResponse;
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import jakarta.validation.Valid;
@@ -45,5 +46,13 @@ public class CouponPolicyController {
     return ResponseUtil.noContent();
   }
 
+  @PatchMapping("/{id}")
+  public ResponseEntity<ApiResponse<Void>> updateCouponPolicy(
+      @PathVariable UUID id,
+      @RequestBody UpdateCouponPolicyRequest request
+  ) {
+    couponService.updateCouponPolicy(id, request);
+    return ResponseUtil.noContent();
+  }
 
 }

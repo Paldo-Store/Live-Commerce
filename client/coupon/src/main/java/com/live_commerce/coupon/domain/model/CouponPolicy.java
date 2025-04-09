@@ -61,6 +61,27 @@ public class CouponPolicy extends BaseEntity {
     this.isActive = isActive;
   }
 
+  public void updateCouponPolicy(String name, DISCOUNT_TYPE discountType, BigDecimal discountValue,
+      BigDecimal minOrderAmt, BigDecimal maxOrderAmt, LocalDateTime startAt,
+      LocalDateTime endAt, boolean isActive){
+
+    if (name == null || discountType == null || discountValue == null
+        || startAt == null || endAt == null) {
+      throw new IllegalArgumentException("CouponPolicy의 필수 값이 null일 수 없습니다.");
+    }
+
+    this.name = name;
+    this.discountType = discountType;
+    this.discountValue = discountValue;
+    this.minOrderAmt = minOrderAmt ;
+    this.maxOrderAmt = maxOrderAmt;
+    this.startAt = startAt;
+    this.endAt = endAt;
+    this.isActive = isActive;
+
+    validateDiscountType();
+  }
+
   public void validateDiscountType() {
     if (this.discountType == DISCOUNT_TYPE.FIXED && this.minOrderAmt == null) {
       CouponDiscountTypeException.forFixedDiscount();
