@@ -6,7 +6,11 @@ import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.domain.repository.CouponPolicyRepository;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResponse;
+import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import java.math.BigDecimal;
+import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,5 +45,31 @@ public class CouponPolicyService {
     CouponPolicy couponPolicy = request.toCouponPolicy();
     couponRepository.save(couponPolicy);
     return CreateCouponPolicyResponse.fromCouponPolicy(couponPolicy);
+  }
+
+  public ReadCouponPolicyResponse getCouponPolicy(UUID id) {
+    CouponPolicy couponPolicy = couponRepository.findByCodeAndDeletedStatusFalse(id)
+        .orElseThrow(() -> {
+          CouponPolicyException.forCouponPolicyNotFound();
+          return null;
+        });
+    return ReadCouponPolicyResponse.fromCouponPolicy(couponPolicy);
+  }
+
+  public List<ReadCouponPolicyResponse> getCouponPolicies() {
+    List<CouponPolicy> couponPolicyList = couponRepository.findByDeletedStatusFalse();
+    return couponPolicyList.stream()
+        .map(ReadCouponPolicyResponse::fromCouponPolicy)
+        .collect(Collectors.toList());
+  }
+
+  public void deleteCouponPolicy(UUID id) {
+    CouponPolicy couponPolicy = couponRepository.findById(id)
+        .orElseThrow(() -> {
+          CouponPolicyException.forCouponPolicyNotFound();
+          return null;
+        });
+    couponPolicy.markCouponAsDeleted(couponPolicy.getName());
+    couponRepository.save(couponPolicy);
   }
 }

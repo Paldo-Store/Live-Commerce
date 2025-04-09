@@ -31,5 +31,14 @@ public abstract class BaseEntity {
 
   private LocalDateTime deletedAt;
 
-  private boolean deletedStatus;
+  private Boolean deletedStatus = false;
+
+  public void markAsDeleted(String deletedBy){
+    if(this.deletedStatus){
+      throw new IllegalStateException("Already deleted");
+    }
+    this.deletedStatus = true;
+    this.deletedBy = deletedBy;
+    this.deletedAt = LocalDateTime.now();
+  }
 }
