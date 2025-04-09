@@ -28,6 +28,9 @@ public class Payment extends BaseEntity {
 	@Column(nullable = false)
 	private UUID orderId;
 
+	@Column(nullable = false)
+	private UUID userId;
+
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal amount;
 
@@ -47,15 +50,17 @@ public class Payment extends BaseEntity {
 	}
 
 	// 정적 팩토리 메서드
-	public static Payment of(UUID orderId, BigDecimal amount) {
-		return new Payment(orderId, amount, PaymentStatus.PENDING);
+	public static Payment of(UUID userId, UUID orderId, BigDecimal amount) {
+		return new Payment(userId, orderId, amount, PaymentStatus.PENDING);
 	}
 
 	// 프라이빗 생성자
-	private Payment(UUID orderId, BigDecimal amount, PaymentStatus status) {
+	private Payment(UUID userId, UUID orderId, BigDecimal amount, PaymentStatus status) {
+		this.userId = userId;
 		this.orderId = orderId;
 		this.amount = amount;
 		this.status = status;
 	}
+
 }
 

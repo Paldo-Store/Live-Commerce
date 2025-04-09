@@ -39,11 +39,11 @@ public class PaymentService {
 			requestDto.amount()
 		);
 
-		Payment payment = requestDto.toEntity();
+		Payment payment = requestDto.toEntity(requestUserDetails.getUserId());
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
 
-		return new PaymentReadyResponseDto(readyDto.tid(), readyDto.nextRedirectPcUrl());
+		return PaymentReadyResponseDto.from(readyDto);
 	}
 
 	@Transactional
@@ -60,10 +60,7 @@ public class PaymentService {
 
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
-		return new PaymentApproveResponseDto(
-			approveDto.tid(),
-			LocalDateTime.parse(approveDto.approvedAt(), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-			BigDecimal.valueOf(approveDto.amount().total())
-		);
+		return PaymentApproveResponseDto.from(approveDto);
+
 	}
 }

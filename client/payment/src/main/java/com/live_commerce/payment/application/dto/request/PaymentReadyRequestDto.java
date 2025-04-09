@@ -9,7 +9,7 @@ public record PaymentReadyRequestDto(
 	UUID orderId,
 	BigDecimal amount
 ) {
-	public Payment toEntity() {
-		return Payment.of(this.orderId(), this.amount());
+	public Payment toEntity(UUID userId) {
+		return Payment.of(userId, orderId, amount);
 	}
 }
