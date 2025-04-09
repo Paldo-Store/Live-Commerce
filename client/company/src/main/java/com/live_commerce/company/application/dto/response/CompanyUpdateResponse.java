@@ -5,7 +5,7 @@ import com.live_commerce.company.domain.model.CompanyType;
 
 import java.util.UUID;
 
-public record CompanyGetOneResponse  (
+public record CompanyUpdateResponse (
         UUID companyId,
         String name,
         UUID owner,
@@ -15,8 +15,8 @@ public record CompanyGetOneResponse  (
         String description
 ) {
 
-    public static CompanyGetOneResponse of(Company company) {
-        return new CompanyGetOneResponse(
+    public static CompanyUpdateResponse of(Company company) {
+        return new CompanyUpdateResponse(
                 company.getId(),
                 company.getName(),
                 company.getOwner(),
