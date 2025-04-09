@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface LiveBroadcastRepository {
     <S extends LiveBroadcast> S save(S liveBroadcast);
     Optional<LiveBroadcast> findById(UUID id);
+    Optional<LiveBroadcast> findByIdAndDeletedStatusFalse(UUID id);
 }
