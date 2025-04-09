@@ -1,0 +1,49 @@
+package com.live_commerce.order.domain.model;
+
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Builder
+@Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "p_order")
+public class Order extends BasicEntity{
+
+    // 주문 ID
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    // 주문할 상품의 ID
+    @Column(name = "product_id")
+    private UUID productId;
+
+    // 주문한 사용자
+    @Column(name = "user_id")
+    private UUID userId;
+
+    // 주문할 상품의 수량
+    @Column(name = "product_quantity")
+    private Integer productQuantity;
+
+    // 상품 총 가격
+    @Column(name = "product_total_price")
+    private Long productTotalPrice;
+
+    // 요청 사항
+    @Column(name = "requirement")
+    private String requirement;
+
+    // 주문 상태
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+}
