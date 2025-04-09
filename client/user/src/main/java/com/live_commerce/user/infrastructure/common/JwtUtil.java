@@ -3,6 +3,7 @@ package com.live_commerce.user.infrastructure.common;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -38,10 +39,11 @@ public class JwtUtil {
 		this.key = Keys.hmacShaKeyFor(keyBytes);
 	}
 
-	public String createAccessToken(String username, UserRole role) {
+	public String createAccessToken(UUID userId, String username, UserRole role) {
 		Date now = new Date();
 
 		return BEARER_PREFIX + Jwts.builder()
+			.claim("userId", userId.toString())
 			.claim("username", username)
 			.claim("role", role.name())
 			.setIssuedAt(now)
@@ -50,11 +52,11 @@ public class JwtUtil {
 			.compact();
 	}
 
-	public String createRefreshToken(String username) {
+	public String createRefreshToken(UUID userId) {
 		Date now = new Date();
 
 		return Jwts.builder()
-			.claim("username", username)
+			.claim("userId", userId)
 			.setIssuedAt(now)
 			.setExpiration(new Date(now.getTime() + REFRESH_TOKEN_TIME))
 			.signWith(key, SignatureAlgorithm.HS256)

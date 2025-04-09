@@ -2,6 +2,7 @@ package com.live_commerce.user.infrastructure.filter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -28,7 +29,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		String requestUri = request.getRequestURI();
 
 		// 인증이 필요 없는 경로는 필터를 통과시킴
-		if (requestUri.startsWith("/api/v1/auth/") ||
+		if ((requestUri.startsWith("/api/v1/auth/") && !requestUri.equals("/api/v1/auth/logout")) ||
 			requestUri.startsWith("/swagger-ui/") ||
 			requestUri.startsWith("/v3/api-docs") ||
 			requestUri.startsWith("/actuator")) {
@@ -37,11 +38,19 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		// 요청 헤더에서 사용자 정보 추출
+		String userIdHeader = request.getHeader("X-User-Id");
 		String username = request.getHeader("X-User-Username");
 		String role = request.getHeader("X-User-Role");
 
-		// 인증 정보가 없다면 401 Unauthorized 처리
-		if (username == null || role == null) {
+		if (userIdHeader == null || username == null || role == null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+
+		UUID userId;
+		try {
+			userId = UUID.fromString(userIdHeader);
+		} catch (IllegalArgumentException e) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			return;
 		}
@@ -50,9 +59,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 			role = "ROLE_" + role;
 		}
 
-		// 권한 설정
 		List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-		UserDetails userDetails = new RequestUserDetails(username, authorities);
+		UserDetails userDetails = new RequestUserDetails(userId, username, authorities);
 
 		// 인증 정보 설정
 		UsernamePasswordAuthenticationToken authentication =
