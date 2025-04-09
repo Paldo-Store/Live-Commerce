@@ -1,8 +1,5 @@
 package com.live_commerce.payment.application.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
 import com.live_commerce.payment.application.exception.CustomException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
@@ -61,6 +59,31 @@ public class PaymentService {
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
 		return PaymentApproveResponseDto.from(approveDto);
-
 	}
+
+	@Transactional(readOnly = true)
+	public PaymentGetResponseDto getPayment(UUID paymentId, RequestUserDetails userDetails) {
+		Payment payment = findPaymentById(paymentId);
+		validatePaymentGetPermission(payment, userDetails);
+
+		return PaymentGetResponseDto.from(payment);
+	}
+
+	private boolean hasMasterRole(RequestUserDetails userDetails) {
+		return userDetails.getAuthorities().stream()
+			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
+	}
+
+	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private Payment findPaymentById(UUID paymentId) {
+		return paymentRepository.findById(paymentId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
+
+
 }

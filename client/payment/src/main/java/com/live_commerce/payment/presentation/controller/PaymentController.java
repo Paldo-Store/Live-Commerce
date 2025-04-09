@@ -1,7 +1,11 @@
 package com.live_commerce.payment.presentation.controller;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
 import com.live_commerce.payment.application.service.PaymentService;
 import com.live_commerce.payment.infrastructure.common.ResponseUtil;
@@ -45,6 +50,16 @@ public class PaymentController {
 		);
 		return ResponseUtil.success(response);
 	}
+
+	@GetMapping("/{paymentId}")
+	public ResponseEntity<ApiResponse<PaymentGetResponseDto>> getPayment(
+		@PathVariable UUID paymentId,
+		@AuthenticationPrincipal RequestUserDetails userDetails
+	) {
+		PaymentGetResponseDto response = paymentService.getPayment(paymentId, userDetails);
+		return ResponseUtil.success(response);
+	}
+
 
 
 }
