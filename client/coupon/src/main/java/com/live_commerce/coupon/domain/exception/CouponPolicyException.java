@@ -27,4 +27,9 @@ public class CouponPolicyException extends CustomException {
         CouponExceptionCode.DISCOUNT_GREATER_THAN_100
     );
   }
+
+  public static void forCouponPolicyNotFound(){
+    throw new CouponPolicyException(CouponExceptionCode.COUPON_POLICY_NOT_FOUND);
+  }
+
 }
