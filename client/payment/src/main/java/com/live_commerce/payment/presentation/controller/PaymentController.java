@@ -2,6 +2,9 @@ package com.live_commerce.payment.presentation.controller;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +63,14 @@ public class PaymentController {
 		return ResponseUtil.success(response);
 	}
 
+	@GetMapping
+	public ResponseEntity<ApiResponse<Page<PaymentGetResponseDto>>> getPayments(
+		@AuthenticationPrincipal RequestUserDetails userDetails,
+		@PageableDefault(size = 10) Pageable pageable
+	) {
+		Page<PaymentGetResponseDto> result = paymentService.getPayments(userDetails, pageable);
+		return ResponseUtil.success(result);
+	}
 
 
 }
