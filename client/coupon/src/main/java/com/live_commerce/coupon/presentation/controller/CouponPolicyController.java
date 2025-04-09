@@ -29,19 +29,20 @@ public class CouponPolicyController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(@PathVariable("id") UUID id){
+  public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(
+      @PathVariable("id") UUID id) {
     ReadCouponPolicyResponse response = couponService.getCouponPolicy(id);
     return ResponseUtil.success(response);
   }
 
   @GetMapping("/")
-  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies(){
+  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies() {
     List<ReadCouponPolicyResponse> response = couponService.getCouponPolicies();
     return ResponseUtil.success(response);
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(@PathVariable UUID id){
+  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(@PathVariable UUID id) {
     couponService.deleteCouponPolicy(id);
     return ResponseUtil.noContent();
   }
