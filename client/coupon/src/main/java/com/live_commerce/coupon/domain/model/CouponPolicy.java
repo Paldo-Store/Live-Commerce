@@ -1,6 +1,7 @@
 package com.live_commerce.coupon.domain.model;
 
 import com.live_commerce.coupon.domain.exception.CouponDiscountTypeException;
+import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -59,6 +60,27 @@ public class CouponPolicy extends BaseEntity {
     this.startAt = startAt;
     this.endAt = endAt;
     this.isActive = isActive;
+
+    validateDiscountType();
+  }
+
+  public void updateCouponPolicy(UpdateCouponPolicyRequest request){
+
+    if (name == null || discountType == null || discountValue == null
+        || startAt == null || endAt == null) {
+      throw new IllegalArgumentException("CouponPolicy의 필수 값이 null일 수 없습니다.");
+    }
+
+    this.name = request.name();
+    this.discountType = request.discountType();
+    this.discountValue = request.discountValue();
+    this.minOrderAmt = request.minOrderAmt();
+    this.maxOrderAmt = request.maxOrderAmt();
+    this.startAt = request.startAt();
+    this.endAt = request.endAt();
+    this.isActive = request.isActive();
+
+    validateDiscountType();
   }
 
   public void validateDiscountType() {

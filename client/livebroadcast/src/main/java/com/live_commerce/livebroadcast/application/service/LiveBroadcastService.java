@@ -4,6 +4,7 @@ import com.live_commerce.livebroadcast.application.dto.LiveBroadcastCreateReques
 import com.live_commerce.livebroadcast.application.dto.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.application.dto.LiveBroadcastUpdateRequestDto;
 import com.live_commerce.livebroadcast.application.mapper.LiveBroadcastMapper;
+import com.live_commerce.livebroadcast.domain.exception.LiveBroadcastException;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.domain.repository.LiveBroadcastRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -43,5 +44,16 @@ public class LiveBroadcastService {
         return LiveBroadcastMapper.entityToDto(broadcast);
     }
 
+    @Transactional
+    public void deleteBroadcast(UUID id) {
+        LiveBroadcast broadcast = liveBroadcastRepository.findByIdAndDeletedStatusFalse(id).orElse(null);
+
+        if (broadcast == null) {
+            LiveBroadcastException.forLiveBroadcastNotFound();
+            return;
+        }
+
+        broadcast.delete("temp");
+    }
 
 }
