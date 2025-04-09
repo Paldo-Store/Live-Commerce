@@ -2,10 +2,7 @@ package com.live_commerce.company.application.service;
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
 import com.live_commerce.company.application.dto.request.CompanyUpdateRequest;
-import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
-import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
-import com.live_commerce.company.application.dto.response.CompanyGetResponse;
-import com.live_commerce.company.application.dto.response.CompanyUpdateResponse;
+import com.live_commerce.company.application.dto.response.*;
 import com.live_commerce.company.application.exception.CompanyException;
 import com.live_commerce.company.application.exception.CompanyExceptionCode;
 import com.live_commerce.company.domain.model.Company;
@@ -16,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,28 +50,22 @@ public class CompanyService {
 
     //페이징 함수
     private Pageable getPageable(final int page, final int size, final String sort) {
-
         if (sort == null || sort.isBlank()) {
             return PageRequest.of(page, size); // 기본 정렬 없음
         }
-
         String[] sortParams = sort.split(",");
         List<Sort.Order> orders = new ArrayList<>();
-
         for (String param : sortParams) {
             String[] fieldAndDirection = param.trim().split("[- ]"); // '-' 또는 ' '으로 구분
             if (fieldAndDirection.length != 2) {
                 throw new IllegalArgumentException(
                         "Invalid sort parameter format. Expected 'field direction' (e.g., 'name asc').");
             }
-
             String field = fieldAndDirection[0].trim();
             String direction = fieldAndDirection[1].trim().toUpperCase();
-
             if (!direction.equals("ASC") && !direction.equals("DESC")) {
                 throw new IllegalArgumentException("Invalid sort direction. Use 'asc' or 'desc'.");
             }
-
             Sort.Direction dir = Sort.Direction.fromString(direction);
             orders.add(new Sort.Order(dir, field));
         }
@@ -82,12 +74,15 @@ public class CompanyService {
     }
 
     //업체 단건 조회 service
+    @Transactional(readOnly = true)
     public CompanyGetOneResponse getCompany(final UUID id) {
         Company company = companyRepository.findById(id).orElseThrow();
         return CompanyGetOneResponse.of(company);
     }
 
+
     //업체 이름 검색 service
+    @Transactional(readOnly = true)
     public CompanyGetResponse getCompaniesByKeyword(String keyword, int page, int size, String sort) {
         Pageable pageable = getPageable(page, size, sort);
 
@@ -98,25 +93,26 @@ public class CompanyService {
         return CompanyGetResponse.of(companyQueryRepository.findAll(pageable));
     }
 
+
     //업체 수정 service
+    @Transactional
     public CompanyUpdateResponse updateCompany(UUID companyId, CompanyUpdateRequest request, String userId, String role) {
         //TODO 권한 검증 추가
 
         final Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
-
         company.update(request);
         return CompanyUpdateResponse.of(company);
     }
 
     //업체 삭제 service
-    public void deleteCompany(UUID companyId, String userId, String role) {
+    @Transactional
+    public CompanyDeleteResponse  deleteCompany(UUID companyId, String userId, String role) {
         //TODO 권한 검증 추가
 
         final Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
-
         company.delete(userId);
+        return CompanyDeleteResponse.of(company.getId());
     }
-
 }

@@ -3,10 +3,7 @@ package com.live_commerce.company.presentation.controller;
 
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
 import com.live_commerce.company.application.dto.request.CompanyUpdateRequest;
-import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
-import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
-import com.live_commerce.company.application.dto.response.CompanyGetResponse;
-import com.live_commerce.company.application.dto.response.CompanyUpdateResponse;
+import com.live_commerce.company.application.dto.response.*;
 import com.live_commerce.company.application.service.CompanyService;
 import com.live_commerce.company.infrastructure.common.ResponseUtil;
 import com.live_commerce.company.presentation.common.ApiResponse;
@@ -93,7 +90,7 @@ public class CompanyController {
 
     //업체 삭제 API
     @DeleteMapping("/{companyId}")
-    public ResponseEntity<ApiResponse<String>> deleteCompany (
+    public ResponseEntity<ApiResponse<CompanyDeleteResponse>> deleteCompany (
             @PathVariable final UUID companyId){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -102,7 +99,8 @@ public class CompanyController {
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
                 .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
-        companyService.deleteCompany(companyId, userId, role);
-        return ResponseEntity.ok(new ApiResponse<>("success", "업체 삭제가 완료되었습니다."));
+
+        CompanyDeleteResponse response = companyService.deleteCompany(companyId, userId, role);
+        return ResponseUtil.success(response);
     }
 }
