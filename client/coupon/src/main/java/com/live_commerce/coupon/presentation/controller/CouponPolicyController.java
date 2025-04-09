@@ -39,5 +39,11 @@ public class CouponPolicyController {
     return ResponseUtil.success(response);
   }
 
+  @DeleteMapping("/{id}")
+  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(@PathVariable UUID id){
+    couponService.deleteCouponPolicy(id);
+    return ResponseUtil.noContent();
+  }
+
 
 }

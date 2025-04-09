@@ -1,6 +1,5 @@
 package com.live_commerce.coupon.application.service;
 
-import com.live_commerce.coupon.application.exception.CouponExceptionCode;
 import com.live_commerce.coupon.domain.exception.CouponPolicyException;
 import com.live_commerce.coupon.domain.model.CouponPolicy;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
@@ -62,5 +61,15 @@ public class CouponPolicyService {
     return couponPolicyList.stream()
         .map(ReadCouponPolicyResponse::fromCouponPolicy)
         .collect(Collectors.toList());
+  }
+
+  public void deleteCouponPolicy(UUID id) {
+    CouponPolicy couponPolicy = couponRepository.findById(id)
+        .orElseThrow(() -> {
+          CouponPolicyException.forCouponPolicyNotFound();
+          return null;
+        });
+    couponPolicy.markCouponAsDeleted(couponPolicy.getName());
+    couponRepository.save(couponPolicy);
   }
 }
