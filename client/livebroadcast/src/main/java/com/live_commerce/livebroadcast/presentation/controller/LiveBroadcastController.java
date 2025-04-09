@@ -43,4 +43,9 @@ public class LiveBroadcastController {
         return ResponseUtil.success(responseDto);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteBroadcast(@PathVariable UUID id) {
+        liveBroadcastService.deleteBroadcast(id);
+        return ResponseUtil.success("라이브 방송이 삭제되었습니다.");
+    }
 }
