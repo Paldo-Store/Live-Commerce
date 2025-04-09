@@ -1,6 +1,7 @@
 package com.live_commerce.livebroadcast.domain.model;
 
 
+import com.live_commerce.livebroadcast.application.dto.LiveBroadcastUpdateRequestDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -50,6 +51,13 @@ public class LiveBroadcast extends BaseEntity {
 
     public static LiveBroadcast create(String broadcastName, LocalDateTime startTime, LocalDateTime endTime, UUID hostId, UUID companyId) {
         return new LiveBroadcast(broadcastName, startTime, endTime, hostId, companyId);
+    }
+
+    public void update(LiveBroadcastUpdateRequestDto dto) {
+        if (dto.broadcastName() != null) this.broadcastName = dto.broadcastName();
+        if (dto.startTime() != null) this.startTime = dto.startTime();
+        if (dto.endTime() != null) this.endTime = dto.endTime();
+        if (dto.broadcastStatus() != null) this.broadcastStatus = dto.broadcastStatus();
     }
 
 }
