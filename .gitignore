@@ -1,0 +1,32 @@
+# ========== Java ==========
+*.class
+
+# ========== IntelliJ IDEA ==========
+.idea/
+*.iml
+*.iws
+out/
+
+# ========== Gradle ==========
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# ========== 로그 및 캐시 ==========
+*.log
+logs/
+*.cache
+*.tmp
+
+# ========== OS 별 ==========
+# macOS
+.DS_Store
+
+# Windows
+
+
+# ========== 테스트 실행결과 로그,캐시 ==========
+test-output/
+
+# ========== 환경변수 ==========
+.env

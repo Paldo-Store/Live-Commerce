@@ -1,7 +1,7 @@
 package com.live_commerce.livebroadcast.application.mapper;
 
 import com.live_commerce.livebroadcast.application.dto.LiveBroadcastCreateRequestDto;
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastCreateResponseDto;
+import com.live_commerce.livebroadcast.application.dto.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 
 
@@ -18,9 +18,9 @@ public class LiveBroadcastMapper {
                 .build();
     }
 
-    public static LiveBroadcastCreateResponseDto entityToCreateDto(LiveBroadcast entity) {
+    public static LiveBroadcastResponseDto entityToDto(LiveBroadcast entity) {
 
-        return LiveBroadcastCreateResponseDto.builder()
+        return LiveBroadcastResponseDto.builder()
                 .id(entity.getId())
                 .broadcastName(entity.getBroadcastName())
                 .broadcastStatus(entity.getBroadcastStatus())
