@@ -1,4 +1,26 @@
 package com.live_commerce.order.application.dto.response;
 
-public class OrderCreateResponse {
+import com.live_commerce.order.domain.model.Order;
+import com.live_commerce.order.domain.model.OrderStatus;
+
+import java.util.UUID;
+
+public record OrderCreateResponse (
+     UUID orderId,
+     UUID productId,
+     Integer productQuantity,
+     Long productTotalPrice,
+     String requirement,
+     OrderStatus status
+) {
+    public static OrderCreateResponse of(Order order) {
+        return new OrderCreateResponse(
+                order.getId(),
+                order.getProductId(),
+                order.getProductQuantity(),
+                order.getProductTotalPrice(),
+                order.getRequirement(),
+                order.getStatus()
+        );
+    }
 }

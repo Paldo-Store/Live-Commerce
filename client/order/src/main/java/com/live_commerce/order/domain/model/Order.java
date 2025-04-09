@@ -1,6 +1,7 @@
 package com.live_commerce.order.domain.model;
 
 
+import com.live_commerce.order.presentation.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "p_order")
-public class Order extends BasicEntity{
+public class Order extends BaseEntity {
 
     // 주문 ID
     @Id

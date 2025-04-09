@@ -35,7 +35,7 @@ public class OrderController {
             @Valid @RequestBody final OrderCreateRequest request){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = authentication.getName(); // == username
+        String userId = authentication.getName();
 
         OrderCreateResponse response = orderService.createOrder(request, userId);
         return ResponseUtil.success(response);
