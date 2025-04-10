@@ -1,19 +1,24 @@
 package com.live_commerce.user.infrastructure.common;
 
-import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.live_commerce.user.domain.model.UserRole;
-import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.application.exception.CustomException;
+import com.live_commerce.user.application.exception.UserExceptionCode;
+import com.live_commerce.user.domain.model.UserRole;
 
-import io.jsonwebtoken.*;
-
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 
@@ -29,14 +34,14 @@ public class JwtUtil {
 	private long REFRESH_TOKEN_TIME;
 
 	@Value("${service.jwt.secret-key}")
-	private String secretKey;
+	private String secretKeyString;
 
-	private Key key;
+	private SecretKey secretKey;
 
 	@PostConstruct
 	public void init() {
-		byte[] keyBytes = Base64.getDecoder().decode(secretKey);
-		this.key = Keys.hmacShaKeyFor(keyBytes);
+		byte[] keyBytes = Base64.getDecoder().decode(secretKeyString);
+		this.secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
 	public String createAccessToken(UUID userId, String username, UserRole role) {
@@ -46,9 +51,9 @@ public class JwtUtil {
 			.claim("userId", userId.toString())
 			.claim("username", username)
 			.claim("role", role.name())
-			.setIssuedAt(now)
-			.setExpiration(new Date(now.getTime() + ACCESS_TOKEN_TIME))
-			.signWith(key, SignatureAlgorithm.HS256)
+			.issuedAt(now)
+			.expiration(new Date(now.getTime() + ACCESS_TOKEN_TIME))
+			.signWith(secretKey)
 			.compact();
 	}
 
@@ -56,35 +61,44 @@ public class JwtUtil {
 		Date now = new Date();
 
 		return Jwts.builder()
-			.claim("userId", userId)
-			.setIssuedAt(now)
-			.setExpiration(new Date(now.getTime() + REFRESH_TOKEN_TIME))
-			.signWith(key, SignatureAlgorithm.HS256)
+			.claim("userId", userId.toString())
+			.issuedAt(now)
+			.expiration(new Date(now.getTime() + REFRESH_TOKEN_TIME))
+			.signWith(secretKey)
 			.compact();
 	}
 
 	public Claims parseClaims(String token) {
 		try {
-			return Jwts.parserBuilder()
-				.setSigningKey(key)
+			return Jwts.parser()
+				.verifyWith(secretKey)
 				.build()
-				.parseClaimsJws(token)
-				.getBody();
+				.parseSignedClaims(removePrefix(token))
+				.getPayload();
 		} catch (ExpiredJwtException e) {
 			throw new CustomException(UserExceptionCode.EXPIRED_TOKEN);
-		} catch (SecurityException | MalformedJwtException | SignatureException e) {
+		} catch (SecurityException | MalformedJwtException | UnsupportedJwtException e) {
 			throw new CustomException(UserExceptionCode.INVALID_TOKEN);
-		} catch (UnsupportedJwtException | IllegalArgumentException e) {
+		} catch (IllegalArgumentException e) {
 			throw new CustomException(UserExceptionCode.UNSUPPORTED_TOKEN);
 		}
 	}
 
 	public void validateToken(String token) {
 		try {
-			Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+			Jwts.parser()
+				.verifyWith(secretKey)
+				.build()
+				.parseSignedClaims(removePrefix(token));
 		} catch (JwtException e) {
 			throw new CustomException(UserExceptionCode.INVALID_TOKEN);
 		}
 	}
-}
 
+	private String removePrefix(String token) {
+		if (token != null && token.startsWith(BEARER_PREFIX)) {
+			return token.substring(BEARER_PREFIX.length());
+		}
+		return token;
+	}
+}
