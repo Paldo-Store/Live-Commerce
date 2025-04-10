@@ -47,4 +47,8 @@ public class Order extends BaseEntity {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
+    //주문한 해당 방송
+    @Column(name = "broadcast_id")
+    private UUID broadcastId;
 }

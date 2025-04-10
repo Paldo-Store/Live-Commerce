@@ -12,7 +12,9 @@ public record OrderGetOneResponse(
         Integer productQuantity,
         Long productTotalPrice,
         String requirement,
-        OrderStatus status)
+        OrderStatus status,
+        UUID broadcastId
+)
 {
     public static OrderGetOneResponse of(Order order) {
         return new OrderGetOneResponse(
@@ -22,7 +24,8 @@ public record OrderGetOneResponse(
                 order.getProductQuantity(),
                 order.getProductTotalPrice(),
                 order.getRequirement(),
-                order.getStatus()
+                order.getStatus(),
+                order.getBroadcastId()
         );
     }
 }

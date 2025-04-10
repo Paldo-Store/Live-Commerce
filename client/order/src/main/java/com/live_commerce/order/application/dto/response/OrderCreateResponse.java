@@ -11,7 +11,8 @@ public record OrderCreateResponse (
      Integer productQuantity,
      Long productTotalPrice,
      String requirement,
-     OrderStatus status
+     OrderStatus status,
+     UUID broadcastId
 ) {
     public static OrderCreateResponse of(Order order) {
         return new OrderCreateResponse(
@@ -20,7 +21,8 @@ public record OrderCreateResponse (
                 order.getProductQuantity(),
                 order.getProductTotalPrice(),
                 order.getRequirement(),
-                order.getStatus()
+                order.getStatus(),
+                order.getBroadcastId()
         );
     }
 }
