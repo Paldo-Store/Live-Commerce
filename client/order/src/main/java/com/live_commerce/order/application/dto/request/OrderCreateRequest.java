@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 
 import java.util.UUID;
 
+// order -> product
 public record OrderCreateRequest (
     UUID productId,
     @Min(1) Integer productQuantity,  // 주문할 수량 - 최소 1개이상이어야 유효한 값. @Valid랑 같이써야함
