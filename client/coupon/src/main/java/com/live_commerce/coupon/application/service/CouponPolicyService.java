@@ -8,7 +8,6 @@ import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyReque
 import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResponse;
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
-import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -20,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CouponPolicyService {
 
-  private final CouponPolicyRepository couponRepository;
+  private final CouponPolicyRepository couponPolicyRepository;
   private final CouponPolicyValidator couponPolicyValidator;
 
   public CreateCouponPolicyResponse createCouponPolicy(CreateCouponPolicyRequest request) {
@@ -28,17 +27,17 @@ public class CouponPolicyService {
     couponPolicyValidator.validateForCreatePolicy(request);
 
     CouponPolicy couponPolicy = request.toCouponPolicy();
-    couponRepository.save(couponPolicy);
+    couponPolicyRepository.save(couponPolicy);
     return CreateCouponPolicyResponse.fromCouponPolicy(couponPolicy);
   }
 
-  public ReadCouponPolicyResponse getCouponPolicy(UUID id) {
-    CouponPolicy couponPolicy = findCouponPolicyOrElseThrow(id);
+  public ReadCouponPolicyResponse getCouponPolicy(String code) {
+    CouponPolicy couponPolicy = findCouponPolicyOrElseThrow(code);
     return ReadCouponPolicyResponse.fromCouponPolicy(couponPolicy);
   }
 
-  private CouponPolicy findCouponPolicyOrElseThrow(UUID id) {
-    return couponRepository.findByCodeAndDeletedStatusFalse(id)
+  private CouponPolicy findCouponPolicyOrElseThrow(String code) {
+    return couponPolicyRepository.findByCodeAndDeletedStatusFalse(code)
         .orElseThrow(() -> {
           CouponPolicyException.forCouponPolicyNotFound();
           return null;
@@ -46,26 +45,26 @@ public class CouponPolicyService {
   }
 
   public List<ReadCouponPolicyResponse> getCouponPolicies() {
-    List<CouponPolicy> couponPolicyList = couponRepository.findByDeletedStatusFalse();
+    List<CouponPolicy> couponPolicyList = couponPolicyRepository.findByDeletedStatusFalse();
     return couponPolicyList.stream()
         .map(ReadCouponPolicyResponse::fromCouponPolicy)
         .collect(Collectors.toList());
   }
 
-  public void deleteCouponPolicy(UUID id) {
-    CouponPolicy couponPolicy = couponRepository.findById(id)
+  public void deleteCouponPolicy(String code) {
+    CouponPolicy couponPolicy = couponPolicyRepository.findById(code)
         .orElseThrow(() -> {
           CouponPolicyException.forCouponPolicyNotFound();
           return null;
         });
     couponPolicy.markCouponAsDeleted(couponPolicy.getName());
-    couponRepository.save(couponPolicy);
+    couponPolicyRepository.save(couponPolicy);
   }
 
-  public void updateCouponPolicy(UUID id, UpdateCouponPolicyRequest request) {
-    CouponPolicy updateCouponPolicy = findCouponPolicyOrElseThrow(id);
+  public void updateCouponPolicy(String code, UpdateCouponPolicyRequest request) {
+    CouponPolicy updateCouponPolicy = findCouponPolicyOrElseThrow(code);
     couponPolicyValidator.validateForUpdatePolicy(request);
     updateCouponPolicy.updateCouponPolicy(request);
-    couponRepository.save(updateCouponPolicy);
+    couponPolicyRepository.save(updateCouponPolicy);
   }
 }

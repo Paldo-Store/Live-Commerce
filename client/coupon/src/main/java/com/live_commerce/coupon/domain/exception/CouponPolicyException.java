@@ -10,7 +10,7 @@ public class CouponPolicyException extends CustomException {
   }
 
   public static void forDuplicateCouponName() {
-    throw new CouponPolicyException(CouponExceptionCode.DUPLICATE_COUPON_NAME);
+    throw new CouponPolicyException(CouponExceptionCode.DUPLICATE_COUPON_CODE);
   }
 
   public static void forInvalidDateRange() {

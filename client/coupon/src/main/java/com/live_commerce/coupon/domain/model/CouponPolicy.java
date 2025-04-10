@@ -15,8 +15,8 @@ import lombok.*;
 public class CouponPolicy extends BaseEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private UUID code;
+  @Column(nullable = false, updatable = false, unique = true)
+  private String code;
 
   @Column(nullable = false, updatable = false)
   private String name;
@@ -42,11 +42,11 @@ public class CouponPolicy extends BaseEntity {
   private boolean isActive;
 
   @Builder
-  public CouponPolicy(UUID code, String name, DISCOUNT_TYPE discountType, BigDecimal discountValue,
+  public CouponPolicy(String code, String name, DISCOUNT_TYPE discountType, BigDecimal discountValue,
       BigDecimal minOrderAmt, BigDecimal maxOrderAmt, LocalDateTime startAt, LocalDateTime endAt,
       boolean isActive) {
 
-    if (name == null || discountType == null || discountValue == null
+    if (code == null || name == null || discountType == null || discountValue == null
         || startAt == null || endAt == null) {
       throw new IllegalArgumentException("CouponPolicy의 필수 값이 null일 수 없습니다.");
     }
@@ -70,7 +70,6 @@ public class CouponPolicy extends BaseEntity {
         || startAt == null || endAt == null) {
       throw new IllegalArgumentException("CouponPolicy의 필수 값이 null일 수 없습니다.");
     }
-
     this.name = request.name();
     this.discountType = request.discountType();
     this.discountValue = request.discountValue();
