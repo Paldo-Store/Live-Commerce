@@ -131,12 +131,9 @@ public class PaymentService {
 		return new PageImpl<>(dtoList, pageable, dtoList.size());
 	}
 
-	// Service
 	@Transactional
 	public PaymentRefundResponseDto refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
-		Payment payment = paymentRepository.findByOrderId(orderId)
-			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-
+		Payment payment = findPaymentByOrderId(orderId);
 		validatePaymentRefundPermission(payment, userDetails);
 
 		if (payment.getStatus() != PaymentStatus.COMPLETED) {
@@ -152,9 +149,7 @@ public class PaymentService {
 
 	@Transactional
 	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
-		Payment payment = paymentRepository.findByOrderId(orderId)
-			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-
+		Payment payment = findPaymentByOrderId(orderId);
 		validatePaymentCancelPermission(payment, userDetails);
 
 		// 상태 확인: 아직 결제가 승인되지 않은 상태여야 함
@@ -164,7 +159,6 @@ public class PaymentService {
 
 		payment.updateStatus(PaymentStatus.CANCELED);
 	}
-
 
 
 	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
@@ -200,10 +194,13 @@ public class PaymentService {
 			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
 	}
 
-
-
 	private Payment findPaymentById(UUID paymentId) {
 		return paymentRepository.findById(paymentId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
+
+	private Payment findPaymentByOrderId(UUID orderId) {
+		return paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 	}
 
