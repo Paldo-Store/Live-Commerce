@@ -52,20 +52,37 @@ public class PaymentService {
 
 	@Transactional
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
-		KakaoPayApproveDto approveDto = kakaoPayClient.requestKakaoPayApprove(
-			requestDto.tid(),
-			requestDto.pgToken(),
-			requestDto.orderId(),
-			userId.toString()
-		);
-
 		Payment payment = paymentRepository.findByOrderId(UUID.fromString(requestDto.orderId()))
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
+		// 1) 승인 가능한 상태인지 체크
+		if (payment.getStatus() != PaymentStatus.PENDING) {
+			payment.updateStatus(PaymentStatus.FAILED); // 승인 전 상태가 아니면 실패 처리
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		// 2) 승인 요청 시도
+		KakaoPayApproveDto approveDto;
+		try {
+			approveDto = kakaoPayClient.requestKakaoPayApprove(
+				requestDto.tid(),
+				requestDto.pgToken(),
+				requestDto.orderId(),
+				userId.toString()
+			);
+		} catch (Exception e) {
+			// 카카오 API 호출 자체가 실패한 경우
+			payment.updateStatus(PaymentStatus.FAILED);
+			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
+		}
+
+		// 3) 성공적으로 승인됐으면 상태 변경
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
+		// 4) 응답 DTO 반환
 		return PaymentApproveResponseDto.from(approveDto);
 	}
+
 
 	@Transactional(readOnly = true)
 	public PaymentGetResponseDto getPayment(UUID paymentId, RequestUserDetails userDetails) {
@@ -128,6 +145,24 @@ public class PaymentService {
 		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
 		payment.updateStatus(PaymentStatus.REFUND);
 	}
+
+	@Transactional
+	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		Payment payment = paymentRepository.findByOrderId(orderId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+
+		// 권한 체크
+		validatePaymentCancelPermission(payment, userDetails);
+
+		// 상태 확인: 아직 결제가 승인되지 않은 상태여야 함
+		if (payment.getStatus() != PaymentStatus.PENDING) {
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		// 결제 취소 처리
+		payment.updateStatus(PaymentStatus.CANCELED);
+	}
+
 
 
 	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {

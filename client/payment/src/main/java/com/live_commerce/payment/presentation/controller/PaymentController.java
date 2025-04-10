@@ -84,7 +84,13 @@ public class PaymentController {
 		return ResponseUtil.noContent();
 	}
 
-
-
+	@PostMapping("/{orderId}/cancel")
+	public ResponseEntity<ApiResponse<Void>> cancelPayment(
+		@PathVariable UUID orderId,
+		@AuthenticationPrincipal RequestUserDetails userDetails
+	) {
+		paymentService.cancelPaymentByOrderId(orderId, userDetails);
+		return ResponseUtil.noContent();
+	}
 
 }
