@@ -1,13 +1,12 @@
 package com.live_commerce.order.application.service;
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
-import com.live_commerce.order.application.dto.response.OrderCreateResponse;
-import com.live_commerce.order.application.dto.response.OrderGetOneResponse;
-import com.live_commerce.order.application.dto.response.OrderGetResponse;
-import com.live_commerce.order.application.dto.response.OrderProductResponse;
+import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
+import com.live_commerce.order.application.dto.response.*;
 import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
+import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.BroadcastClient;
 import com.live_commerce.order.infrastructure.client.ProductClient;
@@ -18,11 +17,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -37,9 +38,6 @@ public class OrderService {
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request, String userId) {
 
-        //request.productQuantity();            // 요청: 사용자가 주문한 수량
-        //responseProduct.getProductQuantity(); // 응답: 실제 상품의 재고 수량
-
         // 방송중인지 확인 - 방송중일때만 주문 가능
         BroadcastStatusResponse statusResponse = BroadcastClient.getBroadcastStatus(request.broadcastId());
         if(!"LIVE".equalsIgnoreCase(statusResponse.getBroadcastStatus())){
@@ -52,13 +50,13 @@ public class OrderService {
                 request.productId(),
                 request.productQuantity()); //주문 요청 상품 id, 상품 주문 개수 -> product
 
-        //이미 삭제(단종)된 상품일 경우
+        // 이미 삭제(단종)된 상품일 경우
         if(responseProduct.getDeletedStatus()){
             throw new OrderException("해당 상품은 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        int stock = responseProduct.getProductQuantity(); // 해당 상품 실제 재고
-        int orderQty = request.productQuantity(); // 상품의 주문개수
+        int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
+        int stock = responseProduct.getProductQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)
         //상품의 재고 수량이 0이거나, or 주문한 상품 개수 > 상품 재고 개수
         if (stock == 0 || orderQty > stock) {
             throw new OrderException("해당 상품이 존재하지 않거나 재고가 충분하지 않습니다.", HttpStatus.BAD_REQUEST);
@@ -86,6 +84,8 @@ public class OrderService {
     //주문 전체 조회 service
     @Transactional(readOnly = true)
     public OrderGetResponse getOrders(final int page, final int size, final String sort){
+        //TODO 권한 검증 - CUSTOMER 본인 주문만 조회 가능, 나머지 권한 다 조회 가능
+
         Pageable pageable = getPageable(page, size, sort);
         return OrderGetResponse.of(orderQueryRepository.findAll(pageable));
     }
@@ -118,8 +118,59 @@ public class OrderService {
     //주문 단건 조회 service
     @Transactional(readOnly = true)
     public OrderGetOneResponse getOrder(final UUID id) {
-        Order company = orderRepository.findById(id)
+        //TODO CUSTOMER 본인 단건 조회만 가능, 나머지 권한 다 조회 가능
+
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
-        return OrderGetOneResponse.of(company);
+        return OrderGetOneResponse.of(order);
+    }
+
+    //주문 수정 service
+    @Transactional
+    public OrderUpdateResponse updateOrder(UUID orderId, OrderUpdateRequest request, String userId, String role) {
+
+        // orderId에 해당하는 주문 가져오기
+        Order order  = orderRepository.findById(orderId).orElseThrow(()
+                -> new OrderException(OrderExceptionCode.NOT_FOUND));
+
+        //TODO 권한 검증 - 본인 결제 내역만 수정 가능하게
+        // 고객인 경우에만 자신의 주문만 수정 가능
+        if (role =="CUSTOMER" && !order.getUserId().equals(userId)) {
+            throw new OrderException("고객은 자신의 주문만 수정할 수 있습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 현재 주문의 상태가 결제 완료거나 주문 접수인 경우만 수정 가능하도록 설정하기
+        OrderStatus status = order.getStatus();
+        if (status != OrderStatus.PAID && status != OrderStatus.PENDING) {
+            throw new OrderException("주문 내역을 수정할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        // [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
+        // 재고가 없거나 상품이 없다면 Exception
+        OrderProductResponse responseProduct = productClient.getProduct(
+                request.productId(),
+                request.productQuantity()); //주문 요청 상품 id, 상품 주문 개수 -> product
+
+        // 이미 삭제(단종)된 상품일 경우
+        if(responseProduct.getDeletedStatus()){
+            throw new OrderException("해당 상품은 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
+        int stock = responseProduct.getProductQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)
+
+        //상품의 재고 수량이 0이거나, or 주문한 상품 개수 > 상품 재고 개수
+        if (stock == 0 || orderQty > stock) {
+            throw new OrderException("해당 상품이 존재하지 않거나 재고가 충분하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //총 합계 금액 수정
+        Long productTotalPrice = responseProduct.getProductTotalPrice();
+
+        //주문 상태 수정
+        Order updateOrder = request.toOrder(productTotalPrice);
+        order.updateOrder(updateOrder);
+
+        return OrderUpdateResponse.fromOrder(order);
     }
 }

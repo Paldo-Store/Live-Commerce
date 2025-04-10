@@ -11,8 +11,9 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+// product -> order
 public class OrderProductResponse {
-    private UUID productId;  //상품 아이디
+    private UUID productId;  //실제 상품 아이디
     private String productName;  //상품 이름
     private Integer productQuantity; //실제 상품의 재고 수량
     private Long productTotalPrice;  //상품의 총 가격

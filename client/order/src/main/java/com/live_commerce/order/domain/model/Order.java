@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Builder
@@ -51,4 +52,23 @@ public class Order extends BaseEntity {
     //주문한 해당 방송
     @Column(name = "broadcast_id")
     private UUID broadcastId;
+
+    //주문 update
+    public void updateOrder(Order updateOrder) {
+        if (updateOrder.getProductId() != null) {
+            this.productId = updateOrder.getProductId();
+        }
+        if (updateOrder.getProductQuantity() != null) {
+            this.productQuantity = updateOrder.getProductQuantity();
+        }
+        if (updateOrder.getProductTotalPrice() != null) {
+            this.productTotalPrice = updateOrder.getProductTotalPrice();
+        }
+        if (updateOrder.getRequirement() != null) {
+            this.requirement = updateOrder.getRequirement();
+        }
+        if (updateOrder.getStatus() != null) {
+            this.status = updateOrder.getStatus();
+        }
+    }
 }

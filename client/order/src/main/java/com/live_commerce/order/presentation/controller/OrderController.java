@@ -1,9 +1,11 @@
 package com.live_commerce.order.presentation.controller;
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
+import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
 import com.live_commerce.order.application.dto.response.OrderCreateResponse;
 import com.live_commerce.order.application.dto.response.OrderGetOneResponse;
 import com.live_commerce.order.application.dto.response.OrderGetResponse;
+import com.live_commerce.order.application.dto.response.OrderUpdateResponse;
 import com.live_commerce.order.application.service.OrderService;
 import com.live_commerce.order.infrastructure.common.ResponseUtil;
 import com.live_commerce.order.presentation.common.ApiResponse;
@@ -58,4 +60,27 @@ public class OrderController {
         OrderGetOneResponse response = orderService.getOrder(orderId);
         return ResponseUtil.success(response);
     }
+
+    //주문 수정 API
+    @PatchMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<OrderUpdateResponse>> updateOrder(
+            @PathVariable final UUID orderId,
+            @Valid @RequestBody final OrderUpdateRequest request){
+
+        //주문한 사람 id 받아오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+
+        OrderUpdateResponse response = orderService.updateOrder(orderId, request, userId, role);
+        return ResponseUtil.success(response);
+    }
+
+    //주문 취소 API
+
+    //주문 내역 삭제 API
+
 }
