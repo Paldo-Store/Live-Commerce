@@ -76,20 +76,36 @@ public class PaymentService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<PaymentGetResponseDto> getPayments(RequestUserDetails userDetails, Pageable pageable) {
+	public Page<PaymentGetResponseDto> getPayments(
+		PaymentSearchCondition condition,
+		RequestUserDetails userDetails,
+		Pageable pageable
+	) {
 		validatePaymentSearchPermission(userDetails);
 
+		// 페이지 사이즈 검증
 		int size = pageable.getPageSize();
 		if (size != 10 && size != 30 && size != 50) {
 			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
 		}
 
-		PaymentSearchCondition condition = new PaymentSearchCondition(
-			hasMasterRole(userDetails) ? null : userDetails.getUserId(),
-			null, null, null, null
-		);
+		// 마스터 권한이 아니라면 userId 강제 세팅
+		PaymentSearchCondition finalCondition;
+		if (hasMasterRole(userDetails)) {
+			// 마스터면 원본 condition 그대로 사용
+			finalCondition = condition;
+		} else {
+			// 일반 유저면 userId만 자기 것으로 덮어씌운다
+			finalCondition = new PaymentSearchCondition(
+				userDetails.getUserId(),
+				condition.orderId(),
+				condition.status(),
+				condition.createdAtFrom(),
+				condition.createdAtTo()
+			);
+		}
 
-		List<Payment> payments = paymentRepository.searchPayment(condition);
+		List<Payment> payments = paymentRepository.searchPayment(finalCondition);
 		List<PaymentGetResponseDto> dtoList = payments.stream()
 			.map(PaymentGetResponseDto::from)
 			.toList();

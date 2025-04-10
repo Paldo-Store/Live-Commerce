@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
+import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
@@ -65,10 +67,11 @@ public class PaymentController {
 
 	@GetMapping
 	public ResponseEntity<ApiResponse<Page<PaymentGetResponseDto>>> getPayments(
+		@ModelAttribute PaymentSearchCondition condition,
 		@AuthenticationPrincipal RequestUserDetails userDetails,
 		@PageableDefault(size = 10) Pageable pageable
 	) {
-		Page<PaymentGetResponseDto> result = paymentService.getPayments(userDetails, pageable);
+		Page<PaymentGetResponseDto> result = paymentService.getPayments(condition, userDetails, pageable);
 		return ResponseUtil.success(result);
 	}
 
