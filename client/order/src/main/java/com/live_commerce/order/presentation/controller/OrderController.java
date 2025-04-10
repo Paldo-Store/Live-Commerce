@@ -1,17 +1,16 @@
 package com.live_commerce.order.presentation.controller;
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
+import com.live_commerce.order.application.dto.request.OrderStatusUpdateRequest;
 import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
-import com.live_commerce.order.application.dto.response.OrderCreateResponse;
-import com.live_commerce.order.application.dto.response.OrderGetOneResponse;
-import com.live_commerce.order.application.dto.response.OrderGetResponse;
-import com.live_commerce.order.application.dto.response.OrderUpdateResponse;
+import com.live_commerce.order.application.dto.response.*;
 import com.live_commerce.order.application.service.OrderService;
 import com.live_commerce.order.infrastructure.common.ResponseUtil;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -49,7 +48,13 @@ public class OrderController {
             @RequestParam final int page,
             @RequestParam final int size,
             @RequestParam(required = false) final String sort){
-        OrderGetResponse response = orderService.getOrders(page, size, sort);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+        OrderGetResponse response = orderService.getOrders(page, size, sort, userId, role);
         return ResponseUtil.success(response);
     }
 
@@ -57,7 +62,13 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderGetOneResponse>> getOrder(
             @PathVariable final UUID orderId) {
-        OrderGetOneResponse response = orderService.getOrder(orderId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+        OrderGetOneResponse response = orderService.getOrder(orderId, userId, role);
         return ResponseUtil.success(response);
     }
 
@@ -79,8 +90,36 @@ public class OrderController {
         return ResponseUtil.success(response);
     }
 
-    //주문 취소 API
+    //주문 상태 변경 API
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<ApiResponse<OrderStatusUpdateResponse>> updateOrderStatus(
+            @PathVariable UUID orderId,
+            @RequestBody @Valid OrderStatusUpdateRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
 
-    //주문 내역 삭제 API
+        OrderStatusUpdateResponse response = orderService.updateOrderStatus(orderId, request, userId, role);
+        return ResponseUtil.success(response);
+    }
 
+
+    //주문 내역 삭제 API -> softDeleted만 이루어진다. 주문 상태 변경없음.(결제 취소 발생하면 안된다)
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<OrderDeleteResponse>>  deleteOrder(
+            @PathVariable UUID orderId) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+
+        OrderDeleteResponse response = orderService.deleteOrder(orderId, userId, role);
+        return ResponseUtil.success(response);
+    }
 }

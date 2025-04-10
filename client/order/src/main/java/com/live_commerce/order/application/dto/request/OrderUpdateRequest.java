@@ -11,8 +11,7 @@ import java.util.UUID;
 public record OrderUpdateRequest(
         UUID productId,
         @Min(1) Integer productQuantity,
-        String requirement,
-        String status
+        String requirement
 ) {
     public Order toOrder(Long productTotalPrice) {
         return Order.builder()
@@ -20,7 +19,6 @@ public record OrderUpdateRequest(
                 .productQuantity(this.productQuantity)
                 .productTotalPrice(productTotalPrice)
                 .requirement(this.requirement)
-                .status(OrderStatus.valueOf(this.status)) // 문자열을 enum으로 변환
                 .build();
     }
 }

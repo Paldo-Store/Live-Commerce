@@ -1,13 +1,16 @@
 package com.live_commerce.order.domain.model;
 
 
+import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.presentation.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,7 +56,7 @@ public class Order extends BaseEntity {
     @Column(name = "broadcast_id")
     private UUID broadcastId;
 
-    //주문 update
+    //주문 수정 update 함수
     public void updateOrder(Order updateOrder) {
         if (updateOrder.getProductId() != null) {
             this.productId = updateOrder.getProductId();
@@ -70,5 +73,20 @@ public class Order extends BaseEntity {
         if (updateOrder.getStatus() != null) {
             this.status = updateOrder.getStatus();
         }
+    }
+
+    //주문 상태 변경 함수
+    public void changeStatus(OrderStatus newStatus) {
+        // 이미 취소된 주문이면 다시 변경 불가
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new OrderException("이미 취소된 주문은 상태를 변경할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        // 상태가 동일하다면 무시 (선택사항)
+        if (this.status == newStatus) {
+            throw new OrderException("변경하려는 상태가 현재 상태와 같습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        this.status = newStatus;
     }
 }
