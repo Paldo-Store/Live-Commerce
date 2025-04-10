@@ -44,10 +44,10 @@ spring:
           predicates:
             - Path=/api/v1/coupon-policies, /api/v1/issued-coupons, /api-docs-coupon
 
-        - id: live-broadcast
-          uri: lb://live-broadcast
+        - id: livebroadcast
+          uri: lb://livebroadcast
           predicates:
-            - Path=/api/v1/shoppinglives/**, /api-docs-live-broadcast
+            - Path=/api/v1/livebroadcasts/**, /api-docs-live-broadcast
 
         - id: notification
           uri: lb://notification
