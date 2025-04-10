@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum CouponExceptionCode implements ExceptionCode {
+public enum CouponPolicyExceptionCode implements ExceptionCode {
 
   MISSING_MAX_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "정률 할인 유형에는 최대 주문 금액이 필수입니다."),
   MISSING_MIN_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "고정 할인 유형에는 최소 주문 금액이 필수입니다."),

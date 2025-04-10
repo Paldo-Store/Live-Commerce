@@ -8,7 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.live_commerce.coupon.application.exception.CouponExceptionCode;
+import com.live_commerce.coupon.application.exception.CouponPolicyExceptionCode;
 import com.live_commerce.coupon.application.validation.CouponPolicyValidator;
 import com.live_commerce.coupon.domain.exception.CouponPolicyException;
 import com.live_commerce.coupon.domain.model.CouponPolicy;
@@ -87,7 +87,7 @@ public class CouponPolicyServiceTest {
     );
 
     // when & then
-    doThrow(new CouponPolicyException(CouponExceptionCode.INVALID_DATE_RANGE))
+    doThrow(new CouponPolicyException(CouponPolicyExceptionCode.INVALID_DATE_RANGE))
         .when(couponPolicyValidator).validateForCreatePolicy(
             any(CreateCouponPolicyRequest.class));  // void 메서드는 doThrow로 예외 던지기
 
@@ -112,7 +112,7 @@ public class CouponPolicyServiceTest {
         request.isActive()
     );
     // when & then
-    doThrow(new CouponPolicyException(CouponExceptionCode.DISCOUNT_GREATER_THAN_MAX_ORDER_AMOUNT))
+    doThrow(new CouponPolicyException(CouponPolicyExceptionCode.DISCOUNT_GREATER_THAN_MAX_ORDER_AMOUNT))
         .when(couponPolicyValidator).validateForCreatePolicy(any(CreateCouponPolicyRequest.class));
 
     assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request))
@@ -135,7 +135,7 @@ public class CouponPolicyServiceTest {
         request.isActive()
     );
     // when & then
-    doThrow(new CouponPolicyException(CouponExceptionCode.DISCOUNT_GREATER_THAN_100))
+    doThrow(new CouponPolicyException(CouponPolicyExceptionCode.DISCOUNT_GREATER_THAN_100))
         .when(couponPolicyValidator).validateForCreatePolicy(any(CreateCouponPolicyRequest.class));
 
     assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request))
