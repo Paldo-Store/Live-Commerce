@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
+import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
@@ -130,28 +131,30 @@ public class PaymentService {
 		return new PageImpl<>(dtoList, pageable, dtoList.size());
 	}
 
+	// Service
 	@Transactional
-	public void refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+	public PaymentRefundResponseDto refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
 		Payment payment = paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
-		validatePaymentCancelPermission(payment, userDetails);
+		validatePaymentRefundPermission(payment, userDetails);
 
 		if (payment.getStatus() != PaymentStatus.COMPLETED) {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
-		// 카카오페이 환불 처리 (결제 취소 API 사용)
 		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
 		payment.updateStatus(PaymentStatus.REFUND);
+
+		return PaymentRefundResponseDto.from(payment);
 	}
+
 
 	@Transactional
 	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
 		Payment payment = paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
-		// 권한 체크
 		validatePaymentCancelPermission(payment, userDetails);
 
 		// 상태 확인: 아직 결제가 승인되지 않은 상태여야 함
@@ -159,7 +162,6 @@ public class PaymentService {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
-		// 결제 취소 처리
 		payment.updateStatus(PaymentStatus.CANCELED);
 	}
 
@@ -173,6 +175,12 @@ public class PaymentService {
 
 	private void validatePaymentSearchPermission(RequestUserDetails userDetails) {
 		if (!isSelf(userDetails.getUserId(), userDetails) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private void validatePaymentRefundPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
 			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
 		}
 	}
