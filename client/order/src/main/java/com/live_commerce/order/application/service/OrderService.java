@@ -1,6 +1,7 @@
 package com.live_commerce.order.application.service;
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
+import com.live_commerce.order.application.dto.request.OrderStatusUpdateRequest;
 import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
 import com.live_commerce.order.application.dto.response.*;
 import com.live_commerce.order.application.exception.OrderException;
@@ -9,6 +10,7 @@ import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.BroadcastClient;
+import com.live_commerce.order.infrastructure.client.PaymentClient;
 import com.live_commerce.order.infrastructure.client.ProductClient;
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
@@ -33,6 +35,7 @@ public class OrderService {
     private final OrderQueryRepository orderQueryRepository;
     private final BroadcastClient BroadcastClient;
     private final ProductClient productClient;
+    private final PaymentClient paymentClient;
 
     //주문 생성 service
     @Transactional
@@ -83,11 +86,17 @@ public class OrderService {
 
     //주문 전체 조회 service
     @Transactional(readOnly = true)
-    public OrderGetResponse getOrders(final int page, final int size, final String sort){
-        //TODO 권한 검증 - CUSTOMER 본인 주문만 조회 가능, 나머지 권한 다 조회 가능
-
+    public OrderGetResponse getOrders(final int page, final int size, final String sort, String userId, String role){
         Pageable pageable = getPageable(page, size, sort);
-        return OrderGetResponse.of(orderQueryRepository.findAll(pageable));
+
+        //TODO 권한 검증 - CUSTOMER 본인 주문만 조회 가능, 나머지 권한 다 조회 가능
+        if ("CUSTOMER".equals(role)) {
+            // 고객: 본인 주문만 조회
+            return OrderGetResponse.of(orderRepository.findAllByUserId(userId, pageable));
+        } else {
+            // 나머지 : 전체 주문 조회
+            return OrderGetResponse.of(orderQueryRepository.findAll(pageable));
+        }
     }
 
     //페이징 함수
@@ -114,18 +123,21 @@ public class OrderService {
         Sort sortObj = Sort.by(orders);
         return PageRequest.of(page, size, sortObj);
     }
-    
+
     //주문 단건 조회 service
     @Transactional(readOnly = true)
-    public OrderGetOneResponse getOrder(final UUID id) {
-        //TODO CUSTOMER 본인 단건 조회만 가능, 나머지 권한 다 조회 가능
-
+    public OrderGetOneResponse getOrder(final UUID id, String userId, String role) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+
+        // 권한 검증 - CUSTOMER는 본인 주문만 조회 가능
+        if ("CUSTOMER".equals(role) && !order.getUserId().equals(userId)) {
+            throw new OrderException("고객은 본인의 주문만 조회할 수 있습니다.", HttpStatus.FORBIDDEN);
+        }
         return OrderGetOneResponse.of(order);
     }
 
-    //주문 수정 service
+    //주문 수정 service - 주문 상태 변경을 일어나지 않음.
     @Transactional
     public OrderUpdateResponse updateOrder(UUID orderId, OrderUpdateRequest request, String userId, String role) {
 
@@ -133,15 +145,14 @@ public class OrderService {
         Order order  = orderRepository.findById(orderId).orElseThrow(()
                 -> new OrderException(OrderExceptionCode.NOT_FOUND));
 
-        //TODO 권한 검증 - 본인 결제 내역만 수정 가능하게
-        // 고객인 경우에만 자신의 주문만 수정 가능
+        //TODO 권한 검증 - 고객 본인의 결제 내역만 수정 가능하게
         if (role =="CUSTOMER" && !order.getUserId().equals(userId)) {
             throw new OrderException("고객은 자신의 주문만 수정할 수 있습니다.", HttpStatus.FORBIDDEN);
         }
 
-        // 현재 주문의 상태가 결제 완료거나 주문 접수인 경우만 수정 가능하도록 설정하기
+        // 현재 주문의 상태가 주문 접수나 결제 완료의 경우만 수정 가능하도록 설정
         OrderStatus status = order.getStatus();
-        if (status != OrderStatus.PAID && status != OrderStatus.PENDING) {
+        if (status != OrderStatus.PENDING && status != OrderStatus.PAID) {
             throw new OrderException("주문 내역을 수정할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
@@ -167,10 +178,65 @@ public class OrderService {
         //총 합계 금액 수정
         Long productTotalPrice = responseProduct.getProductTotalPrice();
 
-        //주문 상태 수정
+        //주문 수정
         Order updateOrder = request.toOrder(productTotalPrice);
         order.updateOrder(updateOrder);
 
         return OrderUpdateResponse.fromOrder(order);
+    }
+
+    //주문 상태 변경 SERVICE
+    @Transactional
+    public OrderStatusUpdateResponse updateOrderStatus(UUID orderId, OrderStatusUpdateRequest request, String userId, String role) {
+        // 주문 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+
+        //기존의 원래 주문 상태
+        OrderStatus status = order.getStatus();
+
+        // 권한 검증 - 고객은 본인만 주문 상태 변경 가능, 나머지들은 자유롭게 변경 가능
+        if (role.equals("CUSTOMER") && !order.getUserId().equals(userId)) {
+            throw new OrderException("고객은 본인의 주문만 상태를 변경할 수 있습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 상태 파싱 및 검증 - 주문 상태(오타) 잘못들어오면 예외 발생
+        OrderStatus newStatus;
+        try {
+            newStatus = OrderStatus.valueOf(request.status());  //요청받은 새로운 상태 변수에 담기
+        } catch (IllegalArgumentException e) {
+            throw new OrderException("잘못된 주문 상태입니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        // 상태 변경!
+        order.changeStatus(newStatus);
+
+        //PAID상태인 경우에만, 상품 상태 변경이 일어나 취소된다면 -> 재고 복구, 결제 취소 처리
+        if ( (status==OrderStatus.PAID) &&  (newStatus == OrderStatus.CANCELLED)) {
+
+            // [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호를 payment로 보내준다.)
+            paymentClient.cancelPayment(order.getId());
+
+            // [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 상품 개수를 보내준다.
+            productClient.updateProductState(order.getProductId(), order.getProductQuantity());
+        }
+        return OrderStatusUpdateResponse.fromOrder(order);
+    }
+
+    //주문 삭제 SERVICE
+    @Transactional
+    public OrderDeleteResponse deleteOrder(UUID orderId, String userId, String role) {
+        // orderId에 해당하는 Order 검색
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+
+        // TODO 권한 검증 - 고객 본인 결제 내역만 수정 가능하게
+        if (role =="CUSTOMER" && !order.getUserId().equals(userId)) {
+            throw new OrderException("고객은 자신의 주문만 수정할 수 있습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 삭제 진행
+        order.delete(userId);
+        return OrderDeleteResponse.of(order.getId());
     }
 }
