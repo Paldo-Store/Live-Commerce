@@ -75,5 +75,16 @@ public class PaymentController {
 		return ResponseUtil.success(result);
 	}
 
+	@PostMapping("/{orderId}/refund")
+	public ResponseEntity<ApiResponse<Void>> refundPayment(
+		@PathVariable UUID orderId,
+		@AuthenticationPrincipal RequestUserDetails userDetails
+	) {
+		paymentService.refundPaymentByOrderId(orderId, userDetails);
+		return ResponseUtil.noContent();
+	}
+
+
+
 
 }

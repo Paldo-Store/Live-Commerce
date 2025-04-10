@@ -113,6 +113,21 @@ public class PaymentService {
 		return new PageImpl<>(dtoList, pageable, dtoList.size());
 	}
 
+	@Transactional
+	public void refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		Payment payment = paymentRepository.findByOrderId(orderId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+
+		validatePaymentCancelPermission(payment, userDetails);
+
+		if (payment.getStatus() != PaymentStatus.COMPLETED) {
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		// 카카오페이 환불 처리 (결제 취소 API 사용)
+		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		payment.updateStatus(PaymentStatus.REFUND);
+	}
 
 
 	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
@@ -123,6 +138,12 @@ public class PaymentService {
 
 	private void validatePaymentSearchPermission(RequestUserDetails userDetails) {
 		if (!isSelf(userDetails.getUserId(), userDetails) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private void validatePaymentCancelPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
 			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
 		}
 	}
