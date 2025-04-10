@@ -1,12 +1,14 @@
 package com.live_commerce.coupon.presentation.controller;
 
 import com.live_commerce.coupon.application.service.CouponPolicyService;
+import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.infrastructure.common.ResponseUtil;
 import com.live_commerce.coupon.presentation.common.ApiResponse;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResponse;
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
+import com.live_commerce.coupon.presentation.dto.response.SearchCouponPolicyResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import java.util.List;
@@ -54,6 +56,17 @@ public class CouponPolicyController {
   ) {
     couponService.updateCouponPolicy(id, request);
     return ResponseUtil.noContent();
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<ApiResponse<SearchCouponPolicyResponse>> searchCouPolicy(
+      @RequestParam String keyword,
+      @RequestParam(defaultValue = "1") Integer page,
+      @RequestParam(defaultValue = "asc") String sortBy,
+      @RequestParam(defaultValue = "FIXED") DISCOUNT_TYPE discountType
+  ){
+    SearchCouponPolicyResponse response =  couponService.searchCouponPolicy(keyword,page,sortBy,discountType);
+    return ResponseUtil.success(response);
   }
 
 }
