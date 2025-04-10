@@ -13,7 +13,8 @@ public record OrderGetOneResponse(
         Long productTotalPrice,
         String requirement,
         OrderStatus status,
-        UUID broadcastId
+        UUID broadcastId,
+        String message
 )
 {
     public static OrderGetOneResponse of(Order order) {
@@ -25,7 +26,8 @@ public record OrderGetOneResponse(
                 order.getProductTotalPrice(),
                 order.getRequirement(),
                 order.getStatus(),
-                order.getBroadcastId()
+                order.getBroadcastId(),
+                "주문 단건 조회 성공"
         );
     }
 }

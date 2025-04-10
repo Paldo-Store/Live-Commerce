@@ -12,7 +12,8 @@ public record OrderCreateResponse (
      Long productTotalPrice,
      String requirement,
      OrderStatus status,
-     UUID broadcastId
+     UUID broadcastId,
+     String message
 ) {
     public static OrderCreateResponse of(Order order) {
         return new OrderCreateResponse(
@@ -22,7 +23,8 @@ public record OrderCreateResponse (
                 order.getProductTotalPrice(),
                 order.getRequirement(),
                 order.getStatus(),
-                order.getBroadcastId()
+                order.getBroadcastId(),
+                "주문 생성이 완료되었습니다"
         );
     }
 }
