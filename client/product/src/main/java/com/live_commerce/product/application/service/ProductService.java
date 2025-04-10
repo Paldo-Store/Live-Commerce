@@ -7,6 +7,9 @@ import com.live_commerce.product.application.mapper.ProductMapper;
 import com.live_commerce.product.domain.exception.ProductException;
 import com.live_commerce.product.domain.model.Product;
 import com.live_commerce.product.domain.repository.ProductRepository;
+import com.live_commerce.product.infrastructure.client.CompanyClient;
+import com.live_commerce.product.infrastructure.client.ExternalCompanyResponseDto;
+import com.live_commerce.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +22,18 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
+    private final CompanyClient companyClient;
+
     @Transactional
     public ProductResponseDto createProduct(ProductCreateRequestDto requestDto) {
-        Product product = ProductMapper.createDtoToEntity(requestDto);
+        ApiResponse<ExternalCompanyResponseDto> companyResponse = companyClient.getCompany(requestDto.companyId());
+         // data 필드로 꺼내기
+        if (companyResponse == null) {
+            ProductException.forCompanyNotFound();
+        }
+        ExternalCompanyResponseDto companyResponseDto = companyResponse.getData();
+
+        Product product = ProductMapper.createDtoToEntity(requestDto, companyResponseDto.companyId());
         productRepository.save(product);
         return ProductMapper.entityToDto(product);
     }

@@ -11,4 +11,8 @@ public class ProductException extends CustomException {
     public static void forProductNotFound() {
         throw new ProductException(ProductExceptionCode.NOT_FOUND);
     }
+
+    public static void forCompanyNotFound() {
+        throw new ProductException(ProductExceptionCode.COMPANY_NOT_FOUND);
+    }
 }

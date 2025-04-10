@@ -11,6 +11,7 @@ public record ProductResponseDto (
         String description,
         Integer price,
         ProductCategory category,
-        ProductStatus status
+        ProductStatus status,
+        UUID companyId
 ) {
 }
