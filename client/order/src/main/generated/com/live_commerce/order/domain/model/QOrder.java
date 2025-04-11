@@ -21,6 +21,8 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final com.live_commerce.order.presentation.common.QBaseEntity _super = new com.live_commerce.order.presentation.common.QBaseEntity(this);
 
+    public final ComparablePath<java.util.UUID> broadcastId = createComparable("broadcastId", java.util.UUID.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
