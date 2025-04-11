@@ -3,10 +3,16 @@ package com.live_commerce.ai.application.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.live_commerce.ai.application.dto.request.AiRequestDto;
+import com.live_commerce.ai.application.dto.request.AiSearchCondition;
 import com.live_commerce.ai.application.dto.response.AiCreateResponseDto;
 import com.live_commerce.ai.application.dto.response.AiGetResponseDto;
 import com.live_commerce.ai.application.exception.AiExceptionCode;
@@ -65,12 +71,27 @@ public class AiService {
 		return AiCreateResponseDto.from(saved);
 	}
 
-
-	public AiGetResponseDto findAiAnalysisById(UUID id) {
+	@Transactional(readOnly = true)
+	public AiGetResponseDto getAiAnalysis(UUID id) {
 		AI ai = aiRepository.findById(id)
 			.orElseThrow(() -> new CustomException(AiExceptionCode.ANALYSIS_NOT_FOUND));
 
 		return AiGetResponseDto.from(ai);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<AiGetResponseDto> getAiAnalysisList(AiSearchCondition condition, Pageable pageable) {
+		int size = pageable.getPageSize();
+		if (size != 10 && size != 30 && size != 50) {
+			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+		}
+
+		List<AI> ais = aiRepository.searchAi(condition);
+		List<AiGetResponseDto> dtoList = ais.stream()
+			.map(AiGetResponseDto::from)
+			.toList();
+
+		return new PageImpl<>(dtoList, pageable, dtoList.size());
 	}
 
 

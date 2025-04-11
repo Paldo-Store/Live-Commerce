@@ -1,7 +1,5 @@
 package com.live_commerce.payment.infrastructure.client.dto;
 
-import java.time.LocalDateTime;
-
 public record KakaoPayCancelDto(
 	String tid,
 	String status,
