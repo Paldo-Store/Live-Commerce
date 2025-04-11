@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum AiExceptionCode implements ExceptionCode {
 
-  NOT_FOUND(HttpStatus.NOT_FOUND, "Ai Not Found");
+  SERIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "요청 직렬화 중 오류가 발생했습니다.");
 
 
   private final HttpStatus httpStatus;
