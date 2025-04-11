@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "p_ai")
-public class AI {
+public class AI extends BaseEntity {
 
 	@Id
 	@UuidGenerator
