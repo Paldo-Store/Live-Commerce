@@ -4,14 +4,14 @@ import java.util.UUID;
 
 import com.live_commerce.ai.domain.model.AI;
 
-public record AiResponseDto(
+public record AiCreateResponseDto(
 	UUID id,
 	UUID liveBroadcastId,
 	String requestPayload,
 	String responsePayload
 ) {
-	public static AiResponseDto from(AI ai) {
-		return new AiResponseDto(
+	public static AiCreateResponseDto from(AI ai) {
+		return new AiCreateResponseDto(
 			ai.getId(),
 			ai.getLiveBroadcastId(),
 			ai.getRequestPayload(),

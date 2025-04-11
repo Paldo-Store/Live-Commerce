@@ -1,12 +1,14 @@
 package com.live_commerce.ai.application.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.live_commerce.ai.application.dto.request.AiRequestDto;
-import com.live_commerce.ai.application.dto.response.AiResponseDto;
+import com.live_commerce.ai.application.dto.response.AiCreateResponseDto;
+import com.live_commerce.ai.application.dto.response.AiGetResponseDto;
 import com.live_commerce.ai.application.exception.AiExceptionCode;
 import com.live_commerce.ai.application.exception.CustomException;
 import com.live_commerce.ai.domain.model.AI;
@@ -27,7 +29,9 @@ public class AiService {
 
 	private static final int MAX_CHAT_MESSAGES = 50;
 
-	public AiResponseDto analyze(AiRequestDto request) {
+	public AiCreateResponseDto analyze(AiRequestDto request) {
+		// TODO: 추후 chat-service 연동 시, 아래 부분을 FeignClient 호출로 대체할 예정
+		// 현재는 임시로 AiRequestDto 내 chat_messages 직접 주입받음
 		List<AiRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
 		List<AiRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES
 			? messages.subList(messages.size() - MAX_CHAT_MESSAGES, messages.size())
@@ -44,7 +48,15 @@ public class AiService {
 		}
 
 		AI saved = aiRepository.save(AI.of(request.live_broadcast_id(), requestPayloadJson, response));
-		return AiResponseDto.from(saved);
-
+		return AiCreateResponseDto.from(saved);
 	}
+
+	public AiGetResponseDto findAiAnalysisById(UUID id) {
+		AI ai = aiRepository.findById(id)
+			.orElseThrow(() -> new CustomException(AiExceptionCode.ANALYSIS_NOT_FOUND));
+
+		return AiGetResponseDto.from(ai);
+	}
+
+
 }
