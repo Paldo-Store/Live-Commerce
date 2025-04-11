@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
+import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
@@ -75,5 +76,22 @@ public class PaymentController {
 		return ResponseUtil.success(result);
 	}
 
+	@PostMapping("/{orderId}/refund")
+	public ResponseEntity<ApiResponse<PaymentRefundResponseDto>> refundPayment(
+		@PathVariable UUID orderId,
+		@AuthenticationPrincipal RequestUserDetails userDetails
+	) {
+		PaymentRefundResponseDto response = paymentService.refundPaymentByOrderId(orderId, userDetails);
+		return ResponseUtil.success(response);
+	}
+
+	@PostMapping("/{orderId}/cancel")
+	public ResponseEntity<ApiResponse<Void>> cancelPayment(
+		@PathVariable UUID orderId,
+		@AuthenticationPrincipal RequestUserDetails userDetails
+	) {
+		paymentService.cancelPaymentByOrderId(orderId, userDetails);
+		return ResponseUtil.noContent();
+	}
 
 }

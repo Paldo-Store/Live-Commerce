@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.live_commerce.payment.application.port.KakaoPayClient;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
+import com.live_commerce.payment.infrastructure.client.dto.KakaoPayCancelDto;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 
 import lombok.RequiredArgsConstructor;
@@ -96,6 +97,27 @@ public class KakaoPayClientImpl implements KakaoPayClient {
 		return response.getBody();
 	}
 
+	@Override
+	public KakaoPayCancelDto requestKakaoPayCancel(String tid, BigDecimal cancelAmount) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("cid", kakaoPayCid);
+		params.put("tid", tid);
+		params.put("cancel_amount", cancelAmount.intValue());
+		params.put("cancel_tax_free_amount", 0);
 
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Authorization", "SECRET_KEY " + kakaoPaySecretKey);
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
+		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
+
+		ResponseEntity<KakaoPayCancelDto> response = restTemplate.postForEntity(
+			"https://open-api.kakaopay.com/online/v1/payment/cancel",
+			request,
+			KakaoPayCancelDto.class
+		);
+
+		return response.getBody();
+	}
 
 }

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
+import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
@@ -52,20 +53,37 @@ public class PaymentService {
 
 	@Transactional
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
-		KakaoPayApproveDto approveDto = kakaoPayClient.requestKakaoPayApprove(
-			requestDto.tid(),
-			requestDto.pgToken(),
-			requestDto.orderId(),
-			userId.toString()
-		);
-
 		Payment payment = paymentRepository.findByOrderId(UUID.fromString(requestDto.orderId()))
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
+		// 1) 승인 가능한 상태인지 체크
+		if (payment.getStatus() != PaymentStatus.PENDING) {
+			payment.updateStatus(PaymentStatus.FAILED); // 승인 전 상태가 아니면 실패 처리
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		// 2) 승인 요청 시도
+		KakaoPayApproveDto approveDto;
+		try {
+			approveDto = kakaoPayClient.requestKakaoPayApprove(
+				requestDto.tid(),
+				requestDto.pgToken(),
+				requestDto.orderId(),
+				userId.toString()
+			);
+		} catch (Exception e) {
+			// 카카오 API 호출 자체가 실패한 경우
+			payment.updateStatus(PaymentStatus.FAILED);
+			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
+		}
+
+		// 3) 성공적으로 승인됐으면 상태 변경
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
+		// 4) 응답 DTO 반환
 		return PaymentApproveResponseDto.from(approveDto);
 	}
+
 
 	@Transactional(readOnly = true)
 	public PaymentGetResponseDto getPayment(UUID paymentId, RequestUserDetails userDetails) {
@@ -113,6 +131,34 @@ public class PaymentService {
 		return new PageImpl<>(dtoList, pageable, dtoList.size());
 	}
 
+	@Transactional
+	public PaymentRefundResponseDto refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		Payment payment = findPaymentByOrderId(orderId);
+		validatePaymentRefundPermission(payment, userDetails);
+
+		if (payment.getStatus() != PaymentStatus.COMPLETED) {
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		payment.updateStatus(PaymentStatus.REFUND);
+
+		return PaymentRefundResponseDto.from(payment);
+	}
+
+
+	@Transactional
+	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		Payment payment = findPaymentByOrderId(orderId);
+		validatePaymentCancelPermission(payment, userDetails);
+
+		// 상태 확인: 아직 결제가 승인되지 않은 상태여야 함
+		if (payment.getStatus() != PaymentStatus.PENDING) {
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		payment.updateStatus(PaymentStatus.CANCELED);
+	}
 
 
 	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
@@ -127,6 +173,18 @@ public class PaymentService {
 		}
 	}
 
+	private void validatePaymentRefundPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private void validatePaymentCancelPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
 	private boolean isSelf(UUID userId, RequestUserDetails userDetails) {
 		return userId.equals(userDetails.getUserId());
 	}
@@ -136,10 +194,13 @@ public class PaymentService {
 			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
 	}
 
-
-
 	private Payment findPaymentById(UUID paymentId) {
 		return paymentRepository.findById(paymentId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
+
+	private Payment findPaymentByOrderId(UUID orderId) {
+		return paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 	}
 
