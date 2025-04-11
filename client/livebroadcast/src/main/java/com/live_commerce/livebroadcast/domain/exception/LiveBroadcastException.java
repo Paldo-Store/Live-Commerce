@@ -9,10 +9,20 @@ public class LiveBroadcastException extends CustomException {
         super(code);
     }
 
-    public static void forLiveBroadcastNotFound() {
+    public static LiveBroadcastException forLiveBroadcastNotFound() {
         throw new LiveBroadcastException(LiveBroadcastExceptionCode.NOT_FOUND);
     }
 
 
+//    public static LiveBroadcastException forProductAlreadyConnectedToBroadcast() {
+//        throw new LiveBroadcastException(LiveBroadcastExceptionCode.BROADCAST_PRODUCT_NOT_CONNECTED);
+//    }
 
+    public static LiveBroadcastException forProductAlreadyConnected() {
+        throw new LiveBroadcastException(LiveBroadcastExceptionCode.BROADCAST_PRODUCT_ALREADY_CONNECTED);
+    }
+
+    public static LiveBroadcastException forExternalProductNotFound() {
+        throw new LiveBroadcastException(LiveBroadcastExceptionCode.EXTERNAL_PRODUCT_NOT_FOUND);
+    }
 }
