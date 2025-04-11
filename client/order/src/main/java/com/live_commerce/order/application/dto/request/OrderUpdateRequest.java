@@ -10,7 +10,7 @@ import java.util.UUID;
 @Builder
 public record OrderUpdateRequest(
         UUID productId,
-        @Min(1) Integer productQuantity,
+        Integer productQuantity,
         String requirement
 ) {
     public Order toOrder(Long productTotalPrice) {
