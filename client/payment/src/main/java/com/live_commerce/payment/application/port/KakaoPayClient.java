@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
+import com.live_commerce.payment.infrastructure.client.dto.KakaoPayCancelDto;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 
 public interface KakaoPayClient {
@@ -19,5 +20,8 @@ public interface KakaoPayClient {
 		String orderId,
 		String userId);
 
+	KakaoPayCancelDto requestKakaoPayCancel(
+		String tid,
+		BigDecimal cancelAmount);
 
 }
