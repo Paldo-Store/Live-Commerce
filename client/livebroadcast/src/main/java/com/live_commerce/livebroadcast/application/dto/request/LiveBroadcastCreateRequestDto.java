@@ -1,8 +1,6 @@
-package com.live_commerce.livebroadcast.application.dto;
+package com.live_commerce.livebroadcast.application.dto.request;
 
 import com.live_commerce.livebroadcast.domain.model.BroadcastStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
 

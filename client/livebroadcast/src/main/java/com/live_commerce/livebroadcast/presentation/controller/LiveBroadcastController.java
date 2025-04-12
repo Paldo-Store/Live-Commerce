@@ -1,8 +1,8 @@
 package com.live_commerce.livebroadcast.presentation.controller;
 
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastCreateRequestDto;
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastResponseDto;
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastUpdateRequestDto;
+import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastCreateRequestDto;
+import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastResponseDto;
+import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastUpdateRequestDto;
 import com.live_commerce.livebroadcast.application.service.LiveBroadcastService;
 import com.live_commerce.livebroadcast.infrastructure.common.ResponseUtil;
 import com.live_commerce.livebroadcast.presentation.common.ApiResponse;
