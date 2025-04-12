@@ -38,7 +38,7 @@ public class ChatService {
     @Transactional(readOnly = true)
     public ChatGetResponse getAllChats(int page, int size, String sort, String role) {
         // 권한 검증: 관리자와 쇼호스트만 접근 허용
-        if (!role.equals("ADMIN") && !role.equals("HOST")) {
+        if (!role.equals("MASTER") && !role.equals("SHOW_HOST")) {
             throw new ChatException("권한이 없습니다. 관리자 또는 쇼호스트만 접근 가능합니다.");
         }
 
@@ -77,7 +77,7 @@ public class ChatService {
         Pageable pageable = getPageable(page, size, sort);
 
         // 권한 검증: 관리자와 쇼호스트만 접근 허용
-        if (!role.equals("ADMIN") && !role.equals("HOST")) {
+        if (!role.equals("MASTER") && !role.equals("SHOW_HOST")) {
             throw new ChatException("권한이 없습니다. 관리자 또는 쇼호스트만 접근 가능합니다.");
         }
 
@@ -92,7 +92,7 @@ public class ChatService {
                 .orElseThrow(() -> new ChatException("채팅이 존재하지 않습니다."));
 
         //고객인 경우에는 본인 채팅만 삭제 가능
-        if (role.equals("ROLE_CUSTOMER") && !chat.getUserId().toString().equals(userId)) {
+        if (role.equals("CUSTOMER") && !chat.getUserId().toString().equals(userId)) {
             throw new ChatException("해당 채팅에 대한 삭제 권한이 없습니다.");
         }
 
