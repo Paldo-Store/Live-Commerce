@@ -1,7 +1,7 @@
 package com.live_commerce.livebroadcast.application.mapper;
 
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastCreateRequestDto;
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastResponseDto;
+import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastCreateRequestDto;
+import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 
 
