@@ -29,7 +29,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		String requestUri = request.getRequestURI();
 
 		// 인증이 필요 없는 경로는 필터를 통과시킴
-		if ((requestUri.startsWith("/api/v1/auth/") && !requestUri.equals("/api/v1/auth/logout")) ||
+		if ((requestUri.startsWith("/api/v1/auth/") &&
+			!requestUri.startsWith("/api/v1/auth/approve") &&
+			!requestUri.equals("/api/v1/auth/logout")) ||
 			requestUri.startsWith("/swagger-ui/") ||
 			requestUri.startsWith("/v3/api-docs") ||
 			requestUri.startsWith("/actuator")) {
