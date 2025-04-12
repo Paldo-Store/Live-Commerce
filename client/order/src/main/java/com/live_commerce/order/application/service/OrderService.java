@@ -10,9 +10,11 @@ import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.BroadcastClient;
+import com.live_commerce.order.infrastructure.client.CouponClient;
 import com.live_commerce.order.infrastructure.client.PaymentClient;
 import com.live_commerce.order.infrastructure.client.ProductClient;
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
+import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -31,11 +33,22 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+
+    //DB 조회
     private final OrderRepository orderRepository;
     private final OrderQueryRepository orderQueryRepository;
+
+    //feignClient
     private final BroadcastClient BroadcastClient;
     private final ProductClient productClient;
     private final PaymentClient paymentClient;
+    private final CouponClient couponClient;
+
+    //service 호출
+    private final PaymentStatusTransitionService paymentStatusTransitionService;
+    private final RefundStatusTransitionService refundStatusTransitionService;
+    //private final SuccessStatusTransitionService successStatusTransitionService;
+
 
     //주문 생성 service
     @Transactional
@@ -212,7 +225,7 @@ public class OrderService {
     //고객 제외 나머지가 주문 상태 변경
     @Transactional
     public OrderStatusUpdateResponse updateOrderStatus(UUID orderId, OrderStatusUpdateRequest request, String userId, String role) {
-        // 주문 조회
+        // 주문 조회 - 해당 주문 없으면 예외처리
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
 
@@ -224,7 +237,7 @@ public class OrderService {
             throw new OrderException("고객은 주문 상태를 변경할 수 없습니다.", HttpStatus.FORBIDDEN);
         }
 
-        // 상태 파싱 및 검증 - 주문 상태(오타) 잘못들어오면 예외 발생
+        // 새 주문 요청 상태 파싱 및 검증 - 바꾸려는 주문 상태(오타) 잘못들어오면 예외 발생
         OrderStatus newStatus;
         try {
             newStatus = OrderStatus.valueOf(request.status());  //요청받은 새로운 상태 변수에 담기
@@ -232,34 +245,35 @@ public class OrderService {
             throw new OrderException("잘못된 주문 상태입니다.", HttpStatus.BAD_REQUEST);
         }
 
+        //결제 성공 :PENDING -> PAID
+        //PaymentStatusTransitionService
+        if ( (currentStatus==OrderStatus.PENDING) &&  (newStatus == OrderStatus.PAID)){
+            paymentStatusTransitionService.updateOrderStatusToPaid(order, newStatus);
+
+            //service 바로 종료
+            return OrderStatusUpdateResponse.fromOrder(order);
+        }
+
+        //결제 취소 : PAID -> REFUNDED
+        //RefundStatusTransitionService
         //PAID상태인 경우에만, 상품 상태 변경이 일어나 취소된다면 -> 재고 복구, 결제 취소 처리
         if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.CANCELLED)) {
 
-            // [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호를 payment로 보내준다.)
-            paymentClient.cancelPayment(order.getId());
+            // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
+            // TODO 결제 처리는 Payment에서 로직 처리
+            paymentClient.cancelPayment(order.getId(), order.getFinalPaidPrice());
 
-            // [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 상품 개수를 보내준다.
-            productClient.updateProductState(order.getProductId(), order.getProductQuantity());
+            // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다.
+            // TODO 재고 복구는 Product에서 로직 처리
+            productClient.restoreProductQuantity(order.getProductId(), order.getProductQuantity());
         }
 
-        // 상태 변경!
-        // 주문 취소는 상태 변경 불가, 같은 주문 상태 변경은 예외발생
+        //주문 접수 -> 주문 취소 : PENDING -> CANCELLED
+        //그냥 통과.
+
+        // 상태 변경 - 주문 취소는 상태 변경 불가, 같은 주문 상태 변경은 예외 발생
         order.changeStatus(newStatus);
-
         return OrderStatusUpdateResponse.fromOrder(order);
-    }
-
-    //결제 완료 콜백 상태 변경 메소드 SERVICE
-    @Transactional
-    public void updateOrderStatusToPaid(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
-
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new OrderException("결제 가능한 상태가 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
-
-        order.changeStatus(OrderStatus.PAID);
     }
 
     //주문 삭제 SERVICE
