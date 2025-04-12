@@ -39,7 +39,7 @@ public class Order extends BaseEntity {
     @Column(name = "product_quantity")
     private Integer productQuantity;
 
-    // 상품 총 가격
+    // 상품 총 가격 - 할인 적용 전, 상품 총 합산 금액
     @Column(name = "product_total_price")
     private Long productTotalPrice;
 
@@ -55,6 +55,14 @@ public class Order extends BaseEntity {
     //주문한 해당 방송
     @Column(name = "broadcast_id")
     private UUID broadcastId;
+
+    //쿠폰 id
+    @Column(name = "coupon_id")
+    private UUID couponId;
+
+    // 쿠폰을 적용한 할인 후 최종 결제 예정 금액
+    @Column(name = "final_paid_price")
+    private Long finalPaidPrice;
 
     //주문 수정 update 함수
     public void updateOrder(Order updateOrder) {
@@ -88,5 +96,15 @@ public class Order extends BaseEntity {
         }
 
         this.status = newStatus;
+    }
+
+    //주문 수정 개수로 productTotalPrice update 하기
+    public void updateProductTotalPrice(Long productTotalPrice) {
+        this.productTotalPrice = productTotalPrice;
+    }
+
+    //쿠폰 적용 후 최종 결제 금액 finalPaidPrice -> update 하기
+    public void updateFinalPaidPrice(Long finalPaidPrice) {
+        this.finalPaidPrice = finalPaidPrice;
     }
 }
