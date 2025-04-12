@@ -25,4 +25,8 @@ public class LiveBroadcastException extends CustomException {
     public static LiveBroadcastException forExternalProductNotFound() {
         throw new LiveBroadcastException(LiveBroadcastExceptionCode.EXTERNAL_PRODUCT_NOT_FOUND);
     }
+
+    public static LiveBroadcastException forConnectedProductNotFound() {
+        throw new LiveBroadcastException(LiveBroadcastExceptionCode.PRODUCT_DISCONNECTED);
+    }
 }

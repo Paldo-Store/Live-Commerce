@@ -38,6 +38,8 @@ public class QCompany extends EntityPathBase<Company> {
     //inherited
     public final BooleanPath deletedStatus = _super.deletedStatus;
 
+    public final StringPath description = createString("description");
+
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
     public final StringPath name = createString("name");

@@ -5,11 +5,13 @@ import com.live_commerce.livebroadcast.domain.repository.BroadcastProductReposit
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface JpaBroadcastProductRepository extends JpaRepository<BroadcastProduct, UUID>, BroadcastProductRepository {
-    boolean existsByIdAndDeletedStatusFalse(UUID broadcastId);
 
-    boolean existsByIdAndProductId(UUID broadcastId, UUID productId);
+    boolean existsByBroadcastIdAndProductIdAndDeletedStatusFalse(UUID broadcastId, UUID productId);
+
+    Optional<BroadcastProduct> findByBroadcastIdAndProductIdAndDeletedStatusFalse(UUID broadcastId, UUID productId);
 }

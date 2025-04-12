@@ -2,6 +2,7 @@ package com.live_commerce.product.product.application.service;
 
 import com.live_commerce.product.product.application.dto.ProductCreateRequestDto;
 import com.live_commerce.product.product.application.dto.ProductResponseDto;
+import com.live_commerce.product.product.application.dto.ProductSummaryDto;
 import com.live_commerce.product.product.application.dto.ProductUpdateRequestDto;
 import com.live_commerce.product.product.application.mapper.ProductMapper;
 import com.live_commerce.product.product.domain.exception.ProductException;
@@ -14,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -73,4 +76,10 @@ public class ProductService {
         product.delete("temp");
     }
 
+    public List<ProductSummaryDto> getProductsByIds(List<UUID> productIds) {
+        return productRepository.findAllByIdInAndDeletedStatusFalse(productIds).stream()
+                .map(ProductSummaryDto::fromEntity)
+                .collect(Collectors.toList());
+        // TODO: 추후 성능 고려하여 요청 개수 제한 로직 추가할 것
+    }
 }
