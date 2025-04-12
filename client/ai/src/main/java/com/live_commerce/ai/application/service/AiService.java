@@ -32,26 +32,11 @@ public class AiService {
 	private final PromptGenerator promptGenerator;
 	private final GeminiServiceAdapter geminiServiceAdapter;
 	private final ObjectMapper objectMapper;
-	// private final ChatClient chatClient;
 
 	private static final int MAX_CHAT_MESSAGES = 50;
 
 	public AiCreateResponseDto analyze(AiRequestDto request) {
-
-		// TODO: 추후 chat-service 연동 시, 아래 부분을 FeignClient 호출로 대체할 예정
-		// 현재는 임시로 AiRequestDto 내 chat_messages 직접 주입받음
 		List<AiRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
-
-	/*
-		[향후 구조]
-		List<ChatMessagesResponse.ChatMessage> messages =
-			chatClient.getChatMessages(request.live_broadcast_id()).content();
-
-		List<String> trimmed = messages.size() > MAX_CHAT_MESSAGES
-			? messages.subList(messages.size() - MAX_CHAT_MESSAGES, messages.size())
-				.stream().map(ChatMessage::message).toList()
-			: messages.stream().map(ChatMessage::message).toList();
-	*/
 
 		List<AiRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES
 			? messages.subList(messages.size() - MAX_CHAT_MESSAGES, messages.size())
