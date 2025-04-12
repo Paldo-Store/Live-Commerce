@@ -86,7 +86,13 @@ public class BroadcastProductService {
         Page<BroadcastProductListResponseDto> page = new PageImpl<>(content, pageable, productIds.getTotalElements());
 
         return ProductPageResponse.from(page);
+    }
 
-        //return new PageImpl<>(content, pageable, productIds.getTotalElements());
+
+    @Transactional(readOnly = true)
+    public boolean existsByBroadcastIdAndProductId(UUID broadcastId, UUID productId) {
+        liveBroadcastValidator.validateExists(broadcastId);
+
+        return broadcastProductRepository.existsByBroadcastIdAndProductIdAndDeletedStatusFalse(broadcastId, productId);
     }
 }
