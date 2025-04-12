@@ -27,6 +27,7 @@ public class Chat extends BaseEntity {
     @Column(name = "chatting", nullable = false)
     private String chatting;
 
+    //채팅 생성
     public Chat(String userId, String chatting) {
         this.userId = UUID.fromString(userId);
         this.chatting = chatting;
