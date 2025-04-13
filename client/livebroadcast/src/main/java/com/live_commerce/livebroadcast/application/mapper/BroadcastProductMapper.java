@@ -10,19 +10,19 @@ public class BroadcastProductMapper {
 
     public static BroadcastProductResponseDto entityToDto(BroadcastProduct entity) {
         return new BroadcastProductResponseDto(
-                entity.getId(),
-                entity.getBroadcastId(),
+                entity.getBroadcastProductId(),
+                entity.getLiveBroadcastId(),
                 entity.getProductId()
         );
     }
 
     public static BroadcastProduct connectDtoToEntity(BroadcastProductConnectDto dto) {
-        return BroadcastProduct.create(dto.broadcastId(), dto.productId());
+        return BroadcastProduct.create(dto.liveBroadcastId(), dto.productId());
     }
 
     public static BroadcastProductConnectDto toConnectDto(LiveBroadcast broadcast, ExternalProductResponseDto productDto) {
         return new BroadcastProductConnectDto(
-                broadcast.getId(),
+                broadcast.getLiveBroadcastId(),
                 productDto.productId()
         );
     }

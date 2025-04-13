@@ -20,7 +20,4 @@ public interface ProductClient {
     @PostMapping("/api/v1/products/bulk")
     ApiResponse<List<ProductSummaryDto>> getProducts(@RequestBody List<UUID> productIds);
 
-    @GetMapping("/api/v1/companies/{companyId}")
-    ApiResponse<ExternalCompanyResponseDto> getCompany(@PathVariable("companyId") UUID companyId);
-
 }

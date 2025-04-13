@@ -10,12 +10,7 @@ public class FeignConfig {
 
     @Bean
     public ErrorDecoder errorDecoder() {
-        return (methodKey, response) -> {
-            if (response.status() == 404) {
-                return LiveBroadcastException.forExternalProductNotFound();
-            }
-            return new RuntimeException("Feign Error: " + response.status());
-        };
+        return new ErrorDecoder.Default();
     }
 
 }

@@ -19,19 +19,19 @@ public class BroadcastProduct extends BaseEntity{
 
     @Id
     @UuidGenerator
-    private UUID id;
+    private UUID broadcastProductId;
 
-    private UUID broadcastId;
+    private UUID liveBroadcastId;
 
     private UUID productId;
 
-    private BroadcastProduct(UUID broadcastId, UUID productId) {
-        this.broadcastId = broadcastId;
+    private BroadcastProduct(UUID liveBroadcastId, UUID productId) {
+        this.liveBroadcastId = liveBroadcastId;
         this.productId = productId;
     }
 
-    public static BroadcastProduct create(UUID broadcastId, UUID productId) {
-        return new BroadcastProduct(broadcastId, productId);
+    public static BroadcastProduct create(UUID liveBroadcastId, UUID productId) {
+        return new BroadcastProduct(liveBroadcastId, productId);
     }
 
 }
