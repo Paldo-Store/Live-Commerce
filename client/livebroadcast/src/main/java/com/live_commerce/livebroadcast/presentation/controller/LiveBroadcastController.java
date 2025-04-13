@@ -7,6 +7,7 @@ import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastUpda
 import com.live_commerce.livebroadcast.application.service.LiveBroadcastService;
 import com.live_commerce.livebroadcast.infrastructure.common.ResponseUtil;
 import com.live_commerce.livebroadcast.presentation.common.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,7 @@ public class LiveBroadcastController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<LiveBroadcastResponseDto>> createBroadcast(
-            @RequestBody LiveBroadcastCreateRequestDto requestDto
+            @RequestBody @Valid LiveBroadcastCreateRequestDto requestDto
     ) {
         LiveBroadcastResponseDto responseDto = liveBroadcastService.createBroadcast(requestDto);
         return ResponseUtil.success(responseDto);

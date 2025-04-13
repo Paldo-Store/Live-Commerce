@@ -1,10 +1,8 @@
 package com.live_commerce.livebroadcast.application.dto.request;
 
-import com.live_commerce.livebroadcast.domain.model.BroadcastStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

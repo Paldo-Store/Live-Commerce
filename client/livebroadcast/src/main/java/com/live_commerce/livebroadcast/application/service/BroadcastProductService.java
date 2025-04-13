@@ -71,8 +71,7 @@ public class BroadcastProductService {
     public BroadcastProductPageResponse getBroadcastProducts(UUID liveBroadcastId, Pageable pageable) {
         Page<UUID> productIds = broadcastProductQueryRepository.findProductIdsByBroadcastId(liveBroadcastId, pageable);
 
-        //TODO validator 에다가 빼버려
-        List<ProductSummaryDto> productSummaries = productClient.getProducts(productIds.getContent()).getData();
+        List<ProductSummaryDto> productSummaries = productValidator.getValidProductsOrThrow(productIds.getContent());
 
         Map<UUID, ProductSummaryDto> summaryMap = productSummaries.stream()
                 .collect(Collectors.toMap(ProductSummaryDto::id, Function.identity()));
