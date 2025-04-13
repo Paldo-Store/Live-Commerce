@@ -31,17 +31,20 @@ public record UserSignUpRequestDto(
 
 	boolean alarmConsent,
 
-	UserRole userRole
+	UserRole userRole,
+
+	String masterKey // MASTER 가입 시 필수
 
 ) {
-	public User toEntity(String encodedPassword) {
+	public User toEntity(String encodedPassword, boolean approved) {
 		return User.of(
 			this.username,
 			encodedPassword,
 			this.email,
 			this.nickname,
 			this.alarmConsent,
-			this.userRole
+			this.userRole,
+			approved
 		);
 	}
 }

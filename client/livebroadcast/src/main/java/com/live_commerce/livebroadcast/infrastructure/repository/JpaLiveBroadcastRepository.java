@@ -12,4 +12,6 @@ import java.util.UUID;
 public interface JpaLiveBroadcastRepository extends JpaRepository<LiveBroadcast, UUID>, LiveBroadcastRepository {
 
     Optional<LiveBroadcast> findByIdAndDeletedStatusFalse(UUID id);
+
+    boolean existsByIdAndDeletedStatusFalse(UUID broadcastId);
 }

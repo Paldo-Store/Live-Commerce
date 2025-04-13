@@ -14,6 +14,7 @@ import com.live_commerce.user.application.dto.auth.response.TokenReissueResponse
 import com.live_commerce.user.application.exception.CustomException;
 import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
+import com.live_commerce.user.domain.model.UserRole;
 import com.live_commerce.user.domain.repository.UserRepository;
 import com.live_commerce.user.infrastructure.common.JwtUtil;
 import com.live_commerce.user.infrastructure.common.PasswordGenerator;
@@ -38,14 +39,37 @@ public class AuthService {
 	@Value("${service.jwt.refresh-expiration}")
 	private long refreshTokenExpirationMillis;
 
+	@Value("${user.master-key}")
+	private String masterKey;
+
+
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
 		validateEmail(request.email());
+
+		// MASTER 권한은 등록 키가 필요
+		if (request.userRole() == UserRole.MASTER) {
+			validateMasterRegistrationKey(request.masterKey());
+		}
+
+		// SELLER, SHOW_HOST는 기본적으로 비승인 상태로 가입됨
+		boolean approved = switch (request.userRole()) {
+			case SELLER, SHOW_HOST -> false;
+			default -> true;
+		};
+
 		String encodedPassword = passwordEncoder.encode(request.password());
-		User user = request.toEntity(encodedPassword);
+		User user = request.toEntity(encodedPassword, approved);
 		User savedUser = userRepository.save(user);
 		return UserSignUpResponseDto.from(savedUser);
 	}
+
+	private void validateMasterRegistrationKey(String inputKey) {
+		if (!inputKey.equals(masterKey)) {
+			throw new CustomException(UserExceptionCode.INVALID_MASTER_KEY);
+		}
+	}
+
 
 	@Transactional
 	public UserSignInResponseDto signIn(UserSignInRequestDto requestDto) {
@@ -53,6 +77,11 @@ public class AuthService {
 			.filter(u -> passwordEncoder.matches(requestDto.password(), u.getPassword()))
 			.map(this::validateActiveUser)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.INVALID_CREDENTIALS));
+
+		// 승인 여부 체크
+		if (!user.isApproved()) {
+			throw new CustomException(UserExceptionCode.UNAPPROVED_USER);
+		}
 
 		UUID userId = user.getUserId();
 		String accessToken = jwtUtil.createAccessToken(userId, user.getUsername(), user.getUserRole());
@@ -125,6 +154,15 @@ public class AuthService {
 		user.changePassword(encoded);
 		mailService.sendTemporaryPassword(email, tempPassword);
 	}
+
+	@Transactional
+	public void approveUser(UUID userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+
+		user.approve();
+	}
+
 
 	private User findActiveUserByEmail(String email) {
 		return userRepository.findByEmail(email)

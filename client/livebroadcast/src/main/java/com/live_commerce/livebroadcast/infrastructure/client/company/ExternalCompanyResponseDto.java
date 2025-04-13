@@ -1,4 +1,4 @@
-package com.live_commerce.livebroadcast.infrastructure.client;
+package com.live_commerce.livebroadcast.infrastructure.client.company;
 
 import java.util.UUID;
 
