@@ -1,5 +1,6 @@
 package com.live_commerce.payment.application.service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,23 +37,46 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
+	private final RedisTemplate<String, String> redisTemplate;
+
+	private static final String LOCK_PREFIX = "payment:lock:";
+	private static final String LOCKED_VALUE = "LOCKED";
+	private static final Duration LOCK_DURATION = Duration.ofSeconds(30);
+
 
 	@Transactional
 	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
-		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
-			user.getUserId(),
-			dto.orderId(),
-			dto.amount(),
-			dto.itemName()
+		String lockKey = LOCK_PREFIX + dto.orderId();
+
+		// 락 획득 시도
+		boolean locked = Boolean.TRUE.equals(
+			redisTemplate.opsForValue().setIfAbsent(lockKey, LOCKED_VALUE, LOCK_DURATION)
 		);
 
-		Payment payment = dto.toEntity(user.getUserId());
-		payment.assignTid(readyDto.tid());
-		paymentRepository.save(payment);
+		if (!locked) {
+			throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT_IN_PROGRESS);
+		}
 
-		return PaymentReadyResponseDto.from(readyDto);
+		try {
+			paymentRepository.findByOrderId(dto.orderId()).ifPresent(existing -> {
+				throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT);
+			});
+
+			KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
+				user.getUserId(), dto.orderId(), dto.amount(), dto.itemName()
+			);
+
+			Payment payment = dto.toEntity(user.getUserId());
+			payment.assignTid(readyDto.tid());
+			paymentRepository.save(payment);
+
+			return PaymentReadyResponseDto.from(readyDto);
+		} finally {
+			if (locked) {
+				redisTemplate.delete(lockKey);
+			}
+		}
 	}
-
 
 	@Transactional
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
