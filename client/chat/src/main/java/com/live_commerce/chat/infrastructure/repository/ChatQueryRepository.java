@@ -40,7 +40,6 @@ public class ChatQueryRepository {
 
     public Page<Chat> findAllByUserId(UUID userId, Pageable pageable) {
         QChat chat = QChat.chat;
-
         List<Chat> chats = queryFactory
                 .selectFrom(chat)
                 .where(chat.userId.eq(userId))
@@ -57,6 +56,4 @@ public class ChatQueryRepository {
 
         return new PageImpl<>(chats, pageable, total);
     }
-
-
 }

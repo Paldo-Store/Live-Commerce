@@ -27,9 +27,9 @@ public class ChatService {
     private final ChatQueryRepository chatQueryRepository;
 
     @Transactional
-    public ChatCreateResponse createChat(ChatCreateRequest request, String userId) {
+    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
         //chat 저장
-        Chat chat = new Chat(userId, request.chatting());
+        Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);
         return ChatCreateResponse.of(saved);
     }

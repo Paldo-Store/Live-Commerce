@@ -33,7 +33,7 @@ public class ChatController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         //userId 가져오기
         String userId = authentication.getName();
-        ChatCreateResponse response = chatService.createChat(request, userId);
+        ChatCreateResponse response = chatService.createChat(request, UUID.fromString(userId));
         return ResponseUtil.success(response);
     }
 
