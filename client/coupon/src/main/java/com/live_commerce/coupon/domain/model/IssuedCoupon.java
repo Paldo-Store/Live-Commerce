@@ -3,6 +3,7 @@ package com.live_commerce.coupon.domain.model;
 import com.live_commerce.coupon.presentation.dto.request.IssuedCouponRequest;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.*;
@@ -23,8 +24,7 @@ public class IssuedCoupon {
   @Column(nullable = false, updatable = false)
   private String couponCode;
 
-  @Column(nullable = false)
-  private boolean isUsed;
+  private Boolean isUsed;
 
   private LocalDateTime usedAt;
 
@@ -41,15 +41,25 @@ public class IssuedCoupon {
     this.usedAt = usedAt;
     this.expiresAt = expiresAt;
   }
-  public static IssuedCoupon from(IssuedCouponRequest request){
+
+  public static IssuedCoupon from(IssuedCouponRequest request,
+      Optional<CouponPolicy> couponPolicy) {
     return IssuedCoupon.builder()
         .id(UUID.randomUUID())
         .userId(request.userId())
         .couponCode(request.couponCode())
         .isUsed(false)
-        .usedAt(request.usedAt())
-        .expiresAt(request.expiresAt())
+        .usedAt(null)
+        .expiresAt(couponPolicy.get().getEndAt())
         .build();
+  }
+
+  public void useCoupon() {
+    if (this.isUsed) {
+      throw new IllegalStateException("This coupon has already been used");
+    }
+    this.isUsed = true;
+    this.usedAt = LocalDateTime.now();
   }
 
 }
