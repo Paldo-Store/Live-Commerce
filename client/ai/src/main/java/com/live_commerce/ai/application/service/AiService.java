@@ -21,6 +21,7 @@ import com.live_commerce.ai.domain.model.AI;
 import com.live_commerce.ai.domain.repository.AiRepository;
 import com.live_commerce.ai.domain.prompt.PromptGenerator;
 import com.live_commerce.ai.infrastructure.client.GeminiServiceAdapter;
+import com.live_commerce.ai.infrastructure.security.RequestUserDetails;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,29 +44,23 @@ public class AiService {
 			: messages;
 
 		String prompt = promptGenerator.generate(trimmed);
-		String response = geminiServiceAdapter.generateText(prompt);
-
-		String requestPayloadJson;
-		try {
-			requestPayloadJson = objectMapper.writeValueAsString(request);
-		} catch (Exception e) {
-			throw new CustomException(AiExceptionCode.SERIALIZATION_ERROR);
-		}
+		String response = generateResponse(prompt);
+		String requestPayloadJson = serializeRequest(request);
 
 		AI saved = aiRepository.save(AI.of(request.live_broadcast_id(), requestPayloadJson, response));
 		return AiCreateResponseDto.from(saved);
 	}
 
 	@Transactional(readOnly = true)
-	public AiGetResponseDto getAiAnalysis(UUID id) {
-		AI ai = aiRepository.findById(id)
-			.orElseThrow(() -> new CustomException(AiExceptionCode.ANALYSIS_NOT_FOUND));
-
+	public AiGetResponseDto getAiAnalysis(UUID id, RequestUserDetails userDetails) {
+		validateAiReadPermission(userDetails);
+		AI ai = findAiById(id);
 		return AiGetResponseDto.from(ai);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<AiGetResponseDto> getAiAnalysisList(AiSearchCondition condition, Pageable pageable) {
+	public Page<AiGetResponseDto> getAiAnalysisList(AiSearchCondition condition, Pageable pageable, RequestUserDetails userDetails) {
+		validateAiReadPermission(userDetails);
 		int size = pageable.getPageSize();
 		if (size != 10 && size != 30 && size != 50) {
 			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
@@ -78,6 +73,53 @@ public class AiService {
 
 		return new PageImpl<>(dtoList, pageable, dtoList.size());
 	}
+
+	@Transactional
+	public void deleteAiAnalysis(UUID id, RequestUserDetails userDetails) {
+		validateAiDeletePermission(userDetails);
+		AI ai = findAiById(id);
+		ai.markAsDeleted(userDetails.getUsername());
+	}
+
+	private String generateResponse(String prompt) {
+		try {
+			return geminiServiceAdapter.generateText(prompt);
+		} catch (Exception e) {
+			throw new CustomException(AiExceptionCode.GEMINI_API_ERROR);
+		}
+	}
+
+	private String serializeRequest(AiRequestDto request) {
+		try {
+			return objectMapper.writeValueAsString(request);
+		} catch (Exception e) {
+			throw new CustomException(AiExceptionCode.SERIALIZATION_ERROR);
+		}
+	}
+
+	private void validateAiReadPermission(RequestUserDetails userDetails) {
+		if (!hasMasterRole(userDetails)) {
+			throw new CustomException(AiExceptionCode.FORBIDDEN);
+		}
+	}
+
+	private void validateAiDeletePermission(RequestUserDetails userDetails) {
+		if (!hasMasterRole(userDetails)) {
+			throw new CustomException(AiExceptionCode.FORBIDDEN);
+		}
+	}
+
+	private boolean hasMasterRole(RequestUserDetails userDetails) {
+		return userDetails.getAuthorities().stream()
+			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
+	}
+
+	private AI findAiById(UUID id) {
+		return aiRepository.findById(id)
+			.orElseThrow(() -> new CustomException(AiExceptionCode.ANALYSIS_NOT_FOUND));
+	}
+
+
 
 
 }
