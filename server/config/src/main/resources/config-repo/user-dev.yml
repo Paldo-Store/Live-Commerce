@@ -7,7 +7,9 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
+    defer-datasource-initialization: true
+
     properties:
       hibernate:
         show_sql: true
@@ -19,6 +21,11 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/create-user.sql
 
   data:
     redis:
@@ -40,4 +47,8 @@ service:
     access-expiration: 3600000
     refresh-expiration: 10800000
     secret-key: ${JWT_SECRET_KEY}
+
+user:
+  master-key: ${MASTER_KEY}
+
 

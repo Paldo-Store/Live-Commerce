@@ -1,7 +1,11 @@
 package com.live_commerce.user.presentation.controller;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +21,6 @@ import com.live_commerce.user.application.dto.auth.response.TokenReissueResponse
 import com.live_commerce.user.application.dto.auth.response.UserSignInResponseDto;
 import com.live_commerce.user.application.dto.auth.response.UserSignUpResponseDto;
 import com.live_commerce.user.application.service.AuthService;
-import com.live_commerce.user.application.service.MailService;
 import com.live_commerce.user.infrastructure.common.ResponseUtil;
 import com.live_commerce.user.infrastructure.security.RequestUserDetails;
 import com.live_commerce.user.presentation.common.ApiResponse;
@@ -85,4 +88,12 @@ public class AuthController {
 		TokenReissueResponseDto response = authService.reissueToken(request.refreshToken());
 		return ResponseUtil.success(response);
 	}
+
+	@PostMapping("/approve/{userId}")
+	@PreAuthorize("hasRole('MASTER')")
+	public ResponseEntity<ApiResponse<String>> approveUser(@PathVariable UUID userId) {
+		authService.approveUser(userId);
+		return ResponseUtil.success("사용자가 승인되었습니다.");
+	}
+
 }
