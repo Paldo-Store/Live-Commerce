@@ -9,7 +9,6 @@ import java.util.UUID;
 
 public interface LiveBroadcastRepository {
     <S extends LiveBroadcast> S save(S liveBroadcast);
-    Optional<LiveBroadcast> findById(UUID id);
-    Optional<LiveBroadcast> findByIdAndDeletedStatusFalse(UUID id);
-    boolean existsByIdAndDeletedStatusFalse(UUID broadcastId);
+    Optional<LiveBroadcast> findByLiveBroadcastIdAndDeletedStatusFalse(UUID id);
+    boolean existsByLiveBroadcastIdAndDeletedStatusFalse(UUID broadcastId);
 }

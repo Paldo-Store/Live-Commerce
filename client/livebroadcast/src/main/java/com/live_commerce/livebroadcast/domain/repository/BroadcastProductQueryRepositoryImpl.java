@@ -27,14 +27,14 @@ public class BroadcastProductQueryRepositoryImpl implements BroadcastProductQuer
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<UUID> findProductIdsByBroadcastId(UUID broadcastId, Pageable pageable) {
+    public Page<UUID> findProductIdsByBroadcastId(UUID liveBroadcastId, Pageable pageable) {
         QBroadcastProduct bp = QBroadcastProduct.broadcastProduct;
 
         List<UUID> productIds = queryFactory
                 .select(bp.productId)
                 .from(bp)
                 .where(
-                        bp.broadcastId.eq(broadcastId),
+                        bp.liveBroadcastId.eq(liveBroadcastId),
                         bp.deletedStatus.isFalse()
                 )
                 .orderBy(getOrderSpecifier(pageable.getSort(), bp))
@@ -47,7 +47,7 @@ public class BroadcastProductQueryRepositoryImpl implements BroadcastProductQuer
                         .select(bp.count())
                         .from(bp)
                         .where(
-                                bp.broadcastId.eq(broadcastId),
+                                bp.liveBroadcastId.eq(liveBroadcastId),
                                 bp.deletedStatus.isFalse()
                         )
                         .fetchOne()

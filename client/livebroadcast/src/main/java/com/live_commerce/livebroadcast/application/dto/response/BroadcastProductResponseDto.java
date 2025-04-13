@@ -5,8 +5,8 @@ import lombok.Builder;
 import java.util.UUID;
 
 public record BroadcastProductResponseDto (
-        UUID id,
-        UUID broadcastId,
+        UUID broadcastProductId,
+        UUID liveBroadcastId,
         UUID productId
 ){
 }

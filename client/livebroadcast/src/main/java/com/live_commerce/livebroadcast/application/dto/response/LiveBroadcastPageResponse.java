@@ -1,18 +1,17 @@
 package com.live_commerce.livebroadcast.application.dto.response;
 
-import com.live_commerce.livebroadcast.infrastructure.client.product.ProductSummaryDto;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-public record ProductPageResponse (
-        List<BroadcastProductListResponseDto> products,
+public record LiveBroadcastPageResponse (
+        List<LiveBroadcastResponseDto> products,
         PaginationMeta pagination
 ){
-    public static ProductPageResponse from(Page<BroadcastProductListResponseDto> page) {
-        return new ProductPageResponse(
+    public static LiveBroadcastPageResponse from(Page<LiveBroadcastResponseDto> page) {
+        return new LiveBroadcastPageResponse(
                 page.getContent(),
-                new PaginationMeta(
+                new LiveBroadcastPageResponse.PaginationMeta(
                         page.getNumber(),
                         page.getSize(),
                         page.getTotalPages(),
@@ -30,3 +29,4 @@ public record ProductPageResponse (
             boolean isLast
     ) {}
 }
+

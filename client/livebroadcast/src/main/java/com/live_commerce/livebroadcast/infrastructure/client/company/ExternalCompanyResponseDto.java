@@ -1,8 +1,9 @@
 package com.live_commerce.livebroadcast.infrastructure.client.company;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.UUID;
 
-public class ExternalCompanyResponseDto {
-
-    private UUID companyId;
-}
+public record ExternalCompanyResponseDto (
+        @JsonProperty("id") UUID companyId
+) {}

@@ -50,8 +50,8 @@ public class LiveBroadcastServiceTest {
 
         // then
         assertNotNull(responseDto);
-        assertEquals(requestDto.getBroadcastName(), responseDto.getBroadcastName());
-        assertEquals(requestDto.getStartTime(), responseDto.getStartTime());
+        assertEquals(requestDto.broadcastName(), responseDto.broadcastName());
+        assertEquals(requestDto.startTime(), responseDto.startTime());
 
         // repository.save가 실제로 호출되었는지 검증
         Mockito.verify(liveBroadcastRepository, Mockito.times(1)).save(Mockito.any(LiveBroadcast.class));

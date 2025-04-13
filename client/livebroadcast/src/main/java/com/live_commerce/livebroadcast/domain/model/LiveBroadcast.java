@@ -20,7 +20,7 @@ public class LiveBroadcast extends BaseEntity {
 
     @Id
     @UuidGenerator
-    private UUID id;
+    private UUID liveBroadcastId;
 
     @Column(nullable = false)
     private String broadcastName;
