@@ -3,7 +3,7 @@ package com.live_commerce.livebroadcast.application.service;
 import com.live_commerce.livebroadcast.application.dto.request.BroadcastProductConnectDto;
 import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductListResponseDto;
 import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductResponseDto;
-import com.live_commerce.livebroadcast.application.dto.response.ProductPageResponse;
+import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductPageResponse;
 import com.live_commerce.livebroadcast.application.mapper.BroadcastProductMapper;
 import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValidator;
 import com.live_commerce.livebroadcast.application.validation.ProductValidator;
@@ -42,13 +42,13 @@ public class BroadcastProductService {
 
 
     @Transactional
-    public BroadcastProductResponseDto connectBroadcastProduct(UUID broadcastId, BroadcastProductConnectDto requestDto) {
+    public BroadcastProductResponseDto connectBroadcastProduct(UUID liveBroadcastId, BroadcastProductConnectDto requestDto) {
 
-        LiveBroadcast broadcast = liveBroadcastValidator.validateExists(broadcastId);
+        LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
 
         ExternalProductResponseDto productDto = productValidator.getValidProductOrThrow(requestDto.productId());
 
-        liveBroadcastValidator.validateNotConnected(broadcast.getId(), productDto.productId());
+        liveBroadcastValidator.validateNotConnected(broadcast.getLiveBroadcastId(), productDto.productId());
 
         BroadcastProductConnectDto connectDto = BroadcastProductMapper.toConnectDto(broadcast, productDto);
         BroadcastProduct broadcastProduct = BroadcastProductMapper.connectDtoToEntity(connectDto);
@@ -59,20 +59,19 @@ public class BroadcastProductService {
     }
 
     @Transactional
-    public void disconnectBroadcastProduct(UUID broadcastId, UUID productId) {
-        LiveBroadcast broadcast = liveBroadcastValidator.validateExists(broadcastId);
+    public void disconnectBroadcastProduct(UUID liveBroadcastId, UUID productId) {
+        LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
 
-        BroadcastProduct broadcastProduct = liveBroadcastValidator.validateConnectedProductExists(broadcast.getId(), productId);
+        BroadcastProduct broadcastProduct = liveBroadcastValidator.validateConnectedProductExists(broadcast.getLiveBroadcastId(), productId);
 
         broadcastProduct.delete("temp");
     }
 
     @Transactional(readOnly = true)
-    public ProductPageResponse getBroadcastProducts(UUID broadcastId, Pageable pageable) {
-        Page<UUID> productIds = broadcastProductQueryRepository.findProductIdsByBroadcastId(broadcastId, pageable);
+    public BroadcastProductPageResponse getBroadcastProducts(UUID liveBroadcastId, Pageable pageable) {
+        Page<UUID> productIds = broadcastProductQueryRepository.findProductIdsByBroadcastId(liveBroadcastId, pageable);
 
-        //TODO validator 에다가 빼버려
-        List<ProductSummaryDto> productSummaries = productClient.getProducts(productIds.getContent()).getData();
+        List<ProductSummaryDto> productSummaries = productValidator.getValidProductsOrThrow(productIds.getContent());
 
         Map<UUID, ProductSummaryDto> summaryMap = productSummaries.stream()
                 .collect(Collectors.toMap(ProductSummaryDto::id, Function.identity()));
@@ -85,14 +84,14 @@ public class BroadcastProductService {
 
         Page<BroadcastProductListResponseDto> page = new PageImpl<>(content, pageable, productIds.getTotalElements());
 
-        return ProductPageResponse.from(page);
+        return BroadcastProductPageResponse.from(page);
     }
 
 
     @Transactional(readOnly = true)
-    public boolean existsByBroadcastIdAndProductId(UUID broadcastId, UUID productId) {
-        liveBroadcastValidator.validateExists(broadcastId);
+    public boolean existsByBroadcastIdAndProductId(UUID liveBroadcastId, UUID productId) {
+        liveBroadcastValidator.validateExists(liveBroadcastId);
 
-        return broadcastProductRepository.existsByBroadcastIdAndProductIdAndDeletedStatusFalse(broadcastId, productId);
+        return broadcastProductRepository.existsByLiveBroadcastIdAndProductIdAndDeletedStatusFalse(liveBroadcastId, productId);
     }
 }
