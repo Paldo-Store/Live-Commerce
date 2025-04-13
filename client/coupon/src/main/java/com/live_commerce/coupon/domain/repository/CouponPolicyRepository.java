@@ -8,5 +8,9 @@ public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, Stri
 
   Optional<CouponPolicy> findByCodeAndDeletedStatusFalse(String code);
 
+  Boolean existsByCodeAndDeletedStatusFalse(String code);
+
   List<CouponPolicy> findByDeletedStatusFalse();
+
+  Boolean existsByCode(String code);
 }

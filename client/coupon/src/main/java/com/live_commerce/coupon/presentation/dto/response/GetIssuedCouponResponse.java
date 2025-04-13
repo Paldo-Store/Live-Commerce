@@ -3,25 +3,31 @@ package com.live_commerce.coupon.presentation.dto.response;
 import com.live_commerce.coupon.domain.model.IssuedCoupon;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.List;
 
-public record IssuedCouponResponse(
-
+public record GetIssuedCouponResponse(
     UUID id,
     UUID userId,
     String couponCode,
-    Boolean isUsed,
-    LocalDateTime usedAt,
+    boolean isUsed,
     LocalDateTime expiresAt
 ) {
 
-  public static IssuedCouponResponse fromEntity(IssuedCoupon issuedCoupon) {
-    return new IssuedCouponResponse(
+  public static GetIssuedCouponResponse from(IssuedCoupon issuedCoupon) {
+    return new GetIssuedCouponResponse(
         issuedCoupon.getId(),
         issuedCoupon.getUserId(),
         issuedCoupon.getCouponCode(),
         issuedCoupon.getIsUsed(),
-        issuedCoupon.getUsedAt(),
         issuedCoupon.getExpiresAt()
     );
   }
+
+  public static List<GetIssuedCouponResponse> from(List<IssuedCoupon> issuedCoupons) {
+    return issuedCoupons.stream()
+        .map(GetIssuedCouponResponse::from)
+        .collect(Collectors.toList());
+  }
 }
+

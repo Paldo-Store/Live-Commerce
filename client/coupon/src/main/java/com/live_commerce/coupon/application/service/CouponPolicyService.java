@@ -31,6 +31,7 @@ public class CouponPolicyService {
     return CreateCouponPolicyResponse.fromCouponPolicy(couponPolicy);
   }
 
+  @Transactional(readOnly = true)
   public ReadCouponPolicyResponse getCouponPolicy(String code) {
     CouponPolicy couponPolicy = findCouponPolicyOrElseThrow(code);
     return ReadCouponPolicyResponse.fromCouponPolicy(couponPolicy);
@@ -44,6 +45,7 @@ public class CouponPolicyService {
         });
   }
 
+  @Transactional(readOnly = true)
   public List<ReadCouponPolicyResponse> getCouponPolicies() {
     List<CouponPolicy> couponPolicyList = couponPolicyRepository.findByDeletedStatusFalse();
     return couponPolicyList.stream()

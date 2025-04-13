@@ -4,21 +4,20 @@ import com.live_commerce.coupon.domain.model.IssuedCoupon;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record IssuedCouponResponse(
-
-    UUID id,
-    UUID userId,
+public record UsedIssuedCouponResponse(
+    UUID issuedCouponId,
     String couponCode,
-    Boolean isUsed,
+    UUID userId,
+    boolean isUsed,
     LocalDateTime usedAt,
     LocalDateTime expiresAt
 ) {
 
-  public static IssuedCouponResponse fromEntity(IssuedCoupon issuedCoupon) {
-    return new IssuedCouponResponse(
+  public static UsedIssuedCouponResponse from(IssuedCoupon issuedCoupon) {
+    return new UsedIssuedCouponResponse(
         issuedCoupon.getId(),
-        issuedCoupon.getUserId(),
         issuedCoupon.getCouponCode(),
+        issuedCoupon.getUserId(),
         issuedCoupon.getIsUsed(),
         issuedCoupon.getUsedAt(),
         issuedCoupon.getExpiresAt()

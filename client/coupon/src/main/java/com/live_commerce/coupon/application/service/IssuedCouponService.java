@@ -1,35 +1,120 @@
 package com.live_commerce.coupon.application.service;
 
 import com.live_commerce.coupon.domain.exception.IssuedCouponException;
+import com.live_commerce.coupon.domain.model.CouponPolicy;
+import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.domain.model.IssuedCoupon;
+import com.live_commerce.coupon.domain.repository.CouponPolicyRepository;
 import com.live_commerce.coupon.domain.repository.IssuedCouponRepository;
-import com.live_commerce.coupon.infrastructure.client.CouponPolicyClient;
 import com.live_commerce.coupon.presentation.dto.request.IssuedCouponRequest;
-import com.live_commerce.coupon.presentation.dto.response.IssuedCouponResponse;
-import com.live_commerce.coupon.presentation.dto.response.SearchCouponPolicyResponse;
+import com.live_commerce.coupon.presentation.dto.response.FirstJoinCouponResponse;
+import com.live_commerce.coupon.presentation.dto.response.GetIssuedCouponResponse;
+import com.live_commerce.coupon.presentation.dto.response.IssuedCouponListResponse;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @Transactional
 @AllArgsConstructor
 public class IssuedCouponService {
 
   private final IssuedCouponRepository issuedCouponRepository;
-  private final CouponPolicyClient couponPolicyClient;
+  private final CouponPolicyRepository couponPolicyRepository;
 
+  public IssuedCoupon issueCoupon(IssuedCouponRequest request) {
 
-  public IssuedCouponResponse issueCoupon(IssuedCouponRequest request) {
-
-    SearchCouponPolicyResponse couponPolicy = couponPolicyClient.getCouponPolicy(request.couponCode());
-    if(couponPolicy == null) {
+    Optional<CouponPolicy> couponPolicy = couponPolicyRepository.findByCodeAndDeletedStatusFalse(
+        request.couponCode());
+    if (couponPolicy.isEmpty()) {
       IssuedCouponException.couponPolicyNotFound();
     }
+    IssuedCoupon issuedCoupon = IssuedCoupon.from(request, couponPolicy);
 
-    IssuedCoupon issuedCoupon = IssuedCoupon.from(request);
-    IssuedCoupon savedCoupon = issuedCouponRepository.save(issuedCoupon);
-    return IssuedCouponResponse.fromEntity(savedCoupon);
+    issuedCoupon = issuedCouponRepository.save(issuedCoupon);
+    return issuedCoupon;
   }
 
+
+  public IssuedCoupon useCoupon(UUID couponId) {
+
+    IssuedCoupon issuedCoupon = findIssuedCouponById(couponId);
+
+    checkIfCouponUsed(issuedCoupon);
+
+    return processCouponUsage(issuedCoupon);
+  }
+
+  private IssuedCoupon findIssuedCouponById(UUID couponId) {
+    return issuedCouponRepository.findById(couponId)
+        .orElseThrow(() -> {
+          IssuedCouponException.issuedCouponNotFound();
+          return null;
+        });
+  }
+
+  private void checkIfCouponUsed(IssuedCoupon issuedCoupon) {
+    if (issuedCoupon.getIsUsed()) {
+      IssuedCouponException.alreadyUsedCoupon();
+    }
+  }
+
+  private IssuedCoupon processCouponUsage(IssuedCoupon issuedCoupon) {
+    issuedCoupon.useCoupon();
+    return issuedCouponRepository.save(issuedCoupon);
+  }
+
+  public GetIssuedCouponResponse getIssuedCoupon(UUID id) {
+    IssuedCoupon issuedCoupon = findByIdAndIsUsedFalseOrIsUsedIsNull(id);
+    return GetIssuedCouponResponse.from(issuedCoupon);
+  }
+
+  private IssuedCoupon findByIdAndIsUsedFalseOrIsUsedIsNull(UUID id) {
+    return issuedCouponRepository.findByIdAndIsUsedFalseOrIsUsedIsNull(id)
+        .orElseThrow(() ->
+        {
+          IssuedCouponException.issuedCouponNotFound();
+          return null;
+        });
+  }
+
+  public IssuedCouponListResponse getIssuedCoupons() {
+    List<IssuedCoupon> issuedCoupons = issuedCouponRepository.findAll();
+    return IssuedCouponListResponse.from(issuedCoupons);
+  }
+
+  public FirstJoinCouponResponse issueFirstJoinCoupon(UUID userId) {
+
+    String couponCode = "FIRST_COUPON";
+    CouponPolicy couponPolicy = createFirstJoinCouponPolicy(userId, couponCode);
+    log.info(couponPolicy.toString());
+
+    IssuedCouponRequest request = new IssuedCouponRequest(userId, couponCode);
+    IssuedCoupon issuedCoupon = issueCoupon(request);
+    return FirstJoinCouponResponse.from(issuedCoupon);
+  }
+
+  private CouponPolicy createFirstJoinCouponPolicy(UUID userId, String couponCode) {
+
+    CouponPolicy couponPolicy = CouponPolicy.builder()
+        .code(couponCode)
+        .name("First Join Coupon")
+        .discountType(DISCOUNT_TYPE.FIXED)
+        .discountValue(BigDecimal.valueOf(1000))
+        .minOrderAmt(BigDecimal.valueOf(0))
+        .maxOrderAmt(BigDecimal.valueOf(5000))
+        .startAt(LocalDateTime.now())
+        .endAt(LocalDateTime.now().plusYears(1))
+        .isActive(true)
+        .build();
+
+    couponPolicyRepository.save(couponPolicy);
+    return couponPolicy;
+
+  }
 }

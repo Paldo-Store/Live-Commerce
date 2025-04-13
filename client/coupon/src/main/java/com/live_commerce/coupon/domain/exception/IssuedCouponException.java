@@ -9,11 +9,19 @@ public class IssuedCouponException extends CustomException {
     super(code);
   }
 
-  public static IssuedCouponException couponPolicyNotFound() {
-    return new IssuedCouponException(IssuedCouponExceptionCode.COUPON_POLICY_NOT_FOUND);
+  public static void couponPolicyNotFound() {
+    throw new IssuedCouponException(IssuedCouponExceptionCode.COUPON_POLICY_NOT_FOUND);
   }
 
-  public static IssuedCouponException couponAlreadyIssued() {
-    return new IssuedCouponException(IssuedCouponExceptionCode.COUPON_ALREADY_ISSUED);
+  public static void couponAlreadyIssued() {
+    throw new IssuedCouponException(IssuedCouponExceptionCode.COUPON_ALREADY_ISSUED);
+  }
+
+  public static void issuedCouponNotFound() {
+    throw new IssuedCouponException(IssuedCouponExceptionCode.ISSUED_COUPON_NOT_FOUND);
+  }
+
+  public static void alreadyUsedCoupon() {
+    throw new IssuedCouponException(IssuedCouponExceptionCode.ISSUED_ALREADY_USED);
   }
 }
