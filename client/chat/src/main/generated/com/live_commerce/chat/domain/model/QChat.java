@@ -40,6 +40,10 @@ public class QChat extends EntityPathBase<Chat> {
 
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
+    public final ComparablePath<java.util.UUID> liveBroadcastId = createComparable("liveBroadcastId", java.util.UUID.class);
+
+    public final EnumPath<MessageType> type = createEnum("type", MessageType.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
