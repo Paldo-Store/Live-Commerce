@@ -10,23 +10,30 @@ public class LiveBroadcastException extends CustomException {
     }
 
     public static LiveBroadcastException forLiveBroadcastNotFound() {
-        throw new LiveBroadcastException(LiveBroadcastExceptionCode.NOT_FOUND);
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.NOT_FOUND);
     }
 
-
-//    public static LiveBroadcastException forProductAlreadyConnectedToBroadcast() {
-//        throw new LiveBroadcastException(LiveBroadcastExceptionCode.BROADCAST_PRODUCT_NOT_CONNECTED);
-//    }
-
     public static LiveBroadcastException forProductAlreadyConnected() {
-        throw new LiveBroadcastException(LiveBroadcastExceptionCode.BROADCAST_PRODUCT_ALREADY_CONNECTED);
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.BROADCAST_PRODUCT_ALREADY_CONNECTED);
     }
 
     public static LiveBroadcastException forExternalProductNotFound() {
-        throw new LiveBroadcastException(LiveBroadcastExceptionCode.EXTERNAL_PRODUCT_NOT_FOUND);
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.EXTERNAL_PRODUCT_NOT_FOUND);
     }
 
     public static LiveBroadcastException forConnectedProductNotFound() {
-        throw new LiveBroadcastException(LiveBroadcastExceptionCode.PRODUCT_DISCONNECTED);
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.PRODUCT_DISCONNECTED);
+    }
+
+    public static LiveBroadcastException forExternalCompanyNotFound() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.EXTERNAL_COMPANY_NOT_FOUND);
+    }
+
+    public static LiveBroadcastException forInvalidTimeRange() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.INVALID_TIME_RANGE);
+    }
+
+    public static LiveBroadcastException forUpdateFieldRequired() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.EXCEPTION_FIELD_REQUIRED);
     }
 }

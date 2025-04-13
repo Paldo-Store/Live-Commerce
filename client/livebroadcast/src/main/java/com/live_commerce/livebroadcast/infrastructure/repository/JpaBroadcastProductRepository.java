@@ -11,7 +11,7 @@ import java.util.UUID;
 @Repository
 public interface JpaBroadcastProductRepository extends JpaRepository<BroadcastProduct, UUID>, BroadcastProductRepository {
 
-    boolean existsByBroadcastIdAndProductIdAndDeletedStatusFalse(UUID broadcastId, UUID productId);
+    boolean existsByLiveBroadcastIdAndProductIdAndDeletedStatusFalse(UUID liveBroadcastId, UUID productId);
 
-    Optional<BroadcastProduct> findByBroadcastIdAndProductIdAndDeletedStatusFalse(UUID broadcastId, UUID productId);
+    Optional<BroadcastProduct> findByLiveBroadcastIdAndProductIdAndDeletedStatusFalse(UUID liveBroadcastId, UUID productId);
 }

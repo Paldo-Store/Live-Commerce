@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface BroadcastProductRepository {
     <S extends BroadcastProduct> S save(S broadcastProduct);
 
-    boolean existsByBroadcastIdAndProductIdAndDeletedStatusFalse(UUID broadcastId, UUID productId);
+    boolean existsByLiveBroadcastIdAndProductIdAndDeletedStatusFalse(UUID liveBroadcastId, UUID productId);
 
-    Optional<BroadcastProduct> findByBroadcastIdAndProductIdAndDeletedStatusFalse(UUID broadcastId, UUID productId);
+    Optional<BroadcastProduct> findByLiveBroadcastIdAndProductIdAndDeletedStatusFalse(UUID liveBroadcastId, UUID productId);
 }

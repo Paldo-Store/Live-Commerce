@@ -3,11 +3,13 @@ package com.live_commerce.livebroadcast.application.validation;
 import com.live_commerce.livebroadcast.domain.exception.LiveBroadcastException;
 import com.live_commerce.livebroadcast.infrastructure.client.product.ExternalProductResponseDto;
 import com.live_commerce.livebroadcast.infrastructure.client.product.ProductClient;
+import com.live_commerce.livebroadcast.infrastructure.client.product.ProductSummaryDto;
 import com.live_commerce.livebroadcast.presentation.common.ApiResponse;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -31,4 +33,22 @@ public class ProductValidator {
             throw new RuntimeException("상품 서비스 호출 실패", e);
         }
     }
+
+    public List<ProductSummaryDto> getValidProductsOrThrow(List<UUID> productIds) {
+        try {
+            ApiResponse<List<ProductSummaryDto>> response = productClient.getProducts(productIds);
+            List<ProductSummaryDto> data = response.getData();
+
+            if (data == null || data.size() != productIds.size()) {
+                throw LiveBroadcastException.forExternalProductNotFound(); // 일부 없을 수 있음
+            }
+
+            return data;
+        } catch (FeignException.NotFound e) {
+            throw LiveBroadcastException.forExternalProductNotFound();
+        } catch (FeignException e) {
+            throw new RuntimeException("상품 서비스 호출 실패", e);
+        }
+    }
+
 }
