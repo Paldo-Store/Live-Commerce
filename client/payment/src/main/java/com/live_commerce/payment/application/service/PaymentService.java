@@ -37,19 +37,21 @@ public class PaymentService {
 	private final KakaoPayClient kakaoPayClient;
 
 	@Transactional
-	public PaymentReadyResponseDto readyPayment(RequestUserDetails requestUserDetails, PaymentReadyRequestDto requestDto) {
+	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
 		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
-			requestUserDetails.getUserId(),
-			requestDto.orderId(),
-			requestDto.amount()
+			user.getUserId(),
+			dto.orderId(),
+			dto.amount(),
+			dto.itemName()
 		);
 
-		Payment payment = requestDto.toEntity(requestUserDetails.getUserId());
+		Payment payment = dto.toEntity(user.getUserId());
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}
+
 
 	@Transactional
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {

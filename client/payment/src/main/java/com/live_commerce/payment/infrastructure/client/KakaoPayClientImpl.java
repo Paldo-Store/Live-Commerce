@@ -39,14 +39,15 @@ public class KakaoPayClientImpl implements KakaoPayClient {
 	public KakaoPayReadyDto requestKakaoPayReady(
 		UUID userId,
 		UUID orderId,
-		BigDecimal amount
+		BigDecimal amount,
+		String itemName
 	) {
 		// 1) JSON 형태의 파라미터 구성
 		Map<String, Object> params = new HashMap<>();
 		params.put("cid", kakaoPayCid);
 		params.put("partner_order_id", orderId.toString());
 		params.put("partner_user_id", userId.toString());
-		params.put("item_name", "테스트상품");
+		params.put("item_name", itemName);
 		params.put("quantity", 1);
 		params.put("total_amount", amount.intValue());  // JSON에서는 정수로 처리하는 게 안전함
 		params.put("tax_free_amount", 0);
