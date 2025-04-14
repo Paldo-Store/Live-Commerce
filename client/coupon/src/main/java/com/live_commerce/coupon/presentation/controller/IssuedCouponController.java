@@ -29,7 +29,7 @@ public class IssuedCouponController {
   }
 
   // 쿠폰 사용 요쳥
-  @PatchMapping("/{id}/ues")
+  @PatchMapping("/{id}/use")
   public ResponseEntity<ApiResponse<UsedIssuedCouponResponse>> useCoupon(@PathVariable UUID id) {
     IssuedCoupon issuedCoupon = issuedCouponService.useCoupon(id);
     UsedIssuedCouponResponse response = UsedIssuedCouponResponse.from(issuedCoupon);
@@ -37,10 +37,10 @@ public class IssuedCouponController {
   }
 
   // 단일 쿠폰 조회
-  @GetMapping("/{id}")
+  @GetMapping("/{couponId}")
   public ResponseEntity<ApiResponse<GetIssuedCouponResponse>> getIssuedCoupon(
-      @PathVariable UUID id) {
-    GetIssuedCouponResponse response = issuedCouponService.getIssuedCoupon(id);
+      @PathVariable UUID couponId) {
+    GetIssuedCouponResponse response = issuedCouponService.getIssuedCoupon(couponId);
     return ResponseUtil.success(response);
   }
 
@@ -52,10 +52,10 @@ public class IssuedCouponController {
   }
 
   // 첫 회원가입 쿠폰 발급
-  @PostMapping("/first-join")
-  public ResponseEntity<ApiResponse<FirstJoinCouponResponse>> issueFirstJoinCoupon(
-      UUID userId) {
-    FirstJoinCouponResponse response = issuedCouponService.issueFirstJoinCoupon(userId);
+  @PostMapping("/{userId}/signup-first")
+  public ResponseEntity<ApiResponse<FirstJoinCouponResponse>> issueFirstCoupon(
+      @PathVariable UUID userId) {
+    FirstJoinCouponResponse response = issuedCouponService.issueFirstCoupon(userId);
     return ResponseUtil.success(response);
   }
 }

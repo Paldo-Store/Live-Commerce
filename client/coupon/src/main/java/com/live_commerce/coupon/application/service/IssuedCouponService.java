@@ -43,6 +43,7 @@ public class IssuedCouponService {
 
   public IssuedCoupon useCoupon(UUID couponId) {
 
+    // TODO: 사용하지 않으 쿠폰만 조회
     IssuedCoupon issuedCoupon = findIssuedCouponById(couponId);
 
     checkIfCouponUsed(issuedCoupon);
@@ -69,6 +70,7 @@ public class IssuedCouponService {
     return issuedCouponRepository.save(issuedCoupon);
   }
 
+  @Transactional(readOnly = true)
   public GetIssuedCouponResponse getIssuedCoupon(UUID id) {
     IssuedCoupon issuedCoupon = findByIdAndIsUsedFalseOrIsUsedIsNull(id);
     return GetIssuedCouponResponse.from(issuedCoupon);
@@ -83,36 +85,37 @@ public class IssuedCouponService {
         });
   }
 
+  @Transactional(readOnly = true)
   public IssuedCouponListResponse getIssuedCoupons() {
+    //TODO : 사용자한정
     List<IssuedCoupon> issuedCoupons = issuedCouponRepository.findAll();
     return IssuedCouponListResponse.from(issuedCoupons);
   }
 
-  public FirstJoinCouponResponse issueFirstJoinCoupon(UUID userId) {
+  public FirstJoinCouponResponse issueFirstCoupon(UUID userId) {
 
     String couponCode = "FIRST_COUPON";
-    CouponPolicy couponPolicy = createFirstJoinCouponPolicy(userId, couponCode);
-    log.info(couponPolicy.toString());
+    // TODO : 나중에는 이미 정의되어 있는 쿠폰 정책으로 쿠폰 발급이 이루어져야 함.
+    CouponPolicy couponPolicy = createFirstCouponPolicy(couponCode);
 
-    IssuedCouponRequest request = new IssuedCouponRequest(userId, couponCode);
+    IssuedCouponRequest request = new IssuedCouponRequest(userId, couponPolicy.getCode());
     IssuedCoupon issuedCoupon = issueCoupon(request);
     return FirstJoinCouponResponse.from(issuedCoupon);
   }
 
-  private CouponPolicy createFirstJoinCouponPolicy(UUID userId, String couponCode) {
+  private CouponPolicy createFirstCouponPolicy(String couponCode) {
 
     CouponPolicy couponPolicy = CouponPolicy.builder()
         .code(couponCode)
-        .name("First Join Coupon")
+        .name("First Coupon for Signup")
         .discountType(DISCOUNT_TYPE.FIXED)
-        .discountValue(BigDecimal.valueOf(1000))
+        .discountValue(BigDecimal.valueOf(15000))
         .minOrderAmt(BigDecimal.valueOf(0))
-        .maxOrderAmt(BigDecimal.valueOf(5000))
+        .maxOrderAmt(BigDecimal.valueOf(50000))
         .startAt(LocalDateTime.now())
         .endAt(LocalDateTime.now().plusYears(1))
         .isActive(true)
         .build();
-
     couponPolicyRepository.save(couponPolicy);
     return couponPolicy;
 
