@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.live_commerce.ai.application.dto.request.AiRequestDto;
+import com.live_commerce.ai.application.dto.request.AiAnalyzeRequestDto;
 import com.live_commerce.ai.application.dto.request.AiSearchCondition;
 import com.live_commerce.ai.application.dto.response.AiCreateResponseDto;
 import com.live_commerce.ai.application.dto.response.AiGetResponseDto;
@@ -36,10 +36,10 @@ public class AiService {
 
 	private static final int MAX_CHAT_MESSAGES = 50;
 
-	public AiCreateResponseDto analyze(AiRequestDto request) {
-		List<AiRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
+	public AiCreateResponseDto analyze(AiAnalyzeRequestDto request) {
+		List<AiAnalyzeRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
 
-		List<AiRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES
+		List<AiAnalyzeRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES
 			? messages.subList(messages.size() - MAX_CHAT_MESSAGES, messages.size())
 			: messages;
 
@@ -89,7 +89,7 @@ public class AiService {
 		}
 	}
 
-	private String serializeRequest(AiRequestDto request) {
+	private String serializeRequest(AiAnalyzeRequestDto request) {
 		try {
 			return objectMapper.writeValueAsString(request);
 		} catch (Exception e) {

@@ -9,7 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.live_commerce.ai.application.dto.request.AiRequestDto;
+import com.live_commerce.ai.application.dto.request.AiAnalyzeRequestDto;
 import com.live_commerce.ai.application.dto.request.AiSearchCondition;
 import com.live_commerce.ai.application.dto.response.AiCreateResponseDto;
 import com.live_commerce.ai.application.dto.response.AiGetResponseDto;
@@ -28,7 +28,7 @@ public class AiController {
 	private final AiService aiService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<AiCreateResponseDto>> analyze(@RequestBody AiRequestDto request) {
+	public ResponseEntity<ApiResponse<AiCreateResponseDto>> analyze(@RequestBody AiAnalyzeRequestDto request) {
 		AiCreateResponseDto response = aiService.analyze(request);
 
 		return ResponseUtil.success(response);
