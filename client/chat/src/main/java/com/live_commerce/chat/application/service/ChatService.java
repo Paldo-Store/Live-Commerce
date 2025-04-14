@@ -1,5 +1,6 @@
 package com.live_commerce.chat.application.service;
 
+import com.live_commerce.chat.application.dto.request.ChatAnalyzeRequestDto;
 import com.live_commerce.chat.application.dto.request.ChatCreateRequest;
 import com.live_commerce.chat.application.dto.response.ChatCreateResponse;
 import com.live_commerce.chat.application.dto.response.ChatDeleteResponse;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -109,6 +111,20 @@ public class ChatService {
         chat.delete(userId.toString()); // 실제 삭제 대신 삭제 플래그만 true로 변경
         return ChatDeleteResponse.of(chat);
     }
+
+    @Transactional(readOnly = true)
+    public List<ChatAnalyzeRequestDto> getChatsSince(LocalDateTime sinceTime) {
+        List<Chat> chats = chatRepository.findRecentValidChats(sinceTime);
+
+        return chats.stream()
+            .map(chat -> new ChatAnalyzeRequestDto(
+                chat.getLiveBroadcastId(),
+                chat.getChatting()
+            ))
+            .toList();
+    }
+
+
 
     private boolean hasMasterRole(RequestUserDetails userDetails) {
         return userDetails.getAuthorities().stream()
