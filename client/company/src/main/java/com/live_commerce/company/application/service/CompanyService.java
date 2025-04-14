@@ -34,7 +34,7 @@ public class CompanyService {
     public CompanyCreateResponse createCompany(CompanyCreateRequest request, UUID userId, String role) {
         log.info("User role: " + role);
         // ROLE_MASTER 또는 ROLE_MANAGER만 접근 가능
-        if (!role.equals("ROLE_MASTER") && !role.equals("MANAGER")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("ROLE_SELLER")) {
             throw new AccessDeniedException("업체 생성 권한이 없습니다.");
         }
         //업체 생성 저장
@@ -101,7 +101,7 @@ public class CompanyService {
     public CompanyUpdateResponse updateCompany(UUID companyId, CompanyUpdateRequest request, UUID userId, String role) {
         // ROLE_MASTER 또는 ROLE_MANAGER만 접근 가능
         log.info("User role: " + role);
-        if (!role.equals("ROLE_MASTER") && !role.equals("MANAGER")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("ROLE_SELLER")) {
             throw new AccessDeniedException("업체 생성 권한이 없습니다.");
         }
         final Company company = companyRepository.findById(companyId)
@@ -115,7 +115,7 @@ public class CompanyService {
     public CompanyDeleteResponse  deleteCompany(UUID companyId, UUID userId, String role) {
         // ROLE_MASTER 또는 ROLE_MANAGER만 접근 가능
         log.info("User role: " + role);
-        if (!role.equals("ROLE_MASTER") && !role.equals("MANAGER")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("ROLE_SELLER")) {
             throw new AccessDeniedException("업체 생성 권한이 없습니다.");
         }
         final Company company = companyRepository.findById(companyId)
