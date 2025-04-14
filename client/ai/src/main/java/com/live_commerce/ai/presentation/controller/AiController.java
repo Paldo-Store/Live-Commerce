@@ -2,6 +2,7 @@ package com.live_commerce.ai.presentation.controller;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.live_commerce.ai.application.dto.request.AiRequestDto;
+import com.live_commerce.ai.application.dto.request.AiAnalyzeRequestDto;
 import com.live_commerce.ai.application.dto.request.AiSearchCondition;
 import com.live_commerce.ai.application.dto.response.AiCreateResponseDto;
 import com.live_commerce.ai.application.dto.response.AiGetResponseDto;
@@ -28,11 +29,15 @@ public class AiController {
 	private final AiService aiService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<AiCreateResponseDto>> analyze(@RequestBody AiRequestDto request) {
-		AiCreateResponseDto response = aiService.analyze(request);
+	public ResponseEntity<ApiResponse<AiCreateResponseDto>> analyze(
+		@RequestHeader(value = "X-Internal-Secret", required = false) String secret,
+		@RequestBody AiAnalyzeRequestDto request
+	) {
+		AiCreateResponseDto response = aiService.analyze(request, secret);
 
 		return ResponseUtil.success(response);
 	}
+
 
 	@GetMapping("/{id}")
 	@PreAuthorize("hasRole('MASTER')")

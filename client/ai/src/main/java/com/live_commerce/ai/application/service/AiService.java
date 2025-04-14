@@ -3,6 +3,7 @@ package com.live_commerce.ai.application.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.live_commerce.ai.application.dto.request.AiRequestDto;
+import com.live_commerce.ai.application.dto.request.AiAnalyzeRequestDto;
 import com.live_commerce.ai.application.dto.request.AiSearchCondition;
 import com.live_commerce.ai.application.dto.response.AiCreateResponseDto;
 import com.live_commerce.ai.application.dto.response.AiGetResponseDto;
@@ -36,10 +37,17 @@ public class AiService {
 
 	private static final int MAX_CHAT_MESSAGES = 50;
 
-	public AiCreateResponseDto analyze(AiRequestDto request) {
-		List<AiRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
+	@Value("${internal.secret}")
+	private String internalSecret;
 
-		List<AiRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES
+	public AiCreateResponseDto analyze(AiAnalyzeRequestDto request, String providedSecret) {
+		if (!internalSecret.equals(providedSecret)) {
+			throw new CustomException(AiExceptionCode.UNAUTHORIZED_INTERNAL_REQUEST);
+		}
+
+		List<AiAnalyzeRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
+
+		List<AiAnalyzeRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES
 			? messages.subList(messages.size() - MAX_CHAT_MESSAGES, messages.size())
 			: messages;
 
@@ -89,7 +97,7 @@ public class AiService {
 		}
 	}
 
-	private String serializeRequest(AiRequestDto request) {
+	private String serializeRequest(AiAnalyzeRequestDto request) {
 		try {
 			return objectMapper.writeValueAsString(request);
 		} catch (Exception e) {

@@ -32,6 +32,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		if ((requestUri.startsWith("/api/v1/auth/") && !requestUri.equals("/api/v1/auth/logout")) ||
 			requestUri.startsWith("/swagger-ui/") ||
 			requestUri.startsWith("/v3/api-docs") ||
+			requestUri.startsWith("/api/v1/ai") ||
 			requestUri.startsWith("/actuator")) {
 			filterChain.doFilter(request, response);
 			return;

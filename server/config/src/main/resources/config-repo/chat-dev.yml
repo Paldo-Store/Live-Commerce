@@ -19,3 +19,10 @@ spring:
     username: postgres
     password: 8dostore
     driver-class-name: org.postgresql.Driver
+
+ai-service:
+  url: http://gateway-server
+
+internal:
+  secret: ${INTERNAL_SECRET}
+

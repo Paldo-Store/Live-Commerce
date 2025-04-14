@@ -4,16 +4,16 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.live_commerce.ai.application.dto.request.AiRequestDto;
+import com.live_commerce.ai.application.dto.request.AiAnalyzeRequestDto;
 
 @Component
 public class PromptGenerator {
 
-	public String generate(List<AiRequestDto.ChatMessage> messages) {
+	public String generate(List<AiAnalyzeRequestDto.ChatMessage> messages) {
 		StringBuilder prompt = new StringBuilder();
 		prompt.append("다음은 실시간 라이브 방송 중 고객들이 남긴 채팅 메시지 목록입니다.\n\n");
 
-		for (AiRequestDto.ChatMessage msg : messages) {
+		for (AiAnalyzeRequestDto.ChatMessage msg : messages) {
 			prompt.append("- ").append(msg.message()).append("\n");
 		}
 
