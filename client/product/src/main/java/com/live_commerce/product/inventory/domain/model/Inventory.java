@@ -1,6 +1,7 @@
 package com.live_commerce.product.inventory.domain.model;
 
 
+import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -51,14 +52,29 @@ public class Inventory extends BaseEntity{
     }
 
     public void decrease(int quantity) {
-        if (this.quantity < quantity) {
-            //TODO 예외처리 - 재고부족
+        if (this.availableQuantity < quantity) {
+            throw InventoryException.forInventoryOutOfStock();
         }
+
+        this.availableQuantity -= quantity;
         this.quantity -= quantity;
+
+        if (this.availableQuantity <= 0) {
+            this.inventoryStatus = InventoryStatus.OUT_OF_STOCK;
+        }
     }
 
     public void increase(int quantity) {
+        this.availableQuantity += quantity;
         this.quantity += quantity;
+
+        if (this.inventoryStatus == InventoryStatus.OUT_OF_STOCK && this.availableQuantity > 0) {
+            this.inventoryStatus = InventoryStatus.AVAILABLE;
+        }
+    }
+
+    public void discontinue() {
+        this.inventoryStatus = InventoryStatus.DISCONTINUED;
     }
 
 }

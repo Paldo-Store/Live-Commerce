@@ -25,9 +25,11 @@ public class InventoryController {
         return ResponseUtil.success(responseDto);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<InventoryResponseDto>> getInventoryById(@PathVariable UUID id) {
-        InventoryResponseDto responseDto = inventoryService.getInventory(id);
+    @GetMapping("/{inventoryId}")
+    public ResponseEntity<ApiResponse<InventoryResponseDto>> getInventoryById(@PathVariable UUID inventoryId) {
+        InventoryResponseDto responseDto = inventoryService.getInventory(inventoryId);
         return ResponseUtil.success(responseDto);
     }
+
+
 }

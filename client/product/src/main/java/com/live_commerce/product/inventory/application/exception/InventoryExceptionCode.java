@@ -10,8 +10,9 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum InventoryExceptionCode implements ExceptionCode {
 
-  NOT_FOUND(HttpStatus.NOT_FOUND, "Inventory Not Found"),
-  PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다.");
+  NOT_FOUND(HttpStatus.NOT_FOUND, "재고 정보가 없습니다."),
+  PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."),
+  INVENTORY_OUT_OF_STOCK(HttpStatus.CONFLICT, "재고가 부족합니다.");
 
 
   private final HttpStatus httpStatus;

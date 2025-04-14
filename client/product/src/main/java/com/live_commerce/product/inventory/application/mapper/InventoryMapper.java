@@ -8,6 +8,7 @@ public class InventoryMapper {
 
     public static Inventory createDtoToEntity(InventoryCreateRequestDto dto) {
         return Inventory.builder()
+                .productId(dto.productId())
                 .quantity(dto.quantity())
                 .reservedQuantity(dto.reservedQuantity())
                 .availableQuantity(dto.availableQuantity())
