@@ -20,7 +20,7 @@ public class ProductMapper {
 
     public static ProductResponseDto entityToDto(Product entity) {
         return new ProductResponseDto(
-                entity.getId(),
+                entity.getProductId(),
                 entity.getName(),
                 entity.getDescription(),
                 entity.getPrice(),

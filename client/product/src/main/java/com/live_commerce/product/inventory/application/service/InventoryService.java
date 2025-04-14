@@ -22,7 +22,7 @@ public class InventoryService {
 
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
-        if (!productRepository.existsByIdAndDeletedStatusFalse(requestDto.productId())) {
+        if (!productRepository.existsByProductIdAndDeletedStatusFalse(requestDto.productId())) {
             InventoryException.forProductNotFound();
         }
 

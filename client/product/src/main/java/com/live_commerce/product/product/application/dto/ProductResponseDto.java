@@ -6,7 +6,7 @@ import com.live_commerce.product.product.domain.model.ProductStatus;
 import java.util.UUID;
 
 public record ProductResponseDto (
-        UUID id,
+        UUID productId,
         String name,
         String description,
         Integer price,

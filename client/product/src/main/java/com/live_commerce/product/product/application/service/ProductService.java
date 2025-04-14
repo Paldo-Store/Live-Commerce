@@ -5,6 +5,8 @@ import com.live_commerce.product.product.application.dto.ProductResponseDto;
 import com.live_commerce.product.product.application.dto.ProductSummaryDto;
 import com.live_commerce.product.product.application.dto.ProductUpdateRequestDto;
 import com.live_commerce.product.product.application.mapper.ProductMapper;
+import com.live_commerce.product.product.application.validation.CompanyValidator;
+import com.live_commerce.product.product.application.validation.ProductValidator;
 import com.live_commerce.product.product.domain.exception.ProductException;
 import com.live_commerce.product.product.domain.model.Product;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
@@ -24,60 +26,45 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-
-    private final CompanyClient companyClient;
+    private final ProductValidator productValidator;
+    private final CompanyValidator companyValidator;
 
     @Transactional
     public ProductResponseDto createProduct(ProductCreateRequestDto requestDto) {
-        ApiResponse<ExternalCompanyResponseDto> companyResponse = companyClient.getCompany(requestDto.companyId());
-         // data 필드로 꺼내기
-        if (companyResponse == null) {
-            ProductException.forCompanyNotFound();
-        }
-        ExternalCompanyResponseDto companyResponseDto = companyResponse.getData();
+        companyValidator.validateExistsAndActiveOrThrow(requestDto.companyId());
 
-        Product product = ProductMapper.createDtoToEntity(requestDto, companyResponseDto.companyId());
+        Product product = ProductMapper.createDtoToEntity(requestDto, requestDto.companyId());
         productRepository.save(product);
+
         return ProductMapper.entityToDto(product);
     }
 
     @Transactional(readOnly = true)
-    public ProductResponseDto getProduct(UUID id) {
-        Product product = productRepository.findByIdAndDeletedStatusFalse(id).orElse(null);
-
-        if (product == null) {
-            ProductException.forProductNotFound();
-        }
+    public ProductResponseDto getProduct(UUID productId) {
+        Product product = productValidator.validateAndFindProduct(productId);
 
         return ProductMapper.entityToDto(product);
     }
 
     @Transactional
-    public ProductResponseDto updateProduct(UUID id, ProductUpdateRequestDto requestDto) {
-        Product product = productRepository.findByIdAndDeletedStatusFalse(id).orElse(null);
-
-        if (product == null) {
-            ProductException.forProductNotFound();
-        }
+    public ProductResponseDto updateProduct(UUID productId, ProductUpdateRequestDto requestDto) {
+        Product product = productValidator.validateAndFindProduct(productId);
 
         product.update(requestDto);
         return ProductMapper.entityToDto(product);
     }
 
     @Transactional
-    public void deleteProduct(UUID id) {
-        Product product = productRepository.findByIdAndDeletedStatusFalse(id).orElse(null);
-
-        if (product == null) {
-            ProductException.forProductNotFound();
-            return;
-        }
+    public void deleteProduct(UUID productId) {
+        Product product = productValidator.validateAndFindProduct(productId);
 
         product.delete("temp");
     }
 
+
+
     public List<ProductSummaryDto> getProductsByIds(List<UUID> productIds) {
-        return productRepository.findAllByIdInAndDeletedStatusFalse(productIds).stream()
+        return productRepository.findAllByProductIdInAndDeletedStatusFalse(productIds).stream()
                 .map(ProductSummaryDto::fromEntity)
                 .collect(Collectors.toList());
         // TODO: 추후 성능 고려하여 요청 개수 제한 로직 추가할 것

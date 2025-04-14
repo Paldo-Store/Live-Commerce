@@ -27,23 +27,24 @@ public class ProductController {
         return ResponseUtil.success(responseDto);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProductResponseDto>> getProduct(@PathVariable UUID id) {
-        ProductResponseDto responseDto = productService.getProduct(id);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductResponseDto>> getProduct(@PathVariable UUID productId) {
+        ProductResponseDto responseDto = productService.getProduct(productId);
         return ResponseUtil.success(responseDto);
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProductResponseDto>> updateProduct(@PathVariable UUID id, @RequestBody ProductUpdateRequestDto requestDto) {
-        ProductResponseDto responseDto = productService.updateProduct(id, requestDto);
+    @PatchMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductResponseDto>> updateProduct(@PathVariable UUID productId, @RequestBody ProductUpdateRequestDto requestDto) {
+        ProductResponseDto responseDto = productService.updateProduct(productId, requestDto);
         return ResponseUtil.success(responseDto);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable UUID id) {
-        productService.deleteProduct(id);
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable UUID productId) {
+        productService.deleteProduct(productId);
         return ResponseUtil.success("상품이 삭제되었습니다.");
     }
+
 
 
 
