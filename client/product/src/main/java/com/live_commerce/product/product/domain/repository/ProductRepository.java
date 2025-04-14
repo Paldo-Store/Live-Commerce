@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface ProductRepository {
     <S extends Product> S save(S product);
-    Optional<Product> findByIdAndDeletedStatusFalse(UUID id);
-    boolean existsByIdAndDeletedStatusFalse(UUID id);
-    List<Product> findAllByIdInAndDeletedStatusFalse(List<UUID> ids);
+    Optional<Product> findByProductIdAndDeletedStatusFalse(UUID id);
+    boolean existsByProductIdAndDeletedStatusFalse(UUID id);
+    List<Product> findAllByProductIdInAndDeletedStatusFalse(List<UUID> ids);
 }

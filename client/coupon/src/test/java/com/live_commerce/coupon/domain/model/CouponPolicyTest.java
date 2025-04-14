@@ -2,6 +2,7 @@ package com.live_commerce.coupon.domain.model;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static reactor.core.publisher.Mono.when;
 
 import com.live_commerce.coupon.domain.exception.CouponDiscountTypeException;
 import java.math.BigDecimal;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.*;
 
 public class CouponPolicyTest {
 
-  private UUID code;
+  private String code;
   private String name;
   private DISCOUNT_TYPE discountType;
   private BigDecimal discountValue;
@@ -23,7 +24,7 @@ public class CouponPolicyTest {
 
   @BeforeEach
   void setUp() {
-    code = UUID.randomUUID();
+    code = "SUMMER_SALE_100";
     name = "테스트 쿠폰";
     discountType = DISCOUNT_TYPE.FIXED;
     discountValue = BigDecimal.valueOf(0.1);
@@ -82,11 +83,8 @@ public class CouponPolicyTest {
     discountType = DISCOUNT_TYPE.FIXED;
     minOrderAmt = null;
 
-    //when
-    CouponPolicy couponPolicy = createCouponPolicy();
-
-    // then
-    assertThatThrownBy(couponPolicy::validateDiscountType)
+    // when & then
+    assertThatThrownBy(() -> createCouponPolicy())
         .isInstanceOf(CouponDiscountTypeException.class)
         .hasMessageContaining("고정 할인 유형에는 최소 주문 금액이 필수입니다.");
   }
@@ -98,11 +96,8 @@ public class CouponPolicyTest {
     discountType = DISCOUNT_TYPE.RATE;
     maxOrderAmt = null;
 
-    //when
-    CouponPolicy couponPolicy = createCouponPolicy();
-
-    // then
-    assertThatThrownBy(couponPolicy::validateDiscountType)
+    // when & then
+    assertThatThrownBy(() -> createCouponPolicy())
         .isInstanceOf(CouponDiscountTypeException.class) // 예외 타입 확인
         .hasMessageContaining("정률 할인 유형에는 최대 주문 금액이 필수입니다.");
   }

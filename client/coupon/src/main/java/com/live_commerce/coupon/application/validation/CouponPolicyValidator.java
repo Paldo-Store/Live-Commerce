@@ -18,7 +18,7 @@ public class CouponPolicyValidator {
   }
 
   public void validateForCreatePolicy(CreateCouponPolicyRequest request) {
-    if (couponPolicyRepository.existsByName(request.name())) {
+    if (couponPolicyRepository.existsById(request.code())) {
       CouponPolicyException.forDuplicateCouponName();
     }
 
@@ -38,10 +38,6 @@ public class CouponPolicyValidator {
   }
 
   public void validateForUpdatePolicy(UpdateCouponPolicyRequest request) {
-    if (couponPolicyRepository.existsByName(request.name())) {
-      CouponPolicyException.forDuplicateCouponName();
-    }
-
     if (request.startAt().isAfter(request.endAt())) {
       CouponPolicyException.forInvalidDateRange();
     }

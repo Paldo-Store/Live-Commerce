@@ -10,9 +10,10 @@ import java.util.UUID;
 
 public interface JpaProductRepository extends JpaRepository<Product, Long>, ProductRepository {
 
-    Optional<Product> findByIdAndDeletedStatusFalse(UUID id);
+    // 단건 조회용
+    Optional<Product> findByProductIdAndDeletedStatusFalse(UUID id);
 
-    boolean existsByIdAndDeletedStatusFalse(UUID id);
+    boolean existsByProductIdAndDeletedStatusFalse(UUID id);
 
-    List<Product> findAllByIdInAndDeletedStatusFalse(List<UUID> ids);
+    List<Product> findAllByProductIdInAndDeletedStatusFalse(List<UUID> ids);
 }

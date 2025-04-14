@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public record LiveBroadcastPageResponse (
-        List<LiveBroadcastResponseDto> products,
+        List<LiveBroadcastResponseDto> liveBroadcasts,
         PaginationMeta pagination
 ){
     public static LiveBroadcastPageResponse from(Page<LiveBroadcastResponseDto> page) {

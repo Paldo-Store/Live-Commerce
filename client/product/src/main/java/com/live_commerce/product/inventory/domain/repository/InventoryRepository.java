@@ -8,5 +8,6 @@ import java.util.UUID;
 public interface InventoryRepository {
 
     <S extends Inventory> S save(S inventory);
-    Optional<Inventory> findByIdAndDeletedStatusFalse(UUID id);
+    Optional<Inventory> findByInventoryIdAndDeletedStatusFalse(UUID id);
+    Optional<Inventory> findByProductIdAndDeletedStatusFalse(UUID productId);
 }

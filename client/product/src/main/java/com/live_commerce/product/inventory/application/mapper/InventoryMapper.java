@@ -17,7 +17,7 @@ public class InventoryMapper {
 
     public static InventoryResponseDto entityToDto(Inventory entity) {
         return new InventoryResponseDto(
-                entity.getId(),
+                entity.getInventoryId(),
                 entity.getProductId(),
                 entity.getQuantity(),
                 entity.getReservedQuantity(),
