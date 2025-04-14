@@ -14,19 +14,21 @@ import reactor.core.publisher.Mono;
 public class AiWebClient {
 
 	private final WebClient webClient;
+	private final String internalSecret;
 
 	public AiWebClient(
 		@Value("${ai-service.url}") String baseUrl,
+		@Value("${internal.secret}") String internalSecret,
 		WebClient.Builder builder
 	) {
-		this.webClient = builder
-			.baseUrl(baseUrl)
-			.build();
+		this.webClient = builder.baseUrl(baseUrl).build();
+		this.internalSecret = internalSecret;
 	}
 
 	public Mono<Void> sendAiAnalyzeRequest(AiAnalyzeRequestDto requestDto) {
 		return webClient.post()
 			.uri("/api/v1/ai")
+			.header("X-Internal-Secret", internalSecret)
 			.bodyValue(requestDto)
 			.retrieve()
 			.bodyToMono(Void.class)
@@ -34,5 +36,6 @@ public class AiWebClient {
 			.doOnError(e -> log.error("AI 분석 요청 실패: {}", e.getMessage()));
 	}
 }
+
 
 

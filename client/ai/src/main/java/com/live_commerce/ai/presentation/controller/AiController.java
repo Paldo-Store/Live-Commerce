@@ -2,6 +2,7 @@ package com.live_commerce.ai.presentation.controller;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +29,15 @@ public class AiController {
 	private final AiService aiService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<AiCreateResponseDto>> analyze(@RequestBody AiAnalyzeRequestDto request) {
-		AiCreateResponseDto response = aiService.analyze(request);
+	public ResponseEntity<ApiResponse<AiCreateResponseDto>> analyze(
+		@RequestHeader(value = "X-Internal-Secret", required = false) String secret,
+		@RequestBody AiAnalyzeRequestDto request
+	) {
+		AiCreateResponseDto response = aiService.analyze(request, secret);
 
 		return ResponseUtil.success(response);
 	}
+
 
 	@GetMapping("/{id}")
 	@PreAuthorize("hasRole('MASTER')")

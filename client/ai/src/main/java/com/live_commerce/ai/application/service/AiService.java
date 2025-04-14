@@ -3,6 +3,7 @@ package com.live_commerce.ai.application.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -36,7 +37,14 @@ public class AiService {
 
 	private static final int MAX_CHAT_MESSAGES = 50;
 
-	public AiCreateResponseDto analyze(AiAnalyzeRequestDto request) {
+	@Value("${internal.secret}")
+	private String internalSecret;
+
+	public AiCreateResponseDto analyze(AiAnalyzeRequestDto request, String providedSecret) {
+		if (!internalSecret.equals(providedSecret)) {
+			throw new CustomException(AiExceptionCode.UNAUTHORIZED_INTERNAL_REQUEST);
+		}
+
 		List<AiAnalyzeRequestDto.ChatMessage> messages = request.request_payload().chat_messages();
 
 		List<AiAnalyzeRequestDto.ChatMessage> trimmed = messages.size() > MAX_CHAT_MESSAGES

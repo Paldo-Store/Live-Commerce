@@ -22,3 +22,7 @@ spring:
 
 ai-service:
   url: http://gateway-server
+
+internal:
+  secret: ${INTERNAL_SECRET}
+
