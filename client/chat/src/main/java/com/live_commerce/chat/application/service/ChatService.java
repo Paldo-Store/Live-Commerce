@@ -8,12 +8,15 @@ import com.live_commerce.chat.application.exception.ChatException;
 import com.live_commerce.chat.domain.model.Chat;
 import com.live_commerce.chat.domain.repository.ChatRepository;
 import com.live_commerce.chat.infrastructure.repository.ChatQueryRepository;
+import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,20 +28,25 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final ChatQueryRepository chatQueryRepository;
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
+    //chat 생성 서비스
     @Transactional
-    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
+    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId, RequestUserDetails userDetails) {
         //chat 저장
         Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);
         return ChatCreateResponse.of(saved);
     }
 
-    // 전체 채팅 조회
+    // chat 전체 채팅 조회
     @Transactional(readOnly = true)
-    public ChatGetResponse getAllChats(int page, int size, String sort, String role) {
+    public ChatGetResponse getAllChats(int page, int size, String sort, RequestUserDetails userDetails) {
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        logger.info("User role: " + role);
+
         // 권한 검증: 관리자와 쇼호스트만 접근 허용
-        if (!role.equals("MASTER") && !role.equals("SHOW_HOST")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("SHOW_HOST")) {
             throw new ChatException("권한이 없습니다. 관리자 또는 쇼호스트만 접근 가능합니다.");
         }
 
@@ -73,20 +81,21 @@ public class ChatService {
 
     //한 유저에 대한 채팅 조회
     @Transactional(readOnly = true)
-    public ChatGetResponse getChatsByUserId(String userId, int page, int size, String sort, String role) {
+    public ChatGetResponse getChatsByUserId(UUID userId, int page, int size, String sort, RequestUserDetails userDetails) {
         Pageable pageable = getPageable(page, size, sort);
-
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
         // 권한 검증: 관리자와 쇼호스트만 접근 허용
-        if (!role.equals("MASTER") && !role.equals("SHOW_HOST")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("SHOW_HOST")) {
             throw new ChatException("권한이 없습니다. 관리자 또는 쇼호스트만 접근 가능합니다.");
         }
 
-        return ChatGetResponse.of(chatQueryRepository.findAllByUserId(UUID.fromString(userId), pageable));
+        return ChatGetResponse.of(chatQueryRepository.findAllByUserId(userId, pageable));
     }
 
     //chat 삭제 service
     @Transactional
-    public ChatDeleteResponse deleteChat(UUID chatId, String userId, String role) {
+    public ChatDeleteResponse deleteChat(UUID chatId, UUID userId, RequestUserDetails userDetails) {
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
         //삭제할 채팅 들고오기
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new ChatException("채팅이 존재하지 않습니다."));
@@ -97,7 +106,12 @@ public class ChatService {
         }
 
         //채팅 삭제
-        chat.delete(userId); // 실제 삭제 대신 삭제 플래그만 true로 변경
+        chat.delete(userId.toString()); // 실제 삭제 대신 삭제 플래그만 true로 변경
         return ChatDeleteResponse.of(chat);
+    }
+
+    private boolean hasMasterRole(RequestUserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
     }
 }

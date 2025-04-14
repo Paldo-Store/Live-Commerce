@@ -7,11 +7,13 @@ import com.live_commerce.chat.application.dto.response.ChatCreateResponse;
 import com.live_commerce.chat.application.service.ChatService;
 import com.live_commerce.chat.domain.model.Chat;
 import com.live_commerce.chat.infrastructure.client.LiveBroadcastClient;
+import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 @Slf4j
@@ -24,7 +26,8 @@ public class ChatSocketController {
 
     @MessageMapping("/chat.send")  // /app/chat.send
     @SendTo("/topic/broadcast/{broadcastId}")  // 방송별로 구독한 클라이언트에게 메시지 전달
-    public ChatMessage sendMessage(@Payload ChatMessage message) {
+    public ChatMessage sendMessage(@Payload ChatMessage message,
+                                   @AuthenticationPrincipal RequestUserDetails userDetails) {
         log.info("Received message: {}", message);
 
         // 1. broadcastId는 외부에서 Feign으로 조회
@@ -45,7 +48,7 @@ public class ChatSocketController {
         );
 
         // 채팅 저장
-        ChatCreateResponse response = chatService.createChat(chatCreateRequest, message.userId());
+        ChatCreateResponse response = chatService.createChat(chatCreateRequest, message.userId(), userDetails);
 
         // 저장된 채팅 메시지를 WebSocket으로 전송
         return message;
