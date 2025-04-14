@@ -3,15 +3,20 @@ package com.live_commerce.product.inventory.application.service;
 import com.live_commerce.product.inventory.application.dto.InventoryCreateRequestDto;
 import com.live_commerce.product.inventory.application.dto.InventoryResponseDto;
 import com.live_commerce.product.inventory.application.mapper.InventoryMapper;
+import com.live_commerce.product.inventory.application.validation.InventoryValidator;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
+import com.live_commerce.product.product.infrastructure.redisson.DistributedLock;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +24,8 @@ public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
+    private final InventoryValidator inventoryValidator;
+    private final RedissonClient redissonClient;
 
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
@@ -43,23 +50,26 @@ public class InventoryService {
         return InventoryMapper.entityToDto(inventory);
     }
 
+    @DistributedLock(key = "#productId")
     @Transactional
     public void decreaseInventory(UUID productId, int quantity) {
-        System.out.println("productId: " + productId);
+        inventoryValidator.validateExistsAndAvailableOrThrow(productId, quantity);
 
-        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
-                .orElseThrow(InventoryException::forInventoryNotFound);
-
-        inventory.decrease(quantity);
-
+        int updated = inventoryRepository.decreaseInventoryAtomically(productId, quantity);
+        if (updated == 0) {
+            throw InventoryException.forInventoryOutOfStock();
+        }
     }
 
+    @DistributedLock(key = "#productId")
     @Transactional
     public void increaseInventory(UUID productId, int quantity) {
-        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
-                .orElseThrow(InventoryException::forInventoryNotFound);
+        inventoryValidator.validateExistsOrThrow(productId);
 
-        inventory.increase(quantity);
+        int updated = inventoryRepository.increaseInventoryAtomically(productId, quantity);
+        if (updated == 0) {
+            throw InventoryException.forInventoryNotFound();
+        }
     }
 
     public boolean isSoldOut(UUID productId) {
