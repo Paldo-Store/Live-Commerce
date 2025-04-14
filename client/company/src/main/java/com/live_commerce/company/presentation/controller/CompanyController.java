@@ -25,7 +25,7 @@ public class CompanyController {
 
     //업체 생성 API
     //MASTER과 업체 관리자만
-    @PostMapping("/")
+    @PostMapping("")
     public ResponseEntity<ApiResponse<CompanyCreateResponse>> createCompany(
             @Valid @RequestBody final CompanyCreateRequest request,
             @AuthenticationPrincipal RequestUserDetails userDetails) {
@@ -37,7 +37,7 @@ public class CompanyController {
 
     //업체 전체 조회 API
     //누구나 가능
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompanies (
             @RequestParam final int page,
             @RequestParam final int size,
