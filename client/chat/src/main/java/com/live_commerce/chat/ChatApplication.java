@@ -2,8 +2,10 @@ package com.live_commerce.chat;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
+@EnableFeignClients(basePackages = "com.live_commerce.chat.infrastructure.client")
 public class ChatApplication {
 
 	public static void main(String[] args) {
