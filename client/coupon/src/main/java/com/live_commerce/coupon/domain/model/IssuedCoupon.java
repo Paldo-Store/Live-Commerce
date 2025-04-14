@@ -45,7 +45,7 @@ public class IssuedCoupon {
   public static IssuedCoupon from(IssuedCouponRequest request,
       Optional<CouponPolicy> couponPolicy) {
     return IssuedCoupon.builder()
-        .id(UUID.randomUUID())
+//        .id(UUID.randomUUID())
         .userId(request.userId())
         .couponCode(request.couponCode())
         .isUsed(false)
