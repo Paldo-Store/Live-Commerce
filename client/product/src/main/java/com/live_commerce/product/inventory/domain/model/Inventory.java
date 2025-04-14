@@ -18,7 +18,7 @@ public class Inventory extends BaseEntity{
 
     @Id
     @UuidGenerator
-    private UUID id;
+    private UUID inventoryId;
 
     private UUID productId;
 

@@ -1,13 +1,12 @@
 package com.live_commerce.product.product.presentation.controller;
 
-import com.live_commerce.product.product.application.dto.ProductCreateRequestDto;
-import com.live_commerce.product.product.application.dto.ProductResponseDto;
-import com.live_commerce.product.product.application.dto.ProductSummaryDto;
-import com.live_commerce.product.product.application.dto.ProductUpdateRequestDto;
+import com.live_commerce.product.product.application.dto.*;
 import com.live_commerce.product.product.application.service.ProductService;
 import com.live_commerce.product.product.infrastructure.common.ResponseUtil;
 import com.live_commerce.product.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,8 +21,8 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ProductResponseDto>> createProduct(@RequestBody ProductCreateRequestDto requestDto) {
-        ProductResponseDto responseDto = productService.createProduct(requestDto);
+    public ResponseEntity<ApiResponse<ProductCreateResponseDto>> createProduct(@RequestBody ProductCreateRequestDto requestDto) {
+        ProductCreateResponseDto responseDto = productService.createProduct(requestDto);
         return ResponseUtil.success(responseDto);
     }
 
@@ -45,7 +44,14 @@ public class ProductController {
         return ResponseUtil.success("상품이 삭제되었습니다.");
     }
 
-
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<ProductPageResponseDto>> searchProducts(
+            @ModelAttribute ProductSearchCondition condition,
+            Pageable pageable
+    ) {
+        ProductPageResponseDto response = productService.searchProducts(condition, pageable);
+        return ResponseUtil.success(response);
+    }
 
 
     @PostMapping("/bulk")

@@ -32,12 +32,21 @@ public class InventoryService {
     }
 
     public InventoryResponseDto getInventory(UUID id) {
-        Inventory inventory = inventoryRepository.findByIdAndDeletedStatusFalse(id).orElse(null);
+        Inventory inventory = inventoryRepository.findByInventoryIdAndDeletedStatusFalse(id).orElse(null);
 
         if (inventory == null) {
             InventoryException.forInventoryNotFound();
         }
 
         return InventoryMapper.entityToDto(inventory);
+    }
+
+    public boolean isSoldOut(UUID productId) {
+        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
+                .orElse(null);
+
+        if (inventory == null) return true;
+
+        return inventory.getQuantity() <= 0;
     }
 }
