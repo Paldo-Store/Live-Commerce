@@ -1,7 +1,7 @@
 package com.live_commerce.livebroadcast.domain.model;
 
 
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastUpdateRequestDto;
+import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastUpdateRequestDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class LiveBroadcast extends BaseEntity {
 
     @Id
     @UuidGenerator
-    private UUID id;
+    private UUID liveBroadcastId;
 
     @Column(nullable = false)
     private String broadcastName;

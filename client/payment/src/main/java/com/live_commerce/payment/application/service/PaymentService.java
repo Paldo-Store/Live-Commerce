@@ -1,0 +1,208 @@
+package com.live_commerce.payment.application.service;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
+import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
+import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
+import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
+import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
+import com.live_commerce.payment.application.exception.CustomException;
+import com.live_commerce.payment.application.exception.PaymentExceptionCode;
+import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.domain.model.Payment;
+import com.live_commerce.payment.domain.model.PaymentStatus;
+import com.live_commerce.payment.domain.repository.PaymentRepository;
+import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
+import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
+import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentService {
+
+	private final PaymentRepository paymentRepository;
+	private final KakaoPayClient kakaoPayClient;
+
+	@Transactional
+	public PaymentReadyResponseDto readyPayment(RequestUserDetails requestUserDetails, PaymentReadyRequestDto requestDto) {
+		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
+			requestUserDetails.getUserId(),
+			requestDto.orderId(),
+			requestDto.amount()
+		);
+
+		Payment payment = requestDto.toEntity(requestUserDetails.getUserId());
+		payment.assignTid(readyDto.tid());
+		paymentRepository.save(payment);
+
+		return PaymentReadyResponseDto.from(readyDto);
+	}
+
+	@Transactional
+	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
+		Payment payment = paymentRepository.findByOrderId(UUID.fromString(requestDto.orderId()))
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+
+		// 1) 승인 가능한 상태인지 체크
+		if (payment.getStatus() != PaymentStatus.PENDING) {
+			payment.updateStatus(PaymentStatus.FAILED); // 승인 전 상태가 아니면 실패 처리
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		// 2) 승인 요청 시도
+		KakaoPayApproveDto approveDto;
+		try {
+			approveDto = kakaoPayClient.requestKakaoPayApprove(
+				requestDto.tid(),
+				requestDto.pgToken(),
+				requestDto.orderId(),
+				userId.toString()
+			);
+		} catch (Exception e) {
+			// 카카오 API 호출 자체가 실패한 경우
+			payment.updateStatus(PaymentStatus.FAILED);
+			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
+		}
+
+		// 3) 성공적으로 승인됐으면 상태 변경
+		payment.updateStatus(PaymentStatus.COMPLETED);
+
+		// 4) 응답 DTO 반환
+		return PaymentApproveResponseDto.from(approveDto);
+	}
+
+
+	@Transactional(readOnly = true)
+	public PaymentGetResponseDto getPayment(UUID paymentId, RequestUserDetails userDetails) {
+		Payment payment = findPaymentById(paymentId);
+		validatePaymentGetPermission(payment, userDetails);
+
+		return PaymentGetResponseDto.from(payment);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<PaymentGetResponseDto> getPayments(
+		PaymentSearchCondition condition,
+		RequestUserDetails userDetails,
+		Pageable pageable
+	) {
+		validatePaymentSearchPermission(userDetails);
+
+		// 페이지 사이즈 검증
+		int size = pageable.getPageSize();
+		if (size != 10 && size != 30 && size != 50) {
+			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+		}
+
+		// 마스터 권한이 아니라면 userId 강제 세팅
+		PaymentSearchCondition finalCondition;
+		if (hasMasterRole(userDetails)) {
+			// 마스터면 원본 condition 그대로 사용
+			finalCondition = condition;
+		} else {
+			// 일반 유저면 userId만 자기 것으로 덮어씌운다
+			finalCondition = new PaymentSearchCondition(
+				userDetails.getUserId(),
+				condition.orderId(),
+				condition.status(),
+				condition.createdAtFrom(),
+				condition.createdAtTo()
+			);
+		}
+
+		List<Payment> payments = paymentRepository.searchPayment(finalCondition);
+		List<PaymentGetResponseDto> dtoList = payments.stream()
+			.map(PaymentGetResponseDto::from)
+			.toList();
+
+		return new PageImpl<>(dtoList, pageable, dtoList.size());
+	}
+
+	@Transactional
+	public PaymentRefundResponseDto refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		Payment payment = findPaymentByOrderId(orderId);
+		validatePaymentRefundPermission(payment, userDetails);
+
+		if (payment.getStatus() != PaymentStatus.COMPLETED) {
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		payment.updateStatus(PaymentStatus.REFUND);
+
+		return PaymentRefundResponseDto.from(payment);
+	}
+
+
+	@Transactional
+	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		Payment payment = findPaymentByOrderId(orderId);
+		validatePaymentCancelPermission(payment, userDetails);
+
+		// 상태 확인: 아직 결제가 승인되지 않은 상태여야 함
+		if (payment.getStatus() != PaymentStatus.PENDING) {
+			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
+		}
+
+		payment.updateStatus(PaymentStatus.CANCELED);
+	}
+
+
+	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private void validatePaymentSearchPermission(RequestUserDetails userDetails) {
+		if (!isSelf(userDetails.getUserId(), userDetails) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private void validatePaymentRefundPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private void validatePaymentCancelPermission(Payment payment, RequestUserDetails userDetails) {
+		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
+			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
+		}
+	}
+
+	private boolean isSelf(UUID userId, RequestUserDetails userDetails) {
+		return userId.equals(userDetails.getUserId());
+	}
+
+	private boolean hasMasterRole(RequestUserDetails userDetails) {
+		return userDetails.getAuthorities().stream()
+			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
+	}
+
+	private Payment findPaymentById(UUID paymentId) {
+		return paymentRepository.findById(paymentId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
+
+	private Payment findPaymentByOrderId(UUID orderId) {
+		return paymentRepository.findByOrderId(orderId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
+
+
+}

@@ -22,7 +22,10 @@ public enum UserExceptionCode implements ExceptionCode {
     VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "인증번호가 만료되었습니다. 다시 시도해주세요."),
     INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "인증번호가 일치하지 않습니다."),
     MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "메일 전송에 실패했습니다."),
-    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 유효하지 않습니다.");
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 유효하지 않습니다."),
+    INVALID_MASTER_KEY(HttpStatus.UNAUTHORIZED, "마스터 등록 키가 유효하지 않습니다."),
+    UNAPPROVED_USER(HttpStatus.FORBIDDEN, "승인되지 않은 계정입니다.");
+
 
 
 

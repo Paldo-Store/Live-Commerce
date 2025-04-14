@@ -23,7 +23,7 @@ public class User extends BaseEntity {
 	@UuidGenerator
 	private UUID userId;
 
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String username; // 사용자 ID
 
 	@Column(nullable = false)
@@ -42,21 +42,25 @@ public class User extends BaseEntity {
 	@Column(nullable = false, length = 30)
 	private UserRole userRole; // 사용자 역할
 
+	@Column(nullable = false)
+	private boolean approved;
+
 	// 정적 팩토리 메서드
 	public static User of(String username, String password, String email, String nickname,
-		boolean alarmConsent, UserRole userRole) {
-		return new User(username, password, email, nickname, alarmConsent, userRole);
+		boolean alarmConsent, UserRole userRole, boolean approved) {
+		return new User(username, password, email, nickname, alarmConsent, userRole, approved);
 	}
 
 	// 프라이빗 생성자
 	private User(String username, String password, String email, String nickname,
-		boolean alarmConsent, UserRole userRole) {
+		boolean alarmConsent, UserRole userRole, boolean approved) {
 		this.username = username;
 		this.password = password;
 		this.email = email;
 		this.nickname = nickname;
 		this.alarmConsent = alarmConsent;
 		this.userRole = userRole;
+		this.approved = approved;
 	}
 
 	public void updateUser(String password, String email, String nickname, boolean alarmConsent, UserRole userRole) {
@@ -69,6 +73,14 @@ public class User extends BaseEntity {
 
 	public void changePassword(String newEncodedPassword) {
 		this.password = newEncodedPassword;
+	}
+
+	public boolean isApproved() {
+		return approved;
+	}
+
+	public void approve() {
+		this.approved = true;
 	}
 
 

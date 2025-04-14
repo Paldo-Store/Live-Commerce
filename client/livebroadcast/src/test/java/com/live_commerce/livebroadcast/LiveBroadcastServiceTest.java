@@ -1,7 +1,7 @@
 package com.live_commerce.livebroadcast;
 
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastCreateRequestDto;
-import com.live_commerce.livebroadcast.application.dto.LiveBroadcastResponseDto;
+import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastCreateRequestDto;
+import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.application.mapper.LiveBroadcastMapper;
 import com.live_commerce.livebroadcast.application.service.LiveBroadcastService;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
@@ -50,8 +50,8 @@ public class LiveBroadcastServiceTest {
 
         // then
         assertNotNull(responseDto);
-        assertEquals(requestDto.getBroadcastName(), responseDto.getBroadcastName());
-        assertEquals(requestDto.getStartTime(), responseDto.getStartTime());
+        assertEquals(requestDto.broadcastName(), responseDto.broadcastName());
+        assertEquals(requestDto.startTime(), responseDto.startTime());
 
         // repository.save가 실제로 호출되었는지 검증
         Mockito.verify(liveBroadcastRepository, Mockito.times(1)).save(Mockito.any(LiveBroadcast.class));

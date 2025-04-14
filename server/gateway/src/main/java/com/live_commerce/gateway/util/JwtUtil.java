@@ -1,7 +1,8 @@
 package com.live_commerce.gateway.util;
 
-import java.security.Key;
 import java.util.Base64;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,14 +18,14 @@ import jakarta.annotation.PostConstruct;
 public class JwtUtil {
 
 	@Value("${service.jwt.secret-key}")
-	private String secretKey;
+	private String secretKeyString;
 
-	private Key key;
+	private SecretKey secretKey;
 
 	@PostConstruct
 	public void init() {
-		byte[] decoded = Base64.getDecoder().decode(secretKey);
-		this.key = Keys.hmacShaKeyFor(decoded);
+		byte[] decoded = Base64.getDecoder().decode(secretKeyString);
+		this.secretKey = Keys.hmacShaKeyFor(decoded);
 	}
 
 	public String extractToken(ServerWebExchange exchange) {
@@ -37,7 +38,10 @@ public class JwtUtil {
 
 	public boolean validateToken(String token) {
 		try {
-			Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+			Jwts.parser()
+				.verifyWith(secretKey)
+				.build()
+				.parseSignedClaims(token);
 			return true;
 		} catch (JwtException e) {
 			return false;
@@ -45,12 +49,10 @@ public class JwtUtil {
 	}
 
 	public Claims parseClaims(String token) {
-		return Jwts.parserBuilder()
-			.setSigningKey(key)
+		return Jwts.parser()
+			.verifyWith(secretKey)
 			.build()
-			.parseClaimsJws(token)
-			.getBody();
+			.parseSignedClaims(token)
+			.getPayload();
 	}
 }
-
-

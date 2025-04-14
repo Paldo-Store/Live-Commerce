@@ -9,7 +9,11 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum PaymentExceptionCode implements ExceptionCode {
 
-  NOT_FOUND(HttpStatus.NOT_FOUND, "Payment Not Found");
+  NOT_FOUND(HttpStatus.NOT_FOUND, "결제를 찾을 수 없습니다."),
+  PAYMENT_READY_FAIL(HttpStatus.BAD_GATEWAY, "결제 준비에 실패했습니다."),
+  PAYMENT_APPROVE_FAIL(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
+  UNAUTHORIZED(HttpStatus.FORBIDDEN, "해당 결제에 대한 접근 권한이 없습니다."),
+  INVALID_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 결제 상태입니다.");
 
 
   private final HttpStatus httpStatus;
