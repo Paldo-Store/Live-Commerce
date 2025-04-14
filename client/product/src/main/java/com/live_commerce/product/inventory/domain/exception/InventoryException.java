@@ -8,11 +8,17 @@ public class InventoryException extends CustomException {
         super(code);
     }
 
-    public static void forInventoryNotFound() {
-        throw new InventoryException(InventoryExceptionCode.NOT_FOUND);
+    public static InventoryException forInventoryNotFound() {
+        return new InventoryException(InventoryExceptionCode.NOT_FOUND);
     }
 
-    public static void forProductNotFound() {
-        throw new InventoryException(InventoryExceptionCode.PRODUCT_NOT_FOUND);
+    public static InventoryException forProductNotFound() {
+        return new InventoryException(InventoryExceptionCode.PRODUCT_NOT_FOUND);
     }
+
+    public static InventoryException forInventoryOutOfStock() {
+        return new InventoryException(InventoryExceptionCode.INVENTORY_OUT_OF_STOCK);
+    }
+
+
 }
