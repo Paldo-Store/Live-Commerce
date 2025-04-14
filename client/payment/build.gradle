@@ -77,6 +77,10 @@ dependencies {
 	// retry
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
 }
 
 dependencyManagement {
