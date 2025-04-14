@@ -8,11 +8,11 @@ public class ProductException extends CustomException {
         super(code);
     }
 
-    public static void forProductNotFound() {
-        throw new ProductException(ProductExceptionCode.NOT_FOUND);
+    public static ProductException forProductNotFound() {
+        return new ProductException(ProductExceptionCode.NOT_FOUND);
     }
 
-    public static void forCompanyNotFound() {
-        throw new ProductException(ProductExceptionCode.COMPANY_NOT_FOUND);
+    public static ProductException forExternalCompanyNotFound() {
+        return new ProductException(ProductExceptionCode.EXTERNAL_COMPANY_NOT_FOUND);
     }
 }

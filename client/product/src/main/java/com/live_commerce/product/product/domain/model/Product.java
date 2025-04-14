@@ -19,7 +19,7 @@ public class Product extends BaseEntity{
 
     @Id
     @UuidGenerator
-    private UUID id;
+    private UUID productId;
 
     private UUID companyId;
 
@@ -35,8 +35,8 @@ public class Product extends BaseEntity{
     private ProductStatus productStatus;
 
     @Builder
-    private Product(UUID id, UUID companyId, String name, String description, Integer price, ProductCategory category) {
-        this.id = id;
+    private Product(UUID productId, UUID companyId, String name, String description, Integer price, ProductCategory category) {
+        this.productId = productId;
         this.companyId = companyId;
         this.name = name;
         this.description = description;
