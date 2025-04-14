@@ -10,7 +10,6 @@ import com.live_commerce.coupon.presentation.dto.response.CreateCouponPolicyResp
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
 import com.live_commerce.coupon.presentation.dto.response.SearchCouponPolicyResponse;
 import jakarta.validation.Valid;
-import java.util.UUID;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +29,10 @@ public class CouponPolicyController {
     return ResponseUtil.success(response);
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/{code}")
   public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(
-      @PathVariable("id") UUID id) {
-    ReadCouponPolicyResponse response = couponService.getCouponPolicy(id);
+      @PathVariable("code") String code) {
+    ReadCouponPolicyResponse response = couponService.getCouponPolicy(code);
     return ResponseUtil.success(response);
   }
 
@@ -43,18 +42,18 @@ public class CouponPolicyController {
     return ResponseUtil.success(response);
   }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(@PathVariable UUID id) {
-    couponService.deleteCouponPolicy(id);
+  @DeleteMapping("/{code}")
+  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(@PathVariable String code) {
+    couponService.deleteCouponPolicy(code);
     return ResponseUtil.noContent();
   }
 
-  @PatchMapping("/{id}")
+  @PatchMapping("/{code}")
   public ResponseEntity<ApiResponse<Void>> updateCouponPolicy(
-      @PathVariable UUID id,
+      @PathVariable String code,
       @RequestBody UpdateCouponPolicyRequest request
   ) {
-    couponService.updateCouponPolicy(id, request);
+    couponService.updateCouponPolicy(code, request);
     return ResponseUtil.noContent();
   }
 

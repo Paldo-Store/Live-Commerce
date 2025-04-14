@@ -10,13 +10,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, UUID> {
+public interface CouponPolicyRepository extends JpaRepository<CouponPolicy, String> {
 
-  Boolean existsByName(String name);
+  Optional<CouponPolicy> findByCodeAndDeletedStatusFalse(String code);
 
-  Optional<CouponPolicy> findByCodeAndDeletedStatusFalse(UUID id);
+  Boolean existsByCodeAndDeletedStatusFalse(String code);
 
   List<CouponPolicy> findByDeletedStatusFalse();
+
+  Boolean existsByCode(String code);
 
   @Query("SELECT new com.live_commerce.coupon.presentation.dto.response.CouponPolicySearchResult(" +
       "c.code, c.name, c.discountType, c.discountValue, c.minOrderAmt, c.maxOrderAmt, c.startAt, c.endAt, c.isActive) " +
