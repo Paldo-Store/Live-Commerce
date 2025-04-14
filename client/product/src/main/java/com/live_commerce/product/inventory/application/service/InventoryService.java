@@ -23,22 +23,43 @@ public class InventoryService {
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
         if (!productRepository.existsByProductIdAndDeletedStatusFalse(requestDto.productId())) {
-            InventoryException.forProductNotFound();
+            throw InventoryException.forProductNotFound();
         }
+        // TODO 상품 한 개당 재고 정보 한 개만 붙어야함
 
         Inventory inventory = InventoryMapper.createDtoToEntity(requestDto);
         inventoryRepository.save(inventory);
         return InventoryMapper.entityToDto(inventory);
     }
 
+    @Transactional(readOnly = true)
     public InventoryResponseDto getInventory(UUID id) {
         Inventory inventory = inventoryRepository.findByInventoryIdAndDeletedStatusFalse(id).orElse(null);
 
         if (inventory == null) {
-            InventoryException.forInventoryNotFound();
+            throw InventoryException.forInventoryNotFound();
         }
 
         return InventoryMapper.entityToDto(inventory);
+    }
+
+    @Transactional
+    public void decreaseInventory(UUID productId, int quantity) {
+        System.out.println("productId: " + productId);
+
+        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
+                .orElseThrow(InventoryException::forInventoryNotFound);
+
+        inventory.decrease(quantity);
+
+    }
+
+    @Transactional
+    public void increaseInventory(UUID productId, int quantity) {
+        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
+                .orElseThrow(InventoryException::forInventoryNotFound);
+
+        inventory.increase(quantity);
     }
 
     public boolean isSoldOut(UUID productId) {
@@ -49,4 +70,8 @@ public class InventoryService {
 
         return inventory.getQuantity() <= 0;
     }
+
+
+
+
 }
