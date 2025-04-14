@@ -46,7 +46,7 @@ public class PaymentController {
 	}
 
 	@PostMapping("/approve")
-	public ResponseEntity<ApiResponse<PaymentApproveResponseDto>> approvePaymentPost(
+	public ResponseEntity<ApiResponse<PaymentApproveResponseDto>> approvePayment(
 		@AuthenticationPrincipal RequestUserDetails userDetails,
 		@RequestBody PaymentApproveRequestDto requestDto
 	) {
