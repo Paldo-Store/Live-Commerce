@@ -1,31 +1,30 @@
 package com.live_commerce.coupon.domain.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.live_commerce.coupon.presentation.dto.request.IssuedCouponRequest;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
+@Getter
 @Table(name = "p_issued_coupon")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IssuedCoupon {
 
   @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
   @Column(nullable = false)
   private UUID userId;
 
-  @Column(nullable = false)
+  @Column(nullable = false, updatable = false)
   private String couponCode;
 
-  @Column(nullable = false)
-  private boolean isUsed;
+  private Boolean isUsed;
 
   private LocalDateTime usedAt;
 
@@ -41,6 +40,26 @@ public class IssuedCoupon {
     this.isUsed = isUsed;
     this.usedAt = usedAt;
     this.expiresAt = expiresAt;
+  }
+
+  public static IssuedCoupon from(IssuedCouponRequest request,
+      Optional<CouponPolicy> couponPolicy) {
+    return IssuedCoupon.builder()
+//        .id(UUID.randomUUID())
+        .userId(request.userId())
+        .couponCode(request.couponCode())
+        .isUsed(false)
+        .usedAt(null)
+        .expiresAt(couponPolicy.get().getEndAt())
+        .build();
+  }
+
+  public void useCoupon() {
+    if (this.isUsed) {
+      throw new IllegalStateException("This coupon has already been used");
+    }
+    this.isUsed = true;
+    this.usedAt = LocalDateTime.now();
   }
 
 }

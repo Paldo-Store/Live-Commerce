@@ -1,10 +1,9 @@
 package com.live_commerce.coupon.presentation.dto.response;
 
 import com.live_commerce.coupon.domain.model.CouponPolicy;
-import java.util.UUID;
 
 public record ReadCouponPolicyResponse(
-    UUID id,
+    String code,
     String name,
     String discountType,
     String discountValue,

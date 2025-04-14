@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record CreateCouponPolicyRequest(
+    String code,
     String name,
     DISCOUNT_TYPE discountType,
     BigDecimal discountValue,
@@ -18,6 +19,7 @@ public record CreateCouponPolicyRequest(
 
   public CouponPolicy toCouponPolicy() {
     return CouponPolicy.builder()
+        .code(this.code())
         .name(this.name())
         .discountType(this.discountType())
         .discountValue(this.discountValue())
