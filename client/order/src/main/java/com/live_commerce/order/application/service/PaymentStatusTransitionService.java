@@ -22,6 +22,8 @@ public class PaymentStatusTransitionService {
     //결제 성공 : PENDING -> PAID
     public void updateOrderStatusToPaid(Order order, OrderStatus newStatus) {
 
+        //TODO PRODUCTClient에서 상품명 (상품명)
+
         // 1. 총 상품 결제 금액 계산
         //TODO Product에서 총 상품 결제 금액계산 - 수정된 상품 개수로 총 상품 결제 금액 계산
         Long productTotalPrice = productClient.calculateProductTotalPrice(order.getProductId(), order.getProductQuantity());
@@ -52,7 +54,7 @@ public class PaymentStatusTransitionService {
 
         // 2. 결제 승인 요청
         // 주문 아이디와 최종 결제 금액을 payment로 보내줌 (order -> Panyemt)
-        //TODO Payment에서 결제 로직 수행 (결제 진행 -> 결제 성공)
+        //TODO Payment에서 결제 로직 수행 (결제 진행 -> 결제 준비) -> ready
         PaymentSuccessResponse response= paymentClient.approvePayment(order.getId(), order.getFinalPaidPrice());
 
         //3. 결제 성공 응답확인
@@ -73,7 +75,7 @@ public class PaymentStatusTransitionService {
         productClient.reduceProductQuantity(order.getProductId(), order.getProductQuantity());
 
         // 7. 쿠폰 사용 처리
-        if (order.getCouponId() != null){
+        if (order.getCouponId() != null) {
             couponClient.markCouponAsUsed(order.getCouponId());
         }
     }
