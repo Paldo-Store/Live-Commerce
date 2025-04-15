@@ -32,10 +32,10 @@ public class DistributedLockAspect {
 		try {
 			acquired = lock.tryLock(distributedLock.waitTime(), distributedLock.leaseTime(), distributedLock.timeUnit());
 			if (!acquired) {
-				log.warn("❌ 락 획득 실패: {}", key);
+				log.warn("락 획득 실패: {}", key);
 				throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT_IN_PROGRESS);
 			}
-			log.info("✅ 락 획득 성공: {}", key);
+			log.info("락 획득 성공: {}", key);
 			return joinPoint.proceed();
 
 		} catch (InterruptedException e) {
@@ -44,7 +44,7 @@ public class DistributedLockAspect {
 		} finally {
 			if (acquired && lock.isHeldByCurrentThread()) {
 				lock.unlock();
-				log.info("🔓 락 해제 완료: {}", key);
+				log.info("락 해제 완료: {}", key);
 			}
 		}
 	}

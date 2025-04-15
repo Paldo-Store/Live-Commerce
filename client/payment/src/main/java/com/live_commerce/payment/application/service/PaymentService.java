@@ -1,5 +1,6 @@
 package com.live_commerce.payment.application.service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,7 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
+	private final RedisTemplate<String, String> redisTemplate;
 	private final PaymentSuccessEventProducer paymentSuccessEventProducer;
 	private final PaymentCancelEventProducer paymentCancelEventProducer;
 
@@ -61,6 +64,13 @@ public class PaymentService {
 		Payment payment = dto.toEntity(user.getUserId());
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
+
+		// Redis TTL 등록
+		redisTemplate.opsForValue().set(
+			"payment:expire:" + dto.orderId(),
+			payment.getId().toString(),
+			Duration.ofMinutes(10)
+		);
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}

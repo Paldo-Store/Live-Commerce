@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes --appendfsync everysec
+    command: redis-server --appendonly yes --appendfsync everysec --notify-keyspace-events Ex
     volumes:
       - redis_data:/data
     networks:
