@@ -23,6 +23,8 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final ComparablePath<java.util.UUID> broadcastId = createComparable("broadcastId", java.util.UUID.class);
 
+    public final ComparablePath<java.util.UUID> couponId = createComparable("couponId", java.util.UUID.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
@@ -37,6 +39,8 @@ public class QOrder extends EntityPathBase<Order> {
 
     //inherited
     public final BooleanPath deletedStatus = _super.deletedStatus;
+
+    public final NumberPath<Long> finalPaidPrice = createNumber("finalPaidPrice", Long.class);
 
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 

@@ -1,5 +1,7 @@
 package com.live_commerce.order.application.dto.response;
 
+import com.live_commerce.order.infrastructure.client.ProductCategory;
+import com.live_commerce.order.infrastructure.client.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +17,10 @@ import java.util.UUID;
 public class OrderProductResponse {
     private UUID productId;  //실제 상품 아이디
     private String productName;  //상품 이름
-    private Integer productQuantity; //실제 상품의 재고 수량
-    private Long productTotalPrice;  //상품의 총 가격
-    private Boolean deletedStatus;  //상품 삭제 여부
+    private String productDescription;
+    private Double productPrice;
+    private ProductCategory productCategory;
+    private ProductStatus productStatus;
+    private UUID companyId;
+    private Boolean soldOut;  //상품 품절 여부
 }

@@ -9,6 +9,7 @@ import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.ProductClient;
+import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -54,9 +55,11 @@ public class OrderModificationService {
         // [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         //주문 요청 상품 id, update할 상품 주문 개수 -> product
-        OrderProductResponse responseProduct = productClient.getProduct(
-                request.productId(),
-                request.productQuantity());
+//        OrderProductResponse responseProduct = productClient.getProduct(
+//                request.productId(),
+//                request.productQuantity());
+        ApiResponse<OrderProductResponse> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+        OrderProductResponse productResponseByOrder = responseProduct.getData();
 
         //TODO PRODUCT로 아래 로직 이동시키기
         //productClient.validateOrderRequest(request.productId(), orderQty);
@@ -64,13 +67,14 @@ public class OrderModificationService {
         //삭제 여부 확인 - 단종 여부
         //재고 수량 확인
 
-        // 이미 삭제(단종)된 상품일 경우
-        if(responseProduct.getDeletedStatus()){
-            throw new OrderException("해당 상품은 삭제된 상품입니다.", HttpStatus.BAD_REQUEST);
+        // TODO 이미 삭제(단종)된 상품일 경우
+        // 상품이 품절일 경우
+        if(productResponseByOrder.getSoldOut()){
+            throw new OrderException("해당 상품은 품절된 상품입니다.", HttpStatus.BAD_REQUEST);
         }
 
         int orderQty = request.productQuantity() != null ? request.productQuantity() : 1; // 사용자가 수정을 요청한 상품의 수량 (요청 order -> product)
-        int stock = responseProduct.getProductQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)
+        int stock = productResponseByOrder.getProductQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)
 
         //상품의 재고 수량이 0이거나, or 주문한 상품 개수 > 상품 재고 개수
         if (stock == 0 || orderQty > stock) {

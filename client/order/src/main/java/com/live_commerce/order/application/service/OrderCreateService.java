@@ -7,9 +7,12 @@ import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.BroadcastClient;
+import com.live_commerce.order.infrastructure.client.BroadcastStatus;
 import com.live_commerce.order.infrastructure.client.ProductClient;
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
+import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 //주문 생성 service
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderCreateService {
-
     private final BroadcastClient broadcastClient;
     private final ProductClient productClient;
     private final OrderRepository orderRepository;
@@ -30,17 +33,20 @@ public class OrderCreateService {
     public OrderCreateResponse orderCreator(OrderCreateRequest request, UUID userId) {
 
         // 방송중인지 확인 - 방송중일때만 주문 가능
-        BroadcastStatusResponse statusResponse = broadcastClient.getBroadcastStatus(request.broadcastId());
-        if(!"LIVE".equalsIgnoreCase(statusResponse.getBroadcastStatus())){
+        ApiResponse<BroadcastStatusResponse> response = broadcastClient.getBroadcast(request.broadcastId());
+        BroadcastStatusResponse statusResponse = response.getData();
+        if (statusResponse == null || statusResponse.getBroadcastStatus() != BroadcastStatus.LIVE) {
             throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
         }
+
+        log.info("방송 체크 완료");
 
         // [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         // order -> product (productId, productQuantity)
-        OrderProductResponse responseProduct = productClient.getProduct(
-                request.productId(),
-                request.productQuantity()); //주문 요청 상품 id, 상품 주문 개수 -> product
+        ApiResponse<OrderProductResponse> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+                //request.productQuantity());
+        OrderProductResponse productResponseByOrder = responseProduct.getData();
 
         //TODO product 모듈에서
         // 1. productId 조회 후 상품 정보 가져오기
@@ -49,15 +55,18 @@ public class OrderCreateService {
         // 4. 토탈 주문 금액 계산
 
         // productId에 해당하는 상품이 아예 없는 경우
-        if (responseProduct == null) {
+        if (productResponseByOrder == null) {
             throw new OrderException("해당 상품이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
         //TODO product 로직으로 이동
-        // 이미 삭제(단종)된 상품일 경우
-        if(responseProduct.getDeletedStatus()){
-            throw new OrderException("해당 상품은 삭제된 상품입니다", HttpStatus.BAD_REQUEST);
+        // 이미 품절된 상품일 경우,
+        if(productResponseByOrder.getSoldOut()){
+            throw new OrderException("해당 상품은 품절된 상품입니다", HttpStatus.BAD_REQUEST);
         }
+
+        //TODO 삭제 여부도 확인
+
 
         int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
         int stock = responseProduct.getProductQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)

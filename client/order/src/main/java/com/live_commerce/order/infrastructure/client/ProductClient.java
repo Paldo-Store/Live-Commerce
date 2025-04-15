@@ -1,6 +1,7 @@
 package com.live_commerce.order.infrastructure.client;
 
 import com.live_commerce.order.application.dto.response.OrderProductResponse;
+import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,10 +12,13 @@ public interface ProductClient {
 
     // 상품 쪽으로 product 실제로 존재하는지 검증 요청  (상품의 개수랑 상품 ID를 같이 넘김)
     // TODO 재고가 없거나 상품이 없다면 Exception
-    @GetMapping("/api/v1/products/validate")
-    OrderProductResponse getProduct(
-            @RequestParam("productId") UUID productId,
-            @RequestParam("quantity") int quantity);
+//    @GetMapping("/api/v1/products/validate")
+//    OrderProductResponse getProduct(
+//            @RequestParam("productId") UUID productId,
+//            @RequestParam("quantity") int quantity);
+    @GetMapping("/{productId}")
+    ApiResponse<OrderProductResponse> getProduct(@PathVariable("productId") UUID productId);
+
 
     /**
      * 상품 총 결제 금액 계산
