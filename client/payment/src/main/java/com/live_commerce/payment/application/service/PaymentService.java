@@ -3,7 +3,10 @@ package com.live_commerce.payment.application.service;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -44,7 +47,7 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
-	private final RedisTemplate<String, String> redisTemplate;
+	private final RedissonClient redissonClient;
 	private final PaymentSuccessEventProducer paymentSuccessEventProducer;
 	private final PaymentCancelEventProducer paymentCancelEventProducer;
 
@@ -65,12 +68,10 @@ public class PaymentService {
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
 
-		// Redis TTL 등록
-		redisTemplate.opsForValue().set(
-			"payment:expire:" + dto.orderId(),
-			payment.getId().toString(),
-			Duration.ofMinutes(10)
-		);
+		String key = "payment:expire:" + dto.orderId();
+		RBucket<String> bucket = redissonClient.getBucket(key);
+		bucket.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
+
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}
