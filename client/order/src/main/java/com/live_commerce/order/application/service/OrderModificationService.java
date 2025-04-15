@@ -8,7 +8,10 @@ import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
+import com.live_commerce.order.infrastructure.client.InventoryClient;
 import com.live_commerce.order.infrastructure.client.ProductClient;
+import com.live_commerce.order.infrastructure.client.response.InventoryCheckQuantityResponseDto;
+import com.live_commerce.order.infrastructure.client.response.InventoryCheckResponseDto;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +26,7 @@ public class OrderModificationService {
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
+    private final InventoryClient inventoryClient;
 
     //주문 수정 service - 주문 상태 변경을 일어나지 않음.
     //주문 개수, 상품 id, 요청 사항만 수정 가능
@@ -55,11 +59,15 @@ public class OrderModificationService {
         // [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         //주문 요청 상품 id, update할 상품 주문 개수 -> product
-//        OrderProductResponse responseProduct = productClient.getProduct(
-//                request.productId(),
-//                request.productQuantity());
         ApiResponse<OrderProductResponse> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
         OrderProductResponse productResponseByOrder = responseProduct.getData();
+
+        // 재고 확인 로직
+        ApiResponse<InventoryCheckResponseDto> responseInventory = inventoryClient.checkOrderableInventory(request.productId(), request.productQuantity());
+        InventoryCheckResponseDto checkInventory = responseInventory.getData();
+        if (!checkInventory.orderAvailable()) {
+            throw new OrderException("재고가 없는 상태입니다.", HttpStatus.BAD_REQUEST);
+        }
 
         //TODO PRODUCT로 아래 로직 이동시키기
         //productClient.validateOrderRequest(request.productId(), orderQty);
@@ -73,8 +81,13 @@ public class OrderModificationService {
             throw new OrderException("해당 상품은 품절된 상품입니다.", HttpStatus.BAD_REQUEST);
         }
 
+        // 해당 상품의 남은 재고 수량 들고오기
+        ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = inventoryClient.checkInventoryQuantity(request.productId(), request.productQuantity());
+        InventoryCheckQuantityResponseDto getInventoryQuantity = responseInventoryByQuantity.getData();
+
+
         int orderQty = request.productQuantity() != null ? request.productQuantity() : 1; // 사용자가 수정을 요청한 상품의 수량 (요청 order -> product)
-        int stock = productResponseByOrder.getProductQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)
+        int stock = getInventoryQuantity.availableQuantity();  // 실제 상품의 해당 재고 수량 (응답 inventory-> order)
 
         //상품의 재고 수량이 0이거나, or 주문한 상품 개수 > 상품 재고 개수
         if (stock == 0 || orderQty > stock) {
@@ -82,7 +95,7 @@ public class OrderModificationService {
         }
 
         //총 합계 금액 수정
-        Long productTotalPrice = responseProduct.getProductTotalPrice();
+        Long productTotalPrice = (long) (orderQty * productResponseByOrder.getProductPrice());
 
         //주문 수정
         Order updateOrder = request.toOrder(productTotalPrice);
