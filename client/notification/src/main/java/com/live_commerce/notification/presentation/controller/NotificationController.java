@@ -22,7 +22,7 @@ public class NotificationController {
       @RequestBody NotificationCreateRequest request) {
     NotificationCreateResponse response = notificationService.createNotificationForLiveBroadcast(
         request.userId(),
-        request.hostId(),
+        request.broadcastId(),
         request.notificationTime()
     );
 

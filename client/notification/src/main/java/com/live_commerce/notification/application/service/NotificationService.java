@@ -18,12 +18,12 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
 
   // 방송 시작 30분 전에 알림 예약
-  public NotificationCreateResponse createNotificationForLiveBroadcast(UUID userId, UUID hostId,
+  public NotificationCreateResponse createNotificationForLiveBroadcast(UUID userId, UUID broadcastId,
       LocalDateTime notificationTime) {
     Notification notification = Notification.builder()
         .userId(userId)
         .type(NotificationType.LIVE_BROADCAST)
-        .targetId(hostId)
+        .targetId(broadcastId)
         .message("방송이 30분 후에 시작됩니다.")  // 알림 메시지
         .isSent(false)  // 초기 상태는 알림 미전송
         .sentAt(notificationTime) // 알림전송 시간

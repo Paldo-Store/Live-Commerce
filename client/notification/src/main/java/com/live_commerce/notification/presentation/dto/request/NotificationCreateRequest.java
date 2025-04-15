@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record NotificationCreateRequest(
     UUID userId,
-    UUID hostId,
+    UUID broadcastId,
     LocalDateTime notificationTime
 ) {
 }
