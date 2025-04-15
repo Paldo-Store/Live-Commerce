@@ -52,6 +52,9 @@ dependencies {
 	implementation 'org.springframework.session:spring-session-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	// redisson
+	implementation 'org.redisson:redisson:3.45.1'
+
 	// security
 	//implementation 'org.springframework.boot:spring-boot-starter-security'
 	//implementation 'io.jsonwebtoken:jjwt:0.12.6'
@@ -72,6 +75,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

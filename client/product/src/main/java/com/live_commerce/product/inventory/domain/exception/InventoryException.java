@@ -21,4 +21,11 @@ public class InventoryException extends CustomException {
     }
 
 
+    public static InventoryException forLockAcquisitionFailed() {
+        return new InventoryException(InventoryExceptionCode.LOCK_ACQUISITION_FAILED);
+    }
+
+    public static InventoryException forLockTimeout() {
+        return new InventoryException(InventoryExceptionCode.LOCK_TIME_OUT);
+    }
 }

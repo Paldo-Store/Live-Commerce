@@ -35,7 +35,8 @@ public abstract class BaseEntity{
 
     private String deletedBy;
 
-    private Boolean deletedStatus;
+    @Column(nullable = false)
+    private boolean deletedStatus;
 
     protected BaseEntity() {
         this.deletedStatus = false;
