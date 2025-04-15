@@ -1,6 +1,5 @@
 package com.live_commerce.payment.application.service;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -8,7 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,61 +27,45 @@ import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
+import com.live_commerce.payment.infrastructure.lock.DistributedLock;
 import com.live_commerce.payment.infrastructure.messaging.producer.PaymentCancelEventProducer;
 import com.live_commerce.payment.infrastructure.messaging.producer.PaymentSuccessEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
-	private final RedisTemplate<String, String> redisTemplate;
 	private final PaymentSuccessEventProducer paymentSuccessEventProducer;
 	private final PaymentCancelEventProducer paymentCancelEventProducer;
 
-
 	private static final String LOCK_PREFIX = "payment:lock:";
-	private static final String LOCKED_VALUE = "LOCKED";
-	private static final Duration LOCK_DURATION = Duration.ofSeconds(30);
 
-
+	@DistributedLock(key = "#dto.orderId")
 	@Transactional
 	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
-		String lockKey = LOCK_PREFIX + dto.orderId();
+		paymentRepository.findByOrderId(dto.orderId()).ifPresent(existing -> {
+			throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT);
+		});
 
-		// 락 획득 시도
-		boolean locked = Boolean.TRUE.equals(
-			redisTemplate.opsForValue().setIfAbsent(lockKey, LOCKED_VALUE, LOCK_DURATION)
+		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
+			user.getUserId(), dto.orderId(), dto.amount(), dto.itemName()
 		);
 
-		if (!locked) {
-			throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT_IN_PROGRESS);
-		}
+		Payment payment = dto.toEntity(user.getUserId());
+		payment.assignTid(readyDto.tid());
+		paymentRepository.save(payment);
 
-		try {
-			paymentRepository.findByOrderId(dto.orderId()).ifPresent(existing -> {
-				throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT);
-			});
-
-			KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
-				user.getUserId(), dto.orderId(), dto.amount(), dto.itemName()
-			);
-
-			Payment payment = dto.toEntity(user.getUserId());
-			payment.assignTid(readyDto.tid());
-			paymentRepository.save(payment);
-
-			return PaymentReadyResponseDto.from(readyDto);
-		} finally {
-			if (locked) {
-				redisTemplate.delete(lockKey);
-			}
-		}
+		return PaymentReadyResponseDto.from(readyDto);
 	}
+
+
 
 	@Transactional
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
