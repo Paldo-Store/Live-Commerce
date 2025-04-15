@@ -49,7 +49,9 @@ public class PaymentService {
 	@Transactional
 	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
 		paymentRepository.findByOrderId(dto.orderId()).ifPresent(existing -> {
-			throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT);
+			if (existing.getStatus() != PaymentStatus.FAILED) {
+				throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT);
+			}
 		});
 
 		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
