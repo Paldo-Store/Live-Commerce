@@ -28,6 +28,7 @@ public class BroadcastProductController {
             @RequestBody BroadcastProductConnectDto requestDto,
             @PathVariable UUID broadcastId
     ) {
+        System.out.println("🚀 컨트롤러 진입: broadcastId=" + broadcastId + ", productId=" + requestDto.productId());
         BroadcastProductResponseDto responseDto = broadcastProductService.connectBroadcastProduct(broadcastId,requestDto);
         return ResponseUtil.success(responseDto);
     }

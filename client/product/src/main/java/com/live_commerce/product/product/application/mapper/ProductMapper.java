@@ -15,13 +15,13 @@ import java.util.UUID;
 public class ProductMapper {
 
     public static Product createDtoToEntity(ProductCreateRequestDto requestDto, UUID companyId) {
-        return Product.builder()
-                .name(requestDto.name())
-                .description(requestDto.description())
-                .price(requestDto.price())
-                .category(requestDto.category())
-                .companyId(companyId)
-                .build();
+        return Product.create(
+                companyId,
+                requestDto.name(),
+                requestDto.description(),
+                requestDto.price(),
+                requestDto.category()
+        );
     }
 
     public static ProductCreateResponseDto entityToCreateDto(Product entity) {

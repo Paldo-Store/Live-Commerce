@@ -13,5 +13,7 @@ public class FeignConfig {
         return new ErrorDecoder.Default();
     }
 
+
+
 }
 

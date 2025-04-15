@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 public record ProductSummaryDto (
-        UUID id,
+        UUID productId,
         String name,
         Integer price
 ) {

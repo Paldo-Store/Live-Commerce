@@ -5,5 +5,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 public record ExternalCompanyResponseDto (
-        @JsonProperty("id") UUID companyId
+        UUID companyId
 ) {}

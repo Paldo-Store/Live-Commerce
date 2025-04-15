@@ -1,6 +1,7 @@
 package com.live_commerce.livebroadcast.infrastructure.client.product;
 
 import com.live_commerce.livebroadcast.infrastructure.client.company.ExternalCompanyResponseDto;
+import com.live_commerce.livebroadcast.infrastructure.config.FeignLogConfig;
 import com.live_commerce.livebroadcast.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,13 +12,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "product")
+@FeignClient(name = "product", url = "http://localhost:19091", path = "/api/v1/products",
+        configuration = FeignLogConfig.class)
 public interface ProductClient {
 
-    @GetMapping("/api/v1/products/{id}")
-    ApiResponse<ExternalProductResponseDto> getProduct(@PathVariable("id") UUID id);
+    @GetMapping("/{productId}")
+    ApiResponse<ExternalProductResponseDto> getProduct(@PathVariable("productId") UUID productId);
 
-    @PostMapping("/api/v1/products/bulk")
+    @PostMapping("/bulk")
     ApiResponse<List<ProductSummaryDto>> getProducts(@RequestBody List<UUID> productIds);
 
 }

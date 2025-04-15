@@ -37,6 +37,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 			return;
 		}
 
+		String token = request.getHeader("Authorization");
+		if (token != null && token.startsWith("Bearer ")) {
+			token = token.substring(7); // "Bearer " 제거
+		}
+
 		// 요청 헤더에서 사용자 정보 추출
 		String userIdHeader = request.getHeader("X-User-Id");
 		String username = request.getHeader("X-User-Username");
@@ -64,7 +69,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
 		// 인증 정보 설정
 		UsernamePasswordAuthenticationToken authentication =
-			new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+			new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// 필터 체인으로 넘김
