@@ -17,6 +17,7 @@ import com.live_commerce.order.infrastructure.client.response.BroadcastStatusRes
 import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -37,7 +38,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderQueryRepository orderQueryRepository;
     //service 호출
-    private final PaymentStatusTransitionService paymentStatusTransitionService;
+    @Lazy
+    private final PaymentStatusTransitionService paymentStatusTransitionService;  //@Lazy 적용
+    
     private final OrderCreateService orderCreateService;
     private final OrderModificationService orderModificationService;
 

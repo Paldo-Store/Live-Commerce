@@ -25,8 +25,6 @@ public class PaymentStatusTransitionService {
     private final PaymentClient paymentClient;
     private final CouponClient couponClient;
     private final OrderRepository orderRepository;
-    private final PaymentStatusTransitionService paymentStatusTransitionService;
-
 
     public OrderStatusUpdateResponse updateCreator(UUID orderId, OrderStatusUpdateRequest request, UUID userId, String role){
         // 주문 조회 - 해당 주문 없으면 예외처리
@@ -52,7 +50,7 @@ public class PaymentStatusTransitionService {
         //결제 성공 :PENDING -> PAID
         //PaymentStatusTransitionService
         if ( (currentStatus==OrderStatus.PENDING) &&  (newStatus == OrderStatus.PAID)){
-            updateOrderStatusToPaid(order, newStatus);
+            this.updateOrderStatusToPaid(order, newStatus);  //같은 서비스라서 this 붙임
 
             //service 바로 종료
             return OrderStatusUpdateResponse.fromOrder(order);
