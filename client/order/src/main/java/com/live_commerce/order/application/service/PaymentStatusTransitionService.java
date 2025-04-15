@@ -1,8 +1,12 @@
 package com.live_commerce.order.application.service;
 
+import com.live_commerce.order.application.dto.request.OrderStatusUpdateRequest;
+import com.live_commerce.order.application.dto.response.OrderStatusUpdateResponse;
 import com.live_commerce.order.application.exception.OrderException;
+import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
+import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.CouponClient;
 import com.live_commerce.order.infrastructure.client.PaymentClient;
 import com.live_commerce.order.infrastructure.client.ProductClient;
@@ -10,16 +14,75 @@ import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResp
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentStatusTransitionService {
-
     private final ProductClient productClient;
     private final PaymentClient paymentClient;
     private final CouponClient couponClient;
+    private final OrderRepository orderRepository;
+    private final PaymentStatusTransitionService paymentStatusTransitionService;
+
+
+    public OrderStatusUpdateResponse updateCreator(UUID orderId, OrderStatusUpdateRequest request, UUID userId, String role){
+        // 주문 조회 - 해당 주문 없으면 예외처리
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+
+        //기존의 원래 주문 상태
+        OrderStatus currentStatus = order.getStatus();
+
+        // 권한 검증 - 고객은 주문 상태를 변경할 수 없음
+        if (role.equals("ROLE_CUSTOMER")) {
+            throw new OrderException("고객은 주문 상태를 변경할 수 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 새 주문 요청 상태 파싱 및 검증 - 바꾸려는 주문 상태(오타) 잘못들어오면 예외 발생
+        OrderStatus newStatus;
+        try {
+            newStatus = OrderStatus.valueOf(request.status());  //요청받은 새로운 상태 변수에 담기
+        } catch (IllegalArgumentException e) {
+            throw new OrderException("잘못된 주문 상태입니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //결제 성공 :PENDING -> PAID
+        //PaymentStatusTransitionService
+        if ( (currentStatus==OrderStatus.PENDING) &&  (newStatus == OrderStatus.PAID)){
+            updateOrderStatusToPaid(order, newStatus);
+
+            //service 바로 종료
+            return OrderStatusUpdateResponse.fromOrder(order);
+        }
+
+        //결제 취소 : PAID -> REFUNDED
+        //RefundStatusTransitionService
+        //PAID상태인 경우에만, 상품 상태 변경이 일어나 취소된다면 -> 재고 복구, 결제 취소 처리
+        if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.CANCELLED)) {
+
+            // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
+            // TODO 결제 처리는 Payment에서 로직 처리
+            paymentClient.cancelPayment(order.getId(), order.getFinalPaidPrice());
+
+            // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다.
+            // TODO 재고 복구는 Product에서 로직 처리
+            productClient.restoreProductQuantity(order.getProductId(), order.getProductQuantity());
+        }
+
+        //주문 접수 -> 주문 취소 : PENDING -> CANCELLED
+        //그냥 통과.
+
+        // 상태 변경 - 주문 취소는 상태 변경 불가, 같은 주문 상태 변경은 예외 발생
+        order.changeStatus(newStatus);
+        return OrderStatusUpdateResponse.fromOrder(order);
+    }
+
 
     //결제 성공 : PENDING -> PAID
+    @Transactional
     public void updateOrderStatusToPaid(Order order, OrderStatus newStatus) {
 
         //TODO PRODUCTClient에서 상품명 (상품명)
@@ -56,6 +119,9 @@ public class PaymentStatusTransitionService {
         // 주문 아이디와 최종 결제 금액을 payment로 보내줌 (order -> Panyemt)
         //TODO Payment에서 결제 로직 수행 (결제 진행 -> 결제 준비) -> ready
         PaymentSuccessResponse response= paymentClient.approvePayment(order.getId(), order.getFinalPaidPrice());
+
+        // TODO 2.5. Payment에서 응답 내려주기.
+
 
         //3. 결제 성공 응답확인
         if (!response.success()) {
