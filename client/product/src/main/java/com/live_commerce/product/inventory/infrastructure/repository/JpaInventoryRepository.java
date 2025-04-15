@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface JpaInventoryRepository extends JpaRepository<Inventory, UUID>, InventoryRepository {
 
-    Optional<Inventory> findByInventoryIdAndDeletedStatusFalse(UUID id);
+    Optional<Inventory> findByInventoryIdAndDeletedStatusFalse(UUID inventoryId);
 
     Optional<Inventory> findByProductIdAndDeletedStatusFalse(UUID productId);
 }

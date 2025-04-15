@@ -77,6 +77,10 @@ dependencies {
 
 	//feign 의존성
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// WebFlux(비동기 통신용)
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 }
 
 dependencyManagement {

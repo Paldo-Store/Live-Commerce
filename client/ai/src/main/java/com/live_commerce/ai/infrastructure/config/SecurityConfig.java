@@ -36,6 +36,7 @@ public class SecurityConfig {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 상태를 사용하지 않음
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
+					"/api/v1/ai",
 					"/api/v1/auth/**", // 인증되지 않은 경로
 					"/swagger-ui/**",
 					"/v3/api-docs/**",
