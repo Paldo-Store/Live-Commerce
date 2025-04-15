@@ -29,6 +29,7 @@ public class Product extends BaseEntity{
 
     private Integer price;
 
+    @Enumerated(EnumType.STRING)
     private ProductCategory category;
 
     @Enumerated(EnumType.STRING)

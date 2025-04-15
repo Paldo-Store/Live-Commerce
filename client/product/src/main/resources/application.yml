@@ -1,9 +1,12 @@
 spring:
   application:
     name: product
-  profiles:
-    active: dev
+
+---
+spring:
   config:
+    activate:
+      on-profile: dev
     import: "configserver:http://localhost:18080"
 
 server:
@@ -22,6 +25,7 @@ management:
         include: refresh
 
 
+
 #springdoc:
 #  swagger-ui:
 #    enabled: true
@@ -31,3 +35,11 @@ management:
 #  api-docs:
 #    enabled: true
 #    path: /v3/api-docs/user
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+    import: "optional:"
