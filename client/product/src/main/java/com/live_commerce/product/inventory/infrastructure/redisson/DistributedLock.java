@@ -1,4 +1,4 @@
-package com.live_commerce.product.product.infrastructure.redisson;
+package com.live_commerce.product.inventory.infrastructure.redisson;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,23 +1,23 @@
 package com.live_commerce.product.inventory.application.service;
 
-import com.live_commerce.product.inventory.application.dto.InventoryCreateRequestDto;
-import com.live_commerce.product.inventory.application.dto.InventoryResponseDto;
+import com.live_commerce.product.inventory.application.dto.*;
 import com.live_commerce.product.inventory.application.mapper.InventoryMapper;
 import com.live_commerce.product.inventory.application.validation.InventoryValidator;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
-import com.live_commerce.product.product.infrastructure.redisson.DistributedLock;
+import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.redisson.api.RLock;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
@@ -25,7 +25,7 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
     private final InventoryValidator inventoryValidator;
-    private final RedissonClient redissonClient;
+
 
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
@@ -53,8 +53,6 @@ public class InventoryService {
     @DistributedLock(key = "#productId")
     @Transactional
     public void decreaseInventory(UUID productId, int quantity) {
-        inventoryValidator.validateExistsAndAvailableOrThrow(productId, quantity);
-
         int updated = inventoryRepository.decreaseInventoryAtomically(productId, quantity);
         if (updated == 0) {
             throw InventoryException.forInventoryOutOfStock();
@@ -64,8 +62,6 @@ public class InventoryService {
     @DistributedLock(key = "#productId")
     @Transactional
     public void increaseInventory(UUID productId, int quantity) {
-        inventoryValidator.validateExistsOrThrow(productId);
-
         int updated = inventoryRepository.increaseInventoryAtomically(productId, quantity);
         if (updated == 0) {
             throw InventoryException.forInventoryNotFound();
@@ -81,7 +77,17 @@ public class InventoryService {
         return inventory.getQuantity() <= 0;
     }
 
+    public InventoryCheckQuantityResponseDto checkInventoryQuantity(InventoryCheckQuantityRequestDto requestDto) {
+        Inventory inventory = inventoryValidator.validateAndGetActiveInventory(requestDto.productId());
+        return InventoryMapper.toCheckQuantityDto(inventory);
+    }
 
 
-
+    public InventoryCheckResponseDto checkOrderableInventory(InventoryCheckRequestDto requestDto) {
+        boolean orderable = inventoryValidator.checkOrderable(
+                requestDto.productId(),
+                requestDto.orderQuantity()
+        );
+        return InventoryMapper.toCheckResponseDto(orderable);
+    }
 }

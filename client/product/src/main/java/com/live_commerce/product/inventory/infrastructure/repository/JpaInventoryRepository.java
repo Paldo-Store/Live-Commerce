@@ -17,6 +17,16 @@ public interface JpaInventoryRepository extends JpaRepository<Inventory, UUID>, 
 
     Optional<Inventory> findByProductIdAndDeletedStatusFalse(UUID productId);
 
+    @Query("""
+    SELECT CASE WHEN COUNT(i) > 0 THEN true ELSE false END
+    FROM Inventory i
+    WHERE i.productId = :productId
+      AND i.availableQuantity >= :quantity
+      AND i.deletedStatus = false
+""")
+    boolean existsOrderableInventory(@Param("productId") UUID productId,
+                                     @Param("quantity") int quantity);
+
     @Modifying(clearAutomatically = true)
     @Query("""
         UPDATE Inventory i

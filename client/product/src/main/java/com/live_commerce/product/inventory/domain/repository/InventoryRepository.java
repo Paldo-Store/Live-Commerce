@@ -11,6 +11,7 @@ public interface InventoryRepository {
     <S extends Inventory> S save(S inventory);
     Optional<Inventory> findByInventoryIdAndDeletedStatusFalse(UUID id);
     Optional<Inventory> findByProductIdAndDeletedStatusFalse(UUID productId);
+    boolean existsOrderableInventory(UUID productId, int quantity);
 
     int decreaseInventoryAtomically(UUID productId, int quantity);
     int increaseInventoryAtomically(UUID productId, int quantity);

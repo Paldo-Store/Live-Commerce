@@ -33,12 +33,17 @@ public class InventoryValidator {
         validateAvailableQuantityOrThrow(inventory, quantity);
     }
 
-    // 존재 여부만 검증 (increase 용도)
+    // 존재 여부만 검증
     public void validateExistsOrThrow(UUID productId) {
         boolean exists = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId).isPresent();
         if (!exists) {
             throw InventoryException.forInventoryNotFound();
         }
+    }
+
+    public boolean checkOrderable(UUID productId, int quantity) {
+        validateExistsOrThrow(productId);
+        return inventoryRepository.existsOrderableInventory(productId, quantity);
     }
 }
 

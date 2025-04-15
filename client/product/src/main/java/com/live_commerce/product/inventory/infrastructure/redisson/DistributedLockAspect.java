@@ -1,4 +1,4 @@
-package com.live_commerce.product.product.infrastructure.redisson;
+package com.live_commerce.product.inventory.infrastructure.redisson;
 
 
 import com.live_commerce.product.inventory.domain.exception.InventoryException;

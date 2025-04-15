@@ -1,10 +1,7 @@
 package com.live_commerce.product.inventory.presentation.controller;
 
 
-import com.live_commerce.product.inventory.application.dto.InventoryCreateRequestDto;
-import com.live_commerce.product.inventory.application.dto.InventoryDecreaseRequestDto;
-import com.live_commerce.product.inventory.application.dto.InventoryIncreaseRequestDto;
-import com.live_commerce.product.inventory.application.dto.InventoryResponseDto;
+import com.live_commerce.product.inventory.application.dto.*;
 import com.live_commerce.product.inventory.application.service.InventoryService;
 import com.live_commerce.product.inventory.infrastructure.common.ResponseUtil;
 import com.live_commerce.product.inventory.presentation.common.ApiResponse;
@@ -44,6 +41,20 @@ public class InventoryController {
     public ResponseEntity<ApiResponse<String>> increaseInventory(@Valid @RequestBody InventoryIncreaseRequestDto requestDto) {
         inventoryService.increaseInventory(requestDto.productId(), requestDto.quantity());
         return ResponseUtil.success("재고가 복원되었습니다.");
+    }
+
+    // 재고 총 수량 확인용 - 임시
+    @GetMapping("/checkquantity")
+    public ResponseEntity<ApiResponse<InventoryCheckQuantityResponseDto>> checkInventoryQuantity(@Valid @RequestBody InventoryCheckQuantityRequestDto requestDto) {
+        InventoryCheckQuantityResponseDto response = inventoryService.checkInventoryQuantity(requestDto);
+        return ResponseUtil.success(response);
+    }
+
+    // 주문 가능 재고 확인용
+    @GetMapping("/checkorderable")
+    public ResponseEntity<ApiResponse<InventoryCheckResponseDto>> checkOrderableInventory(@Valid @RequestBody InventoryCheckRequestDto requestDto) {
+        InventoryCheckResponseDto response = inventoryService.checkOrderableInventory(requestDto);
+        return ResponseUtil.success(response);
     }
 
 
