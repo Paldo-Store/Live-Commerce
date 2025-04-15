@@ -14,10 +14,10 @@ public record OrderCreateRequest (
     UUID broadcastId)
 {
     //OrderCreateRequest(요청데이터)를 내부에서 쓸 도메인 객체 Order로 변환하는 메서드
-    public Order toOrder(Long productTotalPrice, String userId) {
+    public Order toOrder(Long productTotalPrice, UUID userId) {
         return Order.builder()
                 .productId(productId) //요청에서 받은 상품 id
-                .userId(UUID.fromString(userId))
+                .userId(userId)
                 .productQuantity(productQuantity) //요청에서 받은 수량
                 .productTotalPrice(productTotalPrice)
                 .requirement(requirement) //요청사항
