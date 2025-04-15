@@ -19,3 +19,6 @@ spring:
     username: postgres
     password: 8dostore
     driver-class-name: org.postgresql.Driver
+  redis:
+    host: localhost
+    port: 6379
