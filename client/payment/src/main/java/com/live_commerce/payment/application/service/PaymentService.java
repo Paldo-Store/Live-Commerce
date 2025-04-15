@@ -45,8 +45,6 @@ public class PaymentService {
 	private final PaymentSuccessEventProducer paymentSuccessEventProducer;
 	private final PaymentCancelEventProducer paymentCancelEventProducer;
 
-	private static final String LOCK_PREFIX = "payment:lock:";
-
 	@DistributedLock(key = "#dto.orderId")
 	@Transactional
 	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
@@ -64,8 +62,6 @@ public class PaymentService {
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}
-
-
 
 	@Transactional
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
