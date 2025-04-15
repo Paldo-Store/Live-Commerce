@@ -11,13 +11,8 @@ import com.live_commerce.order.presentation.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -54,6 +49,7 @@ public class OrderController {
             @AuthenticationPrincipal RequestUserDetails userDetails){
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
+
         OrderGetResponse response = orderService.getOrders(page, size, sort, userId, role);
         return ResponseUtil.success(response);
     }
@@ -65,6 +61,7 @@ public class OrderController {
             @AuthenticationPrincipal RequestUserDetails userDetails) {
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
+
         OrderGetOneResponse response = orderService.getOrder(orderId, userId, role);
         return ResponseUtil.success(response);
     }
@@ -77,6 +74,7 @@ public class OrderController {
             @AuthenticationPrincipal RequestUserDetails userDetails){
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
+
         OrderUpdateResponse response = orderService.updateOrder(orderId, request, userId, role);
         return ResponseUtil.success(response);
     }
@@ -93,7 +91,6 @@ public class OrderController {
         OrderStatusUpdateResponse response = orderService.updateOrderStatus(orderId, request, userId, role);
         return ResponseUtil.success(response);
     }
-
 
     //주문 내역 삭제 API -> softDeleted만 이루어진다. 주문 상태 변경없음.(결제 취소 발생하면 안된다)
     @DeleteMapping("/{orderId}")
