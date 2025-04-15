@@ -57,5 +57,11 @@ public class InventoryController {
         return ResponseUtil.success(response);
     }
 
+    @PostMapping("/decrease/no-lock")
+    public ResponseEntity<ApiResponse<String>> decreaseInventoryNoLock(@Valid @RequestBody InventoryDecreaseRequestDto requestDto) {
+        inventoryService.decreaseInventoryWithoutLock(requestDto.productId(), requestDto.quantity());
+        return ResponseUtil.success("재고가 정상적으로 차감되었습니다.");
+    }
+
 
 }
