@@ -3,6 +3,7 @@ package com.live_commerce.coupon.presentation.controller;
 import com.live_commerce.coupon.application.service.CouponPolicyService;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.infrastructure.common.ResponseUtil;
+import com.live_commerce.coupon.infrastructure.security.RequestUserDetails;
 import com.live_commerce.coupon.presentation.common.ApiResponse;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
@@ -11,49 +12,61 @@ import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyRespon
 import com.live_commerce.coupon.presentation.dto.response.SearchCouponPolicyResponse;
 import jakarta.validation.Valid;
 import java.util.List;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/coupon-policies")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CouponPolicyController {
 
   private final CouponPolicyService couponService;
 
   @PostMapping("/")
   public ResponseEntity<ApiResponse<CreateCouponPolicyResponse>> createCoupon(
-      @Valid @RequestBody CreateCouponPolicyRequest request) {
-    CreateCouponPolicyResponse response = couponService.createCouponPolicy(request);
+      @Valid @RequestBody CreateCouponPolicyRequest request,
+      @AuthenticationPrincipal RequestUserDetails userDetails
+  ) {
+    CreateCouponPolicyResponse response = couponService.createCouponPolicy(request, userDetails);
     return ResponseUtil.success(response);
   }
 
-  @GetMapping("/{code}")
+
+  @GetMapping(name = "/{code}")
   public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(
-      @PathVariable("code") String code) {
-    ReadCouponPolicyResponse response = couponService.getCouponPolicy(code);
+      @PathVariable("code") String code,
+      @AuthenticationPrincipal RequestUserDetails userDetails
+  ) {
+    ReadCouponPolicyResponse response = couponService.getCouponPolicy(code, userDetails);
     return ResponseUtil.success(response);
   }
 
   @GetMapping("/")
-  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies() {
-    List<ReadCouponPolicyResponse> response = couponService.getCouponPolicies();
+  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies(
+      @AuthenticationPrincipal RequestUserDetails userDetails
+  ) {
+    List<ReadCouponPolicyResponse> response = couponService.getCouponPolicies(userDetails);
     return ResponseUtil.success(response);
   }
 
-  @DeleteMapping("/{code}")
-  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(@PathVariable String code) {
-    couponService.deleteCouponPolicy(code);
+  @DeleteMapping(name = "/{code}")
+  public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(
+      @PathVariable String code,
+      @AuthenticationPrincipal RequestUserDetails userDetails
+  ) {
+    couponService.deleteCouponPolicy(code, userDetails);
     return ResponseUtil.noContent();
   }
 
   @PatchMapping("/{code}")
   public ResponseEntity<ApiResponse<Void>> updateCouponPolicy(
       @PathVariable String code,
-      @RequestBody UpdateCouponPolicyRequest request
+      @RequestBody UpdateCouponPolicyRequest request,
+      @AuthenticationPrincipal RequestUserDetails userDetails
   ) {
-    couponService.updateCouponPolicy(code, request);
+    couponService.updateCouponPolicy(code, request, userDetails);
     return ResponseUtil.noContent();
   }
 
@@ -62,9 +75,12 @@ public class CouponPolicyController {
       @RequestParam String keyword,
       @RequestParam(defaultValue = "1") Integer page,
       @RequestParam(defaultValue = "asc") String sortBy,
-      @RequestParam(defaultValue = "FIXED") DISCOUNT_TYPE discountType
-  ){
-    SearchCouponPolicyResponse response =  couponService.searchCouponPolicy(keyword,page,sortBy,discountType);
+      @RequestParam(defaultValue = "FIXED") DISCOUNT_TYPE discountType,
+      @AuthenticationPrincipal RequestUserDetails userDetails
+
+  ) {
+    SearchCouponPolicyResponse response = couponService.searchCouponPolicy(keyword, page, sortBy,
+        discountType, userDetails);
     return ResponseUtil.success(response);
   }
 
