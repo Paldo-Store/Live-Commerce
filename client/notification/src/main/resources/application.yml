@@ -6,6 +6,14 @@ spring:
   config:
     import: "configserver:http://localhost:18080"
 
+  kafka:
+    bootstrap-servers: localhost:9092  # 카프카 브로커 URL
+    consumer:
+      group-id: notification-group  # 소비자 그룹 ID (필요에 따라 설정)
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 server:
   port: 0
 eureka:
@@ -20,6 +28,8 @@ management:
     web:
       exposure:
         include: refresh
+
+# 카프카 설정 추가
 
 
 #springdoc:
