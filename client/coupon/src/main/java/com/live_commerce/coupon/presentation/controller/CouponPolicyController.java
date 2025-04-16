@@ -24,18 +24,17 @@ public class CouponPolicyController {
 
   private final CouponPolicyService couponService;
 
-  @PostMapping("/")
-  public ResponseEntity<ApiResponse<CreateCouponPolicyResponse>> createCoupon(
-      @Valid @RequestBody CreateCouponPolicyRequest request,
+  @GetMapping
+  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies(
       @AuthenticationPrincipal RequestUserDetails userDetails
   ) {
-    CreateCouponPolicyResponse response = couponService.createCouponPolicy(request, userDetails);
+    List<ReadCouponPolicyResponse> response = couponService.getCouponPolicies(userDetails);
     return ResponseUtil.success(response);
   }
 
-  @GetMapping(name = "/{code}")
+  @GetMapping("/detail/{code}")
   public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(
-      @PathVariable("code") String code,
+      @PathVariable String code,
       @AuthenticationPrincipal RequestUserDetails userDetails
   ) {
     ReadCouponPolicyResponse response = couponService.getCouponPolicy(code, userDetails);
@@ -56,15 +55,16 @@ public class CouponPolicyController {
     return ResponseUtil.success(response);
   }
 
-  @GetMapping("/")
-  public ResponseEntity<ApiResponse<List<ReadCouponPolicyResponse>>> getCouponPolicies(
+  @PostMapping
+  public ResponseEntity<ApiResponse<CreateCouponPolicyResponse>> createCoupon(
+      @Valid @RequestBody CreateCouponPolicyRequest request,
       @AuthenticationPrincipal RequestUserDetails userDetails
   ) {
-    List<ReadCouponPolicyResponse> response = couponService.getCouponPolicies(userDetails);
+    CreateCouponPolicyResponse response = couponService.createCouponPolicy(request, userDetails);
     return ResponseUtil.success(response);
   }
 
-  @DeleteMapping(name = "/{code}")
+  @DeleteMapping("/{code}")
   public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(
       @PathVariable String code,
       @AuthenticationPrincipal RequestUserDetails userDetails
