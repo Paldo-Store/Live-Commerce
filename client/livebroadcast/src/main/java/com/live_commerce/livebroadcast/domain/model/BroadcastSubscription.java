@@ -9,7 +9,7 @@ import org.hibernate.annotations.UuidGenerator;
 import java.util.UUID;
 
 @Entity
-@Table(name = "broadcast_subscriptions", uniqueConstraints = {
+@Table(name = "p_broadcast_subscriptions", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "broadcast_id"})
 })
 @Getter

@@ -23,8 +23,4 @@ public class SubscriptionMapper {
                 .map(BroadcastSubscription::getUserId)
                 .toList();
     }
-
-    public static BroadcastSubscription fromDto(CreateSubscriptionRequestDto request, UUID userId) {
-        return BroadcastSubscription.create(userId, request.broadcastId());
-    }
 }

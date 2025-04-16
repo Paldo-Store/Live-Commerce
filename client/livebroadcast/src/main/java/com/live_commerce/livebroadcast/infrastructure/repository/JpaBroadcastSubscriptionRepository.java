@@ -5,15 +5,16 @@ import com.live_commerce.livebroadcast.domain.repository.BroadcastSubscriptionRe
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface JpaBroadcastSubscriptionRepository extends JpaRepository<BroadcastSubscription, UUID>, BroadcastSubscriptionRepository {
 
-    boolean existsByUserIdAndBroadcastId(UUID userId, UUID broadcastId);
+    boolean existsByUserIdAndBroadcastIdAndDeletedStatusFalse(UUID userId, UUID broadcastId);
 
-    void deleteByUserIdAndBroadcastId(UUID userId, UUID broadcastId);
+    List<BroadcastSubscription> findAllByUserIdAndDeletedStatusFalse(UUID userId);
 
-    List<BroadcastSubscription> findAllByUserId(UUID userId);
+    List<BroadcastSubscription> findAllByBroadcastIdAndDeletedStatusFalse(UUID broadcastId);
 
-    List<BroadcastSubscription> findAllByBroadcastId(UUID broadcastId);
+    Optional<BroadcastSubscription> findByUserIdAndBroadcastIdAndDeletedStatusFalse(UUID userId, UUID broadcastId);
 }
