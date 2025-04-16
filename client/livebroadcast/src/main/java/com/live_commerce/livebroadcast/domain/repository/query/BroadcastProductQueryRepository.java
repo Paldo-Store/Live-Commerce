@@ -1,8 +1,7 @@
-package com.live_commerce.livebroadcast.domain.repository;
+package com.live_commerce.livebroadcast.domain.repository.query;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
