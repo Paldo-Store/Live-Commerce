@@ -1,15 +1,22 @@
 package com.live_commerce.payment.application.service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.live_commerce.payment.application.dto.event.PaymentCancelEvent;
+import com.live_commerce.payment.application.dto.event.PaymentCompletedEvent;
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
@@ -25,28 +32,46 @@ import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
+import com.live_commerce.payment.infrastructure.lock.DistributedLock;
+import com.live_commerce.payment.infrastructure.messaging.producer.PaymentCancelEventProducer;
+import com.live_commerce.payment.infrastructure.messaging.producer.PaymentSuccessEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
+	private final RedissonClient redissonClient;
+	private final PaymentSuccessEventProducer paymentSuccessEventProducer;
+	private final PaymentCancelEventProducer paymentCancelEventProducer;
 
+	@DistributedLock(key = "#dto.orderId")
 	@Transactional
-	public PaymentReadyResponseDto readyPayment(RequestUserDetails requestUserDetails, PaymentReadyRequestDto requestDto) {
+	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
+		paymentRepository.findByOrderId(dto.orderId()).ifPresent(existing -> {
+			if (existing.getStatus() != PaymentStatus.FAILED) {
+				throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT);
+			}
+		});
+
 		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
-			requestUserDetails.getUserId(),
-			requestDto.orderId(),
-			requestDto.amount()
+			user.getUserId(), dto.orderId(), dto.amount(), dto.itemName()
 		);
 
-		Payment payment = requestDto.toEntity(requestUserDetails.getUserId());
+		Payment payment = dto.toEntity(user.getUserId());
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
+
+		String key = "payment:expire:" + dto.orderId();
+		RBucket<String> bucket = redissonClient.getBucket(key);
+		bucket.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
+
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}
@@ -74,16 +99,29 @@ public class PaymentService {
 		} catch (Exception e) {
 			// 카카오 API 호출 자체가 실패한 경우
 			payment.updateStatus(PaymentStatus.FAILED);
+
+			// 보상용 메시지 발행
+			paymentCancelEventProducer.sendPaymentCancelEvent(
+				new PaymentCancelEvent(payment.getOrderId(), payment.getId(), "KAKAO_API_FAIL")
+			);
+
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
 		}
 
 		// 3) 성공적으로 승인됐으면 상태 변경
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
+		PaymentCompletedEvent event = new PaymentCompletedEvent(
+			payment.getOrderId(),
+			payment.getId(),
+			payment.getStatus().name(),
+			payment.getAmount().intValue()
+		);
+		paymentSuccessEventProducer.sendPaymentCompletedEvent(event);
+
 		// 4) 응답 DTO 반환
 		return PaymentApproveResponseDto.from(approveDto);
 	}
-
 
 	@Transactional(readOnly = true)
 	public PaymentGetResponseDto getPayment(UUID paymentId, RequestUserDetails userDetails) {
