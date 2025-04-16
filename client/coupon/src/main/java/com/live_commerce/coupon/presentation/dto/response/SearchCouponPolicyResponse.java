@@ -1,5 +1,6 @@
 package com.live_commerce.coupon.presentation.dto.response;
 
+import com.live_commerce.coupon.presentation.dto.request.CouponPolicySearchResult;
 import java.util.List;
 import org.springframework.data.domain.Page;
 
