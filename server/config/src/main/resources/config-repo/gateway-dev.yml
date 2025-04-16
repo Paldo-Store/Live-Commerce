@@ -67,7 +67,7 @@ spring:
         - id: product
           uri: lb://product
           predicates:
-            - Path=/api/v1/products/**, /api-docs-product
+            - Path=/api/v1/products/**, /api/v1/inventories/**, /api-docs-product
 
         - id: user
           uri: lb://user

@@ -8,10 +8,8 @@ import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,5 +87,22 @@ public class InventoryService {
                 requestDto.orderQuantity()
         );
         return InventoryMapper.toCheckResponseDto(orderable);
+    }
+
+    @DistributedLock(key = "#productId", waitTime = 1, leaseTime = 2) // 강제 제한
+    public void lockForTesting(UUID productId, int holdSeconds) {
+        try {
+            Thread.sleep(holdSeconds * 1000L);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Transactional
+    public void decreaseInventoryWithoutLock(UUID productId, int quantity) {
+        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
+                .orElseThrow(InventoryException::forInventoryNotFound);
+
+        inventory.decrease(quantity);
     }
 }

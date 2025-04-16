@@ -38,20 +38,21 @@ public class BroadcastProductService {
     private final LiveBroadcastValidator liveBroadcastValidator;
     private final ProductValidator productValidator;
 
-    private final ProductClient productClient;
 
 
     @Transactional
     public BroadcastProductResponseDto connectBroadcastProduct(UUID liveBroadcastId, BroadcastProductConnectDto requestDto) {
 
+        System.out.println("🟡 서비스 진입: connectBroadcastProduct 호출됨");
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
+        System.out.println("✅ 라이브 방송 존재 확인 완료");
 
         ExternalProductResponseDto productDto = productValidator.getValidProductOrThrow(requestDto.productId());
 
         liveBroadcastValidator.validateNotConnected(broadcast.getLiveBroadcastId(), productDto.productId());
 
-        BroadcastProductConnectDto connectDto = BroadcastProductMapper.toConnectDto(broadcast, productDto);
-        BroadcastProduct broadcastProduct = BroadcastProductMapper.connectDtoToEntity(connectDto);
+        BroadcastProductConnectDto connectDto = BroadcastProductMapper.toConnectDto(productDto);
+        BroadcastProduct broadcastProduct = BroadcastProductMapper.connectDtoToEntity(broadcast.getLiveBroadcastId(), connectDto);
 
         broadcastProductRepository.save(broadcastProduct);
 
@@ -74,7 +75,7 @@ public class BroadcastProductService {
         List<ProductSummaryDto> productSummaries = productValidator.getValidProductsOrThrow(productIds.getContent());
 
         Map<UUID, ProductSummaryDto> summaryMap = productSummaries.stream()
-                .collect(Collectors.toMap(ProductSummaryDto::id, Function.identity()));
+                .collect(Collectors.toMap(ProductSummaryDto::productId, Function.identity()));
 
         List<BroadcastProductListResponseDto> content = productIds.getContent().stream()
                 .map(id -> {
