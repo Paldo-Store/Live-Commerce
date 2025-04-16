@@ -33,13 +33,26 @@ public class CouponPolicyController {
     return ResponseUtil.success(response);
   }
 
-
   @GetMapping(name = "/{code}")
   public ResponseEntity<ApiResponse<ReadCouponPolicyResponse>> getCouponPolicy(
       @PathVariable("code") String code,
       @AuthenticationPrincipal RequestUserDetails userDetails
   ) {
     ReadCouponPolicyResponse response = couponService.getCouponPolicy(code, userDetails);
+    return ResponseUtil.success(response);
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<ApiResponse<SearchCouponPolicyResponse>> searchCouPolicy(
+      @RequestParam String keyword,
+      @RequestParam(defaultValue = "1") Integer page,
+      @RequestParam(defaultValue = "asc") String sortBy,
+      @RequestParam(defaultValue = "FIXED") DISCOUNT_TYPE discountType,
+      @AuthenticationPrincipal RequestUserDetails userDetails
+
+  ) {
+    SearchCouponPolicyResponse response = couponService.searchCouponPolicy(keyword, page, sortBy,
+        discountType, userDetails);
     return ResponseUtil.success(response);
   }
 
@@ -70,18 +83,6 @@ public class CouponPolicyController {
     return ResponseUtil.noContent();
   }
 
-  @GetMapping("/search")
-  public ResponseEntity<ApiResponse<SearchCouponPolicyResponse>> searchCouPolicy(
-      @RequestParam String keyword,
-      @RequestParam(defaultValue = "1") Integer page,
-      @RequestParam(defaultValue = "asc") String sortBy,
-      @RequestParam(defaultValue = "FIXED") DISCOUNT_TYPE discountType,
-      @AuthenticationPrincipal RequestUserDetails userDetails
 
-  ) {
-    SearchCouponPolicyResponse response = couponService.searchCouponPolicy(keyword, page, sortBy,
-        discountType, userDetails);
-    return ResponseUtil.success(response);
-  }
 
 }
