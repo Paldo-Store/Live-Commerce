@@ -1,10 +1,11 @@
-package com.live_commerce.product.inventory.application.dto;
+package com.live_commerce.product.inventory.application.dto.response;
 
 import com.live_commerce.product.inventory.domain.model.InventoryStatus;
 
 import java.util.UUID;
 
-public record InventoryCreateRequestDto (
+public record InventoryResponseDto (
+        UUID inventoryId,
         UUID productId,
         Integer quantity,
         Integer reservedQuantity,

@@ -1,9 +1,9 @@
 package com.live_commerce.product.inventory.application.mapper;
 
-import com.live_commerce.product.inventory.application.dto.InventoryCheckQuantityResponseDto;
-import com.live_commerce.product.inventory.application.dto.InventoryCheckResponseDto;
-import com.live_commerce.product.inventory.application.dto.InventoryCreateRequestDto;
-import com.live_commerce.product.inventory.application.dto.InventoryResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
+import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryResponseDto;
 import com.live_commerce.product.inventory.domain.model.Inventory;
 import org.springframework.stereotype.Component;
 
@@ -35,8 +35,8 @@ public class InventoryMapper {
         return new InventoryCheckQuantityResponseDto(inventory.getAvailableQuantity());
     }
 
-    public static InventoryCheckResponseDto toCheckResponseDto(boolean orderable) {
-        return new InventoryCheckResponseDto(orderable);
+    public static InventoryCheckOrderableResponseDto toCheckResponseDto(boolean orderable) {
+        return new InventoryCheckOrderableResponseDto(orderable);
     }
 
 }

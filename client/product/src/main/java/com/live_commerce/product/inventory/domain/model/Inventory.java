@@ -7,10 +7,12 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
+@Slf4j
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -52,12 +54,16 @@ public class Inventory extends BaseEntity{
     }
 
     public void decrease(int quantity) {
+        log.info("감소 시도: 요청 수량={}, 현재 수량={}", quantity, this.availableQuantity);
         if (this.availableQuantity < quantity) {
+            log.warn("재고 부족: 요청 수량={}, 현재 수량={}", quantity, this.availableQuantity);
             throw InventoryException.forInventoryOutOfStock();
         }
 
         this.availableQuantity -= quantity;
         this.quantity -= quantity;
+
+        log.info("재고 차감 성공: 남은 수량={}", this.availableQuantity);
 
         if (this.availableQuantity <= 0) {
             this.inventoryStatus = InventoryStatus.OUT_OF_STOCK;

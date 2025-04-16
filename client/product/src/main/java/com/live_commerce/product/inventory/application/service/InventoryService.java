@@ -1,6 +1,9 @@
 package com.live_commerce.product.inventory.application.service;
 
-import com.live_commerce.product.inventory.application.dto.*;
+import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryResponseDto;
 import com.live_commerce.product.inventory.application.mapper.InventoryMapper;
 import com.live_commerce.product.inventory.application.validation.InventoryValidator;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
@@ -8,10 +11,8 @@ import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,17 +78,27 @@ public class InventoryService {
         return inventory.getQuantity() <= 0;
     }
 
-    public InventoryCheckQuantityResponseDto checkInventoryQuantity(InventoryCheckQuantityRequestDto requestDto) {
-        Inventory inventory = inventoryValidator.validateAndGetActiveInventory(requestDto.productId());
+    // get
+    public InventoryCheckQuantityResponseDto checkInventoryQuantity(UUID productId) {
+        Inventory inventory = inventoryValidator.validateAndGetActiveInventory(productId);
         return InventoryMapper.toCheckQuantityDto(inventory);
     }
 
 
-    public InventoryCheckResponseDto checkOrderableInventory(InventoryCheckRequestDto requestDto) {
-        boolean orderable = inventoryValidator.checkOrderable(
-                requestDto.productId(),
-                requestDto.orderQuantity()
-        );
+    // get - 파라미터로 만들어.
+    public InventoryCheckOrderableResponseDto checkOrderableInventory(UUID productId, int orderQuantity) {
+        boolean orderable = inventoryValidator.checkOrderable(productId, orderQuantity);
         return InventoryMapper.toCheckResponseDto(orderable);
     }
+
+    @DistributedLock(key = "#productId", waitTime = 1, leaseTime = 2) // 강제 제한
+    public void lockForTesting(UUID productId, int holdSeconds) {
+        try {
+            Thread.sleep(holdSeconds * 1000L);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

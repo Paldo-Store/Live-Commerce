@@ -73,6 +73,16 @@ dependencies {
 	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
 	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
 	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+	// retry
+	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// Redisson
+	implementation 'org.redisson:redisson-spring-boot-starter:3.28.0'
 }
 
 dependencyManagement {

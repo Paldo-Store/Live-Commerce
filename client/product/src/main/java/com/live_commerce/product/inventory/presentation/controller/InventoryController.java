@@ -1,7 +1,12 @@
 package com.live_commerce.product.inventory.presentation.controller;
 
 
-import com.live_commerce.product.inventory.application.dto.*;
+import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
+import com.live_commerce.product.inventory.application.dto.request.InventoryDecreaseRequestDto;
+import com.live_commerce.product.inventory.application.dto.request.InventoryIncreaseRequestDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryResponseDto;
 import com.live_commerce.product.inventory.application.service.InventoryService;
 import com.live_commerce.product.inventory.infrastructure.common.ResponseUtil;
 import com.live_commerce.product.inventory.presentation.common.ApiResponse;
@@ -25,8 +30,8 @@ public class InventoryController {
         return ResponseUtil.success(responseDto);
     }
 
-    @GetMapping("/{inventoryId}")
-    public ResponseEntity<ApiResponse<InventoryResponseDto>> getInventoryById(@PathVariable UUID inventoryId) {
+    @GetMapping("/by-id/{inventoryId}")
+    public ResponseEntity<ApiResponse<InventoryResponseDto>> getInventoryById(@PathVariable("inventoryId") UUID inventoryId) {
         InventoryResponseDto responseDto = inventoryService.getInventory(inventoryId);
         return ResponseUtil.success(responseDto);
     }
@@ -44,18 +49,20 @@ public class InventoryController {
     }
 
     // 재고 총 수량 확인용 - 임시
-    @GetMapping("/checkquantity")
-    public ResponseEntity<ApiResponse<InventoryCheckQuantityResponseDto>> checkInventoryQuantity(@Valid @RequestBody InventoryCheckQuantityRequestDto requestDto) {
-        InventoryCheckQuantityResponseDto response = inventoryService.checkInventoryQuantity(requestDto);
+    @GetMapping("/check-quantity") // get은 파라미터로
+    public ResponseEntity<ApiResponse<InventoryCheckQuantityResponseDto>> checkInventoryQuantity(@RequestParam UUID productId) {
+        InventoryCheckQuantityResponseDto response = inventoryService.checkInventoryQuantity(productId);
         return ResponseUtil.success(response);
     }
 
     // 주문 가능 재고 확인용
-    @GetMapping("/checkorderable")
-    public ResponseEntity<ApiResponse<InventoryCheckResponseDto>> checkOrderableInventory(@Valid @RequestBody InventoryCheckRequestDto requestDto) {
-        InventoryCheckResponseDto response = inventoryService.checkOrderableInventory(requestDto);
+    @GetMapping("/check-orderable")
+    public ResponseEntity<ApiResponse<InventoryCheckOrderableResponseDto>> checkOrderableInventory(@RequestParam UUID productId, @RequestParam int orderQuantity) {
+        InventoryCheckOrderableResponseDto response = inventoryService.checkOrderableInventory(productId, orderQuantity);
         return ResponseUtil.success(response);
     }
+
+
 
 
 }

@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "company")
+@FeignClient(name = "company", url = "http://localhost:19091", path = "/api/v1/companies")
 public interface CompanyClient {
 
-    @GetMapping("/api/v1/companies/{id}")
-    ApiResponse<ExternalCompanyResponseDto> getCompany(@PathVariable("id") UUID id);
+    @GetMapping("/{companyId}")
+    ApiResponse<ExternalCompanyResponseDto> getCompany(@PathVariable("companyId") UUID companyId);
 }

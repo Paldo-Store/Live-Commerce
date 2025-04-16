@@ -2,6 +2,7 @@ package com.live_commerce.product.inventory;
 
 
 import com.live_commerce.product.inventory.application.service.InventoryService;
+import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.model.InventoryStatus;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
@@ -128,5 +129,39 @@ public class InventoryServiceTest {
         assertEquals(threadCount - INITIAL_QUANTITY, failCount.get()); // 실패 수 == 초과 요청 수
     }
 
+
+    @Test
+    void 락획득실패_테스트() throws InterruptedException {
+        UUID productId = PRODUCT_ID;
+
+        CountDownLatch latch = new CountDownLatch(2);
+
+        // 1. 스레드1이 락을 잡고 오래 점유
+        new Thread(() -> {
+            try {
+                inventoryService.lockForTesting(productId, 5); // sleep 5초
+            } catch (Exception e) {
+                System.out.println("Thread1 예외: " + e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        }).start();
+
+        Thread.sleep(500); // 락 선점 보장
+
+        // 2. 스레드2가 락을 못잡고 실패
+        new Thread(() -> {
+            try {
+                inventoryService.lockForTesting(productId, 0); // 바로 실패해야함
+            } catch (InventoryException e) {
+                System.out.println("Thread2 예외 발생: " + e.getMessage());
+                assertEquals("현재 처리 중입니다. 잠시 후 다시 시도해주세요.", e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        }).start();
+
+        latch.await();
+    }
 
 }

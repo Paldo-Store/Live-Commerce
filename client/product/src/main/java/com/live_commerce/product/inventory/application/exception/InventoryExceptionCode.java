@@ -13,8 +13,7 @@ public enum InventoryExceptionCode implements ExceptionCode {
   NOT_FOUND(HttpStatus.NOT_FOUND, "재고 정보가 없습니다."),
   PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."),
   INVENTORY_OUT_OF_STOCK(HttpStatus.CONFLICT, "재고가 부족합니다."),
-  LOCK_ACQUISITION_FAILED(HttpStatus.TOO_MANY_REQUESTS, "현재 처리 중입니다. 잠시 후 다시 시도해주세요."),
-  LOCK_TIME_OUT(HttpStatus.REQUEST_TIMEOUT, "요청 시간이 초과되었습니다. 다시 시도해주세요.");
+  LOCK_ACQUISITION_FAILED(HttpStatus.TOO_MANY_REQUESTS, "현재 처리 중입니다. 잠시 후 다시 시도해주세요.");
 
 
   private final HttpStatus httpStatus;

@@ -6,6 +6,8 @@ import com.live_commerce.livebroadcast.domain.model.BroadcastProduct;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.infrastructure.client.product.ExternalProductResponseDto;
 
+import java.util.UUID;
+
 public class BroadcastProductMapper {
 
     public static BroadcastProductResponseDto entityToDto(BroadcastProduct entity) {
@@ -16,13 +18,12 @@ public class BroadcastProductMapper {
         );
     }
 
-    public static BroadcastProduct connectDtoToEntity(BroadcastProductConnectDto dto) {
-        return BroadcastProduct.create(dto.liveBroadcastId(), dto.productId());
+    public static BroadcastProduct connectDtoToEntity(UUID broadcastId, BroadcastProductConnectDto dto) {
+        return BroadcastProduct.create(broadcastId, dto.productId());
     }
 
-    public static BroadcastProductConnectDto toConnectDto(LiveBroadcast broadcast, ExternalProductResponseDto productDto) {
+    public static BroadcastProductConnectDto toConnectDto(ExternalProductResponseDto productDto) {
         return new BroadcastProductConnectDto(
-                broadcast.getLiveBroadcastId(),
                 productDto.productId()
         );
     }

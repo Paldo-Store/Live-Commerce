@@ -11,7 +11,8 @@ public interface KakaoPayClient {
 	KakaoPayReadyDto requestKakaoPayReady(
 		UUID userId,
 		UUID orderId,
-		BigDecimal amount
+		BigDecimal amount,
+		String itemName
 	);
 
 	KakaoPayApproveDto requestKakaoPayApprove(

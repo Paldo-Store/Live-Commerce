@@ -53,8 +53,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	// security
-	//implementation 'org.springframework.boot:spring-boot-starter-security'
-	//implementation 'io.jsonwebtoken:jjwt:0.12.6'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'io.jsonwebtoken:jjwt:0.12.6'
 
 	// postgresql
 	implementation 'org.postgresql:postgresql:42.7.5'
