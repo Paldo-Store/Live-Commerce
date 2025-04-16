@@ -3,6 +3,7 @@ package com.live_commerce.order.application.service;
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
 import com.live_commerce.order.application.dto.response.OrderCreateResponse;
 import com.live_commerce.order.application.dto.response.OrderProductResponse;
+import com.live_commerce.order.application.exception.CustomException;
 import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 //주문 생성 service
@@ -89,8 +91,69 @@ public class OrderCreateService {
         log.info("총 주문 금액 계산");
 
         // 6.  쿠폰에서 할인 적용할 금액 계산하도록 쿠폰아이디와 총 주문 금액(쿠폰 적용전) 넘겨주기
-        // TODO 쿠폰에서 getDiscountAmount함수에 맞게 쿠폰 할인 금액 계산 API 생성
-        Long finalPaidPrice = couponClient.getDiscountAmount(request.couponId(), productTotalPrice);
+        // 최종 결제 금액 필드 선언
+        Long finalPaidPrice = productTotalPrice;
+
+        // 6-1. 지금 로그인 한 유저에 대한 쿠폰 목록 리스트들을 전부 들고온다.
+        ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons(userId);
+        IssuedCouponListResponse couponListByUser = responseCouponList.getData();
+
+        // 6-2. 쿠폰이 하나도 없다면 쿠폰 적용 없이 즉시 최종 결제 금액으로 반환 -> 원가로 결제
+        // TODO 요청들어오는 couponId는 controller에서 비필수로 설정
+        if( (couponListByUser == null) || (couponListByUser.coupons() == null)){
+            Order order = request.toOrder(productTotalPrice, finalPaidPrice, userId);
+            Order savedOrder = orderRepository.save(order);
+            return OrderCreateResponse.of(savedOrder);
+        }
+
+        // 6-3. 유저 목록 쿠폰이 있다면 -> 요청에서 들어온 couponId확인
+        // 쿠폰id가 요청으로 들어오고 로그인한 사람의 쿠폰 목록들이 있다면 쿠폰 목록에서 요청 들어온 쿠폰 id 조회
+
+        // 요청 couponId
+        UUID requestCouponId = request.couponId();
+
+        // 만약 요청 들어온 couponId가 없으면 원가 결제
+        if (requestCouponId == null) {
+            Order order = request.toOrder(productTotalPrice, finalPaidPrice, userId);
+            Order savedOrder = orderRepository.save(order);
+            return OrderCreateResponse.of(savedOrder);
+        }
+
+        // 요청 들어온 couponId를 목록에서 찾고 그 일치하는 쿠폰 정보로 변수에 할당
+        // 만약 요청 들어온 couponId가 쿠폰 목록에 없다면 해당 쿠폰이 목록에 없다는 예외 발생
+        GetIssuedCouponResponse matchedCoupon = couponListByUser.coupons().stream()
+                .filter(coupon -> coupon.id().equals(requestCouponId))
+                .findFirst()
+                .orElseThrow(() -> new OrderException("요청하신 쿠폰은 사용자의 보유 목록에 없습니다.", HttpStatus.BAD_REQUEST));
+
+        // 7. 그 쿠폰에 해당하는 couponCode 찾기 (order -> coupon)
+
+        // 쿠폰 id와 목록 쿠폰id과 일치하는 couponId 변수에 할당
+        UUID matchedRequestCouponId = matchedCoupon.id();
+        // couponCode 가져오기
+        String requestCouponCode = matchedCoupon.couponCode();
+
+        // 7-1. couponCode로 coupon policy에서 쿠폰 정책 조회 및 가져오기
+        ApiResponse<ReadCouponPolicyResponse> responseCouponPolicy= couponClient.getCouponPolicy(requestCouponCode);
+        ReadCouponPolicyResponse couponPolicyByCouponCode = responseCouponPolicy.getData();
+
+        //8. 최종 결제 금액 계산
+
+        //할인 타입 - fixed, rate
+        String discountType = couponPolicyByCouponCode.discountType();
+        // 할인률, 할인값
+        Long discountValue = Long.parseLong(couponPolicyByCouponCode.discountValue());;
+
+        //할인값으로 계산
+        if(discountType.equalsIgnoreCase("fixed")){
+            finalPaidPrice = productTotalPrice - discountValue;  //할인 고정값
+        }
+
+        //할인률로 계산
+        if(discountType.equalsIgnoreCase("rate")){
+            Long discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
+            finalPaidPrice = productTotalPrice - discountAmount;
+        }
         log.info("할인 금액 적용한 최종 결제 예상 금액");
 
         // 7. 주문 생성 - 전체 물건 합과 userId는 따로 받아와야함
