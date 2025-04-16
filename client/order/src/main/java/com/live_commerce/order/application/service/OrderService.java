@@ -40,7 +40,6 @@ public class OrderService {
     //service 호출
     @Lazy
     private final PaymentStatusTransitionService paymentStatusTransitionService;  //@Lazy 적용
-    
     private final OrderCreateService orderCreateService;
     private final OrderModificationService orderModificationService;
 

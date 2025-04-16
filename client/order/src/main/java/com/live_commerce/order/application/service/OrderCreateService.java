@@ -42,7 +42,6 @@ public class OrderCreateService {
         if (statusResponse == null || statusResponse.getBroadcastStatus() != BroadcastStatus.LIVE) {
             throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
         }
-
         log.info("방송 체크 완료");
 
         // 1. [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
@@ -71,19 +70,9 @@ public class OrderCreateService {
         }
         log.info("재고 존재 여부 확인 완료");
 
-        // 해당 상품의 남은 재고 수량 들고오기
-//        ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = inventoryClient.checkInventoryQuantity(request.productId(), request.productQuantity());
-//        InventoryCheckQuantityResponseDto getInventoryQuantity = responseInventoryByQuantity.getData();
 
-        //int stock = getInventoryQuantity.availableQuantity(); // 실제 상품의 해당 재고 수량 (응답 product-> order)
         int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
         log.info("재고 수량 들고오기");
-
-        // 4. 상품의 재고 수량이 0이거나, or 주문한 상품 개수 > 상품 재고 개수
-//        if ( (stock == 0) || (orderQty > stock)) {
-//            throw new OrderException("해당 상품이 존재하지 않거나 재고가 충분하지 않습니다.", HttpStatus.BAD_REQUEST);
-//        }
-        //log.info("재고 > 주문 수량");
 
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격

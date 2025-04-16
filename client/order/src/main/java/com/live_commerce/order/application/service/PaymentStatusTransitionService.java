@@ -7,9 +7,7 @@ import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.infrastructure.client.CouponClient;
-import com.live_commerce.order.infrastructure.client.PaymentClient;
-import com.live_commerce.order.infrastructure.client.ProductClient;
+import com.live_commerce.order.infrastructure.client.*;
 import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,12 +18,14 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+//결제 상태 변경
 public class PaymentStatusTransitionService {
     private final ProductClient productClient;
     private final PaymentClient paymentClient;
     private final CouponClient couponClient;
     private final OrderRepository orderRepository;
 
+    //결제 상태 변경
     public OrderStatusUpdateResponse updateCreator(UUID orderId, OrderStatusUpdateRequest request, UUID userId, String role){
         // 주문 조회 - 해당 주문 없으면 예외처리
         Order order = orderRepository.findById(orderId)
@@ -65,9 +65,10 @@ public class PaymentStatusTransitionService {
             // TODO 결제 처리는 Payment에서 로직 처리
             paymentClient.cancelPayment(order.getId(), order.getFinalPaidPrice());
 
-            // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다.
-            // TODO 재고 복구는 Product에서 로직 처리
-            productClient.restoreProductQuantity(order.getProductId(), order.getProductQuantity());
+            // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다. 재고 복구는 Product에서 로직 처리
+            productClient.increaseInventory(new InventoryIncreaseRequestDto(
+                    order.getProductId(),
+                    order.getProductQuantity()));
         }
 
         //주문 접수 -> 주문 취소 : PENDING -> CANCELLED
@@ -78,48 +79,16 @@ public class PaymentStatusTransitionService {
         return OrderStatusUpdateResponse.fromOrder(order);
     }
 
-
     //결제 성공 : PENDING -> PAID
     @Transactional
     public void updateOrderStatusToPaid(Order order, OrderStatus newStatus) {
 
-        //TODO PRODUCTClient에서 상품명 (상품명)
-
-        // 1. 총 상품 결제 금액 계산
-        //TODO Product에서 총 상품 결제 금액계산 - 수정된 상품 개수로 총 상품 결제 금액 계산
-        Long productTotalPrice = productClient.calculateProductTotalPrice(order.getProductId(), order.getProductQuantity());
-
-        // 총 상품 결제 금액 Order Entity에 저장
-        order.updateProductTotalPrice(productTotalPrice);
-
-        // 2.  쿠폰 할인 적용 -> 금액 계산 (쿠폰이 있을 경우)
-        Long finalPaidPrice = productTotalPrice;
-
-        // ordr -> coupon : 주문에 저장된 couponId와 총 상품 합산 결과를 Coupon 측으로 보내준다.
-        // 쿠폰이 있을 경우
-        if (order.getCouponId() != null) {
-            //TODO Coupon 영역에서 할인 계산을 진행한다.
-            Long discount = couponClient.getDiscountAmount(order.getCouponId(), productTotalPrice);
-
-            //만약 할인 쿠폰 금액이 결제 금액보다 클 경우, 할인금액은 총 상품 합산 금액으로 한다.
-            if (discount > productTotalPrice) {
-                discount = productTotalPrice;
-            }
-
-            //최종 결제 금액 계산
-            finalPaidPrice = productTotalPrice - discount;
-        }
-
-        // 쿠폰 적용 후 최종 결제 금액 Order Entity 에 저장
-        order.updateFinalPaidPrice(finalPaidPrice);
-
-        // 2. 결제 승인 요청
+        // 결제 승인 요청
         // 주문 아이디와 최종 결제 금액을 payment로 보내줌 (order -> Panyemt)
         //TODO Payment에서 결제 로직 수행 (결제 진행 -> 결제 준비) -> ready
         PaymentSuccessResponse response= paymentClient.approvePayment(order.getId(), order.getFinalPaidPrice());
 
         // TODO 2.5. Payment에서 응답 내려주기.
-
 
         //3. 결제 성공 응답확인
         if (!response.success()) {
@@ -127,7 +96,7 @@ public class PaymentStatusTransitionService {
         }
 
         // 4. 결제 금액 일치 여부 확인
-        if (!finalPaidPrice.equals(response.finalPaidPrice())) {
+        if (!order.getFinalPaidPrice().equals(response.finalPaidPrice())) {
             throw new OrderException("결제 금액이 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
@@ -135,8 +104,7 @@ public class PaymentStatusTransitionService {
         order.changeStatus(newStatus);
 
         // 6. 재고 감소
-        //TODO Product에서 productId체크, 재고 >주문개수, 재고 감소, 총 결제금액 계산
-        productClient.reduceProductQuantity(order.getProductId(), order.getProductQuantity());
+        productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
 
         // 7. 쿠폰 사용 처리
         if (order.getCouponId() != null) {

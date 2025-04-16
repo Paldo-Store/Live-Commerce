@@ -11,14 +11,17 @@ import java.util.UUID;
 public record OrderUpdateRequest(
         UUID productId,
         Integer productQuantity,
-        String requirement
+        String requirement,
+        UUID couponId
 ) {
-    public Order toOrder(Long productTotalPrice) {
+    public Order toOrder(Long productTotalPrice, Long finalPaidPrice) {
         return Order.builder()
                 .productId(this.productId)
                 .productQuantity(this.productQuantity)
                 .productTotalPrice(productTotalPrice)
+                .finalPaidPrice(finalPaidPrice)
                 .requirement(this.requirement)
+                .couponId(this.couponId)
                 .build();
     }
 }
