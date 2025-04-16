@@ -42,7 +42,7 @@ public class CouponPolicyController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<ApiResponse<SearchCouponPolicyResponse>> searchCouPolicy(
+  public ResponseEntity<ApiResponse<SearchCouponPolicyResponse>> searchCouponPolicy(
       @RequestParam String keyword,
       @RequestParam(defaultValue = "1") Integer page,
       @RequestParam(defaultValue = "asc") String sortBy,
