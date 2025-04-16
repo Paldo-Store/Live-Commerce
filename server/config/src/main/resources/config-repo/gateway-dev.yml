@@ -42,7 +42,7 @@ spring:
         - id: coupon
           uri: lb://coupon
           predicates:
-            - Path=/api/v1/coupon-policies, /api/v1/issued-coupons, /api-docs-coupon
+            - Path=/api/v1/coupon-policies/**, /api/v1/issued-coupons/**, /api-docs-coupon
 
         - id: livebroadcast
           uri: lb://livebroadcast
