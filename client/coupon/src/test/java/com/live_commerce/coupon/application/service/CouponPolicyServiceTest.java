@@ -14,6 +14,7 @@ import com.live_commerce.coupon.domain.exception.CouponPolicyException;
 import com.live_commerce.coupon.domain.model.CouponPolicy;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.domain.repository.CouponPolicyRepository;
+import com.live_commerce.coupon.infrastructure.security.RequestUserDetails;
 import com.live_commerce.coupon.presentation.dto.request.CreateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.request.UpdateCouponPolicyRequest;
 import com.live_commerce.coupon.presentation.dto.response.ReadCouponPolicyResponse;
@@ -36,6 +37,9 @@ public class CouponPolicyServiceTest {
 
   @InjectMocks
   private CouponPolicyService couponPolicyService;
+
+  @Mock
+  private RequestUserDetails userDetails;
 
   private CreateCouponPolicyRequest request;
 
@@ -91,7 +95,7 @@ public class CouponPolicyServiceTest {
         .when(couponPolicyValidator).validateForCreatePolicy(
             any(CreateCouponPolicyRequest.class));  // void 메서드는 doThrow로 예외 던지기
 
-    assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request))
+    assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request, userDetails))
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("시작일은 종료일보다 이전이어야 합니다.");
   }
@@ -115,7 +119,7 @@ public class CouponPolicyServiceTest {
     doThrow(new CouponPolicyException(CouponPolicyExceptionCode.DISCOUNT_GREATER_THAN_MAX_ORDER_AMOUNT))
         .when(couponPolicyValidator).validateForCreatePolicy(any(CreateCouponPolicyRequest.class));
 
-    assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request))
+    assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request, userDetails))
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("할인 금액이 최대 주문 금액을 초과할 수 없습니다.");
   }
@@ -138,7 +142,7 @@ public class CouponPolicyServiceTest {
     doThrow(new CouponPolicyException(CouponPolicyExceptionCode.DISCOUNT_GREATER_THAN_100))
         .when(couponPolicyValidator).validateForCreatePolicy(any(CreateCouponPolicyRequest.class));
 
-    assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request))
+    assertThatThrownBy(() -> couponPolicyService.createCouponPolicy(request, userDetails))
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("정률 할인 비율은 100을 넘을 수 없습니다.");
   }
@@ -153,7 +157,8 @@ public class CouponPolicyServiceTest {
     when(couponPolicyRepository.findByCodeAndDeletedStatusFalse(validCouponId)).thenReturn(
         Optional.of(couponPolicy));
 
-    ReadCouponPolicyResponse response = couponPolicyService.getCouponPolicy(validCouponId);
+    ReadCouponPolicyResponse response = couponPolicyService.getCouponPolicy(validCouponId,
+        userDetails);
 
     // then
     assertThat(response).isNotNull();
@@ -173,7 +178,7 @@ public class CouponPolicyServiceTest {
         Optional.empty());
 
     // then
-    assertThatThrownBy(() -> couponPolicyService.getCouponPolicy(code))
+    assertThatThrownBy(() -> couponPolicyService.getCouponPolicy(code, userDetails))
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("쿠폰 정책이 없거나 모두 삭제되었습니다.");
 
@@ -191,7 +196,7 @@ public class CouponPolicyServiceTest {
     when(couponPolicyRepository.findById(validCouponId))
         .thenReturn(Optional.of(couponPolicy));
 
-    couponPolicyService.deleteCouponPolicy(validCouponId);
+    couponPolicyService.deleteCouponPolicy(validCouponId, userDetails);
 
     // then
     assertThat(couponPolicy.getDeletedStatus()).isTrue();
@@ -201,7 +206,7 @@ public class CouponPolicyServiceTest {
     when(couponPolicyRepository.findById(validCouponId))
         .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> couponPolicyService.getCouponPolicy(validCouponId))
+    assertThatThrownBy(() -> couponPolicyService.getCouponPolicy(validCouponId, userDetails))
         .isInstanceOf(CouponPolicyException.class)
         .hasMessageContaining("쿠폰 정책이 없거나 모두 삭제되었습니다.");
 
@@ -230,7 +235,7 @@ public class CouponPolicyServiceTest {
         .thenReturn(Optional.of(couponPolicy));
     when(couponPolicyRepository.save(couponPolicy)).thenReturn(couponPolicy);
 
-    couponPolicyService.updateCouponPolicy(validCouponCode, updateRequest);
+    couponPolicyService.updateCouponPolicy(validCouponCode, updateRequest, userDetails);
 
     // then
     assertThat(couponPolicy.getName()).isEqualTo("수정된 쿠폰");

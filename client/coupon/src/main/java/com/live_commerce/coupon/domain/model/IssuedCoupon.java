@@ -1,5 +1,6 @@
 package com.live_commerce.coupon.domain.model;
 
+import com.live_commerce.coupon.infrastructure.security.RequestUserDetails;
 import com.live_commerce.coupon.presentation.dto.request.IssuedCouponRequest;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -43,10 +44,10 @@ public class IssuedCoupon {
   }
 
   public static IssuedCoupon from(IssuedCouponRequest request,
-      Optional<CouponPolicy> couponPolicy) {
+      Optional<CouponPolicy> couponPolicy, RequestUserDetails userDetails) {
     return IssuedCoupon.builder()
 //        .id(UUID.randomUUID())
-        .userId(request.userId())
+        .userId(userDetails.getUserId())
         .couponCode(request.couponCode())
         .isUsed(false)
         .usedAt(null)

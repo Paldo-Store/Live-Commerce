@@ -6,6 +6,7 @@ import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.coupon.domain.model.IssuedCoupon;
 import com.live_commerce.coupon.domain.repository.CouponPolicyRepository;
 import com.live_commerce.coupon.domain.repository.IssuedCouponRepository;
+import com.live_commerce.coupon.infrastructure.security.RequestUserDetails;
 import com.live_commerce.coupon.presentation.dto.request.IssuedCouponRequest;
 import com.live_commerce.coupon.presentation.dto.response.FirstJoinCouponResponse;
 import com.live_commerce.coupon.presentation.dto.response.GetIssuedCouponResponse;
@@ -27,32 +28,33 @@ public class IssuedCouponService {
   private final IssuedCouponRepository issuedCouponRepository;
   private final CouponPolicyRepository couponPolicyRepository;
 
-  public IssuedCoupon issueCoupon(IssuedCouponRequest request) {
+  public IssuedCoupon issueCoupon(IssuedCouponRequest request, RequestUserDetails userDetails) {
 
     Optional<CouponPolicy> couponPolicy = couponPolicyRepository.findByCodeAndDeletedStatusFalse(
         request.couponCode());
+
     if (couponPolicy.isEmpty()) {
       IssuedCouponException.couponPolicyNotFound();
     }
-    IssuedCoupon issuedCoupon = IssuedCoupon.from(request, couponPolicy);
+
+    IssuedCoupon issuedCoupon = IssuedCoupon.from(request, couponPolicy, userDetails);
 
     issuedCoupon = issuedCouponRepository.save(issuedCoupon);
     return issuedCoupon;
   }
 
-
-  public IssuedCoupon useCoupon(UUID couponId) {
+  public IssuedCoupon useCoupon(UUID couponId, RequestUserDetails userDetails) {
 
     // TODO: 사용하지 않으 쿠폰만 조회
-    IssuedCoupon issuedCoupon = findIssuedCouponById(couponId);
+    IssuedCoupon issuedCoupon = findIssuedCouponByIdAndUser(couponId, userDetails);
 
     checkIfCouponUsed(issuedCoupon);
 
     return processCouponUsage(issuedCoupon);
   }
 
-  private IssuedCoupon findIssuedCouponById(UUID couponId) {
-    return issuedCouponRepository.findById(couponId)
+  private IssuedCoupon findIssuedCouponByIdAndUser(UUID couponId, RequestUserDetails userDetails) {
+    return issuedCouponRepository.findByIdAndUserIdAndIsUsedFalse(couponId, userDetails.getUserId())
         .orElseThrow(() -> {
           IssuedCouponException.issuedCouponNotFound();
           return null;
@@ -71,13 +73,14 @@ public class IssuedCouponService {
   }
 
   @Transactional(readOnly = true)
-  public GetIssuedCouponResponse getIssuedCoupon(UUID id) {
-    IssuedCoupon issuedCoupon = findByIdAndIsUsedFalseOrIsUsedIsNull(id);
+  public GetIssuedCouponResponse getIssuedCoupon(UUID couponId, RequestUserDetails userDetails) {
+    IssuedCoupon issuedCoupon = findByIdAndUserAndIsUsedFalse(couponId, userDetails);
     return GetIssuedCouponResponse.from(issuedCoupon);
   }
 
-  private IssuedCoupon findByIdAndIsUsedFalseOrIsUsedIsNull(UUID id) {
-    return issuedCouponRepository.findByIdAndIsUsedFalseOrIsUsedIsNull(id)
+  private IssuedCoupon findByIdAndUserAndIsUsedFalse(UUID couponId,
+      RequestUserDetails userDetails) {
+    return issuedCouponRepository.findByIdAndUserIdAndIsUsedFalse(couponId, userDetails.getUserId())
         .orElseThrow(() ->
         {
           IssuedCouponException.issuedCouponNotFound();
@@ -86,20 +89,20 @@ public class IssuedCouponService {
   }
 
   @Transactional(readOnly = true)
-  public IssuedCouponListResponse getIssuedCoupons() {
+  public IssuedCouponListResponse getIssuedCoupons(RequestUserDetails userDetails) {
     //TODO : 사용자한정
-    List<IssuedCoupon> issuedCoupons = issuedCouponRepository.findAll();
+    List<IssuedCoupon> issuedCoupons = issuedCouponRepository.findByUserId(userDetails.getUserId());
     return IssuedCouponListResponse.from(issuedCoupons);
   }
 
-  public FirstJoinCouponResponse issueFirstCoupon(UUID userId) {
+  public FirstJoinCouponResponse issueFirstCoupon(RequestUserDetails userDetails) {
 
     String couponCode = "FIRST_COUPON";
     // TODO : 나중에는 이미 정의되어 있는 쿠폰 정책으로 쿠폰 발급이 이루어져야 함.
     CouponPolicy couponPolicy = createFirstCouponPolicy(couponCode);
 
-    IssuedCouponRequest request = new IssuedCouponRequest(userId, couponPolicy.getCode());
-    IssuedCoupon issuedCoupon = issueCoupon(request);
+    IssuedCouponRequest request = new IssuedCouponRequest(couponPolicy.getCode());
+    IssuedCoupon issuedCoupon = issueCoupon(request, userDetails);
     return FirstJoinCouponResponse.from(issuedCoupon);
   }
 

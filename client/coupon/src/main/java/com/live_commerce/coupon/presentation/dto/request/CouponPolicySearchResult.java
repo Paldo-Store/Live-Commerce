@@ -1,12 +1,11 @@
-package com.live_commerce.coupon.presentation.dto.response;
+package com.live_commerce.coupon.presentation.dto.request;
 
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public record CouponPolicySearchResult(
-    UUID code,
+    String code,
     String name,
     DISCOUNT_TYPE discountType,
     BigDecimal discountValue,
