@@ -1,6 +1,9 @@
 package com.live_commerce.product.inventory.application.service;
 
-import com.live_commerce.product.inventory.application.dto.*;
+import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
+import com.live_commerce.product.inventory.application.dto.response.InventoryResponseDto;
 import com.live_commerce.product.inventory.application.mapper.InventoryMapper;
 import com.live_commerce.product.inventory.application.validation.InventoryValidator;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
@@ -75,17 +78,16 @@ public class InventoryService {
         return inventory.getQuantity() <= 0;
     }
 
-    public InventoryCheckQuantityResponseDto checkInventoryQuantity(InventoryCheckQuantityRequestDto requestDto) {
-        Inventory inventory = inventoryValidator.validateAndGetActiveInventory(requestDto.productId());
+    // get
+    public InventoryCheckQuantityResponseDto checkInventoryQuantity(UUID productId) {
+        Inventory inventory = inventoryValidator.validateAndGetActiveInventory(productId);
         return InventoryMapper.toCheckQuantityDto(inventory);
     }
 
 
-    public InventoryCheckResponseDto checkOrderableInventory(InventoryCheckRequestDto requestDto) {
-        boolean orderable = inventoryValidator.checkOrderable(
-                requestDto.productId(),
-                requestDto.orderQuantity()
-        );
+    // get - 파라미터로 만들어.
+    public InventoryCheckOrderableResponseDto checkOrderableInventory(UUID productId, int orderQuantity) {
+        boolean orderable = inventoryValidator.checkOrderable(productId, orderQuantity);
         return InventoryMapper.toCheckResponseDto(orderable);
     }
 
@@ -98,11 +100,5 @@ public class InventoryService {
         }
     }
 
-    @Transactional
-    public void decreaseInventoryWithoutLock(UUID productId, int quantity) {
-        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(productId)
-                .orElseThrow(InventoryException::forInventoryNotFound);
 
-        inventory.decrease(quantity);
-    }
 }
