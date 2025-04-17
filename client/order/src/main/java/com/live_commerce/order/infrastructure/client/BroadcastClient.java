@@ -1,7 +1,6 @@
 package com.live_commerce.order.infrastructure.client;
 
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
-import com.live_commerce.order.infrastructure.security.FeignClientInterceptor;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
