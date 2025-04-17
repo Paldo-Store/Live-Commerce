@@ -88,12 +88,12 @@ public class OrderModificationService {
 
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격
-        Long productTotalPrice = (long) (orderQty * productResponseByOrder.price());
+        double productTotalPrice = (orderQty * productResponseByOrder.price());
         log.info("총 주문 금액 계산");
 
         // 6.  쿠폰에서 할인 적용할 금액 계산하도록 쿠폰아이디와 총 주문 금액(쿠폰 적용전) 넘겨주기
         // 최종 결제 금액 필드 선언
-        Long finalPaidPrice = productTotalPrice;
+        double finalPaidPrice = productTotalPrice;
 
         // 6-1. 지금 로그인 한 유저에 대한 쿠폰 목록 리스트들을 전부 들고온다.
         ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons();
@@ -142,7 +142,7 @@ public class OrderModificationService {
         //할인 타입 - fixed, rate
         String discountType = couponPolicyByCouponCode.discountType();
         // 할인률, 할인값
-        Long discountValue = Long.parseLong(couponPolicyByCouponCode.discountValue());;
+        double discountValue = couponPolicyByCouponCode.discountValue();
 
         //할인값으로 계산
         if(discountType.equalsIgnoreCase("fixed")){
@@ -151,7 +151,7 @@ public class OrderModificationService {
 
         //할인률로 계산
         if(discountType.equalsIgnoreCase("rate")){
-            Long discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
+            double discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
             finalPaidPrice = productTotalPrice - discountAmount;
         }
         log.info("할인 금액 적용한 최종 결제 예상 금액");

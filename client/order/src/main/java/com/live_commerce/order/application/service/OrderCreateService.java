@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -74,32 +75,33 @@ public class OrderCreateService {
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격
         log.info("상품의 가격 : " + productResponseByOrder.price());
-        Long productTotalPrice = (long) (orderQty * productResponseByOrder.price());
+        double productTotalPrice = orderQty * productResponseByOrder.price();
         log.info("총 상품 주문 금액 계산 : " + productTotalPrice);
 
         ///////////////////////////////////////////////////////////////////////////////
 
         // 6.  쿠폰에서 할인 적용할 금액 계산하도록 쿠폰아이디와 총 주문 금액(쿠폰 적용전) 넘겨주기
         // 최종 결제 금액 필드 초기화
-        Long finalPaidPrice = productTotalPrice;
+        double finalPaidPrice = productTotalPrice;
 
         // 6-1. 지금 로그인 한 유저에 대한 쿠폰 목록 리스트들을 전부 들고온다.
         ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons();
         IssuedCouponListResponse couponListByUser = responseCouponList.getData();
 
         // 6-2. 쿠폰이 하나도 없다면 쿠폰 적용 없이 즉시 최종 결제 금액으로 반환 -> 원가로 결제
-        // TODO 요청들어오는 couponId는 controller에서 비필수로 설정
         if( (couponListByUser == null) || (couponListByUser.coupons() == null)){
             Order order = request.toOrder(productTotalPrice, finalPaidPrice, userId);
             Order savedOrder = orderRepository.save(order);
             return OrderCreateResponse.of(savedOrder);
         }
+        log.info("로그인 한 유저의 쿠폰 리스트 들고오기");
 
         // 6-3. 유저 목록 쿠폰이 있다면 -> 요청에서 들어온 couponId확인
         // 쿠폰id가 요청으로 들어오고 로그인한 사람의 쿠폰 목록들이 있다면 쿠폰 목록에서 요청 들어온 쿠폰 id 조회
 
         // 요청 couponId
         UUID requestCouponId = request.couponId();
+        log.info("요청한 쿠폰 아이디" + requestCouponId);
 
         // 만약 요청 들어온 couponId가 없으면 원가 결제
         if (requestCouponId == null) {
@@ -114,22 +116,26 @@ public class OrderCreateService {
                 .filter(coupon -> coupon.id().equals(requestCouponId))
                 .findFirst()
                 .orElseThrow(() -> new OrderException("요청하신 쿠폰은 사용자의 보유 목록에 없습니다.", HttpStatus.BAD_REQUEST));
+        log.info("요청에 맞는 쿠폰아이디를 목록에서 찾아서 쿠폰 정보 들고오기");
 
         // 7. 그 쿠폰에 해당하는 couponCode 찾기 (order -> coupon)
-
         // couponCode 가져오기
         String requestCouponCode = matchedCoupon.couponCode();
+        log.info("해당 쿠폰의 couponCode 들고오기" + requestCouponCode);
 
         // 7-1. couponCode로 coupon policy에서 쿠폰 정책 조회 및 가져오기
+        // TODO ReadCouponPolicyResponse의 type -> enum으로 변경
         ApiResponse<ReadCouponPolicyResponse> responseCouponPolicy= couponClient.getCouponPolicy(requestCouponCode);
         ReadCouponPolicyResponse couponPolicyByCouponCode = responseCouponPolicy.getData();
+        log.info("쿠폰 정책 조회 및 들고오기");
 
         //8. 최종 결제 금액 계산
-
         //할인 타입 - fixed, rate
         String discountType = couponPolicyByCouponCode.discountType();
+        log.info("쿠폰 할인 타입" + discountType);
         // 할인률, 할인값
-        Long discountValue = Long.parseLong(couponPolicyByCouponCode.discountValue());;
+        double discountValue = couponPolicyByCouponCode.discountValue();
+        log.info("할인률 혹은 할인값 : " + discountValue);
 
         //할인값으로 계산
         if(discountType.equalsIgnoreCase("fixed")){
@@ -138,18 +144,18 @@ public class OrderCreateService {
 
         //할인률로 계산
         if(discountType.equalsIgnoreCase("rate")){
-            Long discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
+            double discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
             finalPaidPrice = productTotalPrice - discountAmount;
         }
-        log.info("할인 금액 적용한 최종 결제 예상 금액");
+        log.info("할인 금액 적용한 최종 결제 예상 금액" + finalPaidPrice);
 
         // 7. 주문 생성 - 전체 물건 합과 userId는 따로 받아와야함
         Order order = request.toOrder(productTotalPrice, finalPaidPrice, userId);
-        log.info("주문 생성 - 저장전");
+        log.info("주문 생성 : 저장전");
 
         // 8. 생성 주문 저장 - 주문 생성 후, 상품 상태 PENDING
         Order savedOrder = orderRepository.save(order);
-        log.info("주문 생성 저장 완료");
+        log.info("주문 생성 저장 완료!!!!!");
         return OrderCreateResponse.of(savedOrder);
     }
 }
