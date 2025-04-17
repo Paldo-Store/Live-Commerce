@@ -29,7 +29,6 @@ public class OrderCreateService {
     private final BroadcastClient broadcastClient;
     private final ProductClient productClient;
     private final OrderRepository orderRepository;
-    private final InventoryClient inventoryClient;
     private final CouponClient couponClient;
 
     //주문 생성 함수
@@ -47,8 +46,8 @@ public class OrderCreateService {
         // 1. [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         // order -> product (productId, productQuantity)
-        ApiResponse<OrderProductResponse> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
-        OrderProductResponse productResponseByOrder = responseProduct.getData();
+        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+        ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
 
         // productId에 해당하는 상품이 아예 없는 경우
         if (productResponseByOrder == null) {
@@ -56,26 +55,27 @@ public class OrderCreateService {
         }
 
         //product 로직에서 이미 품절된 상품일 경우,
-        if(productResponseByOrder.getSoldOut()){
-            throw new OrderException("해당 상품은 품절된 상품입니다", HttpStatus.BAD_REQUEST);
-        }
+//        if(productResponseByOrder.getSoldOut()){
+//            throw new OrderException("해당 상품은 품절된 상품입니다", HttpStatus.BAD_REQUEST);
+//        }
         log.info("상품 조회 완료");
 
         // 2. 재고가 주문보다 많나 체크 - 주문이 현재 가능한 상태인지 확인 로직
-        ApiResponse<InventoryCheckResponseDto> responseInventory = inventoryClient.checkOrderableInventory(request.productId(), request.productQuantity());
+        ApiResponse<InventoryCheckResponseDto> responseInventory = productClient.checkOrderableInventory(request.productId(), request.orderQuantity());
         InventoryCheckResponseDto checkInventory = responseInventory.getData();
         if (!checkInventory.orderAvailable()) {
             throw new OrderException("재고가 없는 상태입니다.", HttpStatus.BAD_REQUEST);
         }
         log.info("재고 존재 여부 확인 완료");
 
-        int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
-        log.info("재고 수량 들고오기");
+        int orderQty = request.orderQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
+        log.info("주문 수량 들고오기 : " + orderQty);
 
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격
-        Long productTotalPrice = (long) (orderQty * productResponseByOrder.getProductPrice());
-        log.info("총 상품 주문 금액 계산");
+        log.info("상품의 가격 : " + productResponseByOrder.price());
+        Long productTotalPrice = (long) (orderQty * productResponseByOrder.price());
+        log.info("총 상품 주문 금액 계산 : " + productTotalPrice);
 
         ///////////////////////////////////////////////////////////////////////////////
 

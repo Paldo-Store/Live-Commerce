@@ -22,5 +22,4 @@ public class OrderProductResponse {
     private ProductCategory productCategory;
     private ProductStatus productStatus;
     private UUID companyId;
-    private Boolean soldOut;  //상품 품절 여부
 }

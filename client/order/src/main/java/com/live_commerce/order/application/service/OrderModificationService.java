@@ -28,7 +28,6 @@ public class OrderModificationService {
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
-    private final InventoryClient inventoryClient;
     private final CouponClient couponClient;
 
     //주문 수정 service - 주문 상태 변경을 일어나지 않음.
@@ -62,11 +61,11 @@ public class OrderModificationService {
         // [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         //주문 요청 상품 id, update할 상품 주문 개수 -> product
-        ApiResponse<OrderProductResponse> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
-        OrderProductResponse productResponseByOrder = responseProduct.getData();
+        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+        ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
 
         // 재고 확인 로직
-        ApiResponse<InventoryCheckResponseDto> responseInventory = inventoryClient.checkOrderableInventory(request.productId(), request.productQuantity());
+        ApiResponse<InventoryCheckResponseDto> responseInventory = productClient.checkOrderableInventory(request.productId(), request.productQuantity());
         InventoryCheckResponseDto checkInventory = responseInventory.getData();
         if (!checkInventory.orderAvailable()) {
             throw new OrderException("재고가 없는 상태입니다.", HttpStatus.BAD_REQUEST);
@@ -75,12 +74,12 @@ public class OrderModificationService {
 
         // TODO 이미 삭제(단종)된 상품일 경우
         // 상품이 품절일 경우
-        if(productResponseByOrder.getSoldOut()){
+        if(productResponseByOrder == null) {
             throw new OrderException("해당 상품은 품절된 상품입니다.", HttpStatus.BAD_REQUEST);
         }
 
         // 해당 상품의 남은 재고 수량 들고오기
-        ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = inventoryClient.checkInventoryQuantity(request.productId(), request.productQuantity());
+        ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = productClient.checkInventoryQuantity(request.productId(), request.productQuantity());
         InventoryCheckQuantityResponseDto getInventoryQuantity = responseInventoryByQuantity.getData();
 
 
@@ -89,7 +88,7 @@ public class OrderModificationService {
 
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격
-        Long productTotalPrice = (long) (orderQty * productResponseByOrder.getProductPrice());
+        Long productTotalPrice = (long) (orderQty * productResponseByOrder.price());
         log.info("총 주문 금액 계산");
 
         // 6.  쿠폰에서 할인 적용할 금액 계산하도록 쿠폰아이디와 총 주문 금액(쿠폰 적용전) 넘겨주기

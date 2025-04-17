@@ -9,7 +9,7 @@ import java.util.UUID;
 // 주문 요청 내역
 public record OrderCreateRequest (
     UUID productId,
-    @Min(1) Integer productQuantity,  // 주문할 수량 - 최소 1개이상이어야 유효한 값. @Valid랑 같이써야함
+    @Min(1) int orderQuantity,  // 주문할 수량 - 최소 1개이상이어야 유효한 값. @Valid랑 같이써야함
     String requirement,
     UUID broadcastId,
     UUID couponId
@@ -20,7 +20,7 @@ public record OrderCreateRequest (
         return Order.builder()
                 .productId(productId) //요청에서 받은 상품 id
                 .userId(userId)
-                .productQuantity(productQuantity) //요청에서 받은 수량
+                .productQuantity(orderQuantity) //요청에서 받은 수량
                 .productTotalPrice(productTotalPrice) // 쿠폰 적용 전, 주문 총 상품 결제 금액 합산
                 .finalPaidPrice(finalPaidPrice)   // 쿠폰 적용한 최종 결제 금액 -> payment
                 .requirement(requirement) //요청사항
