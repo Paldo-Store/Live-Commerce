@@ -30,7 +30,7 @@ public class BroadcastSubscriptionService {
 
     @Transactional
     public SubscriptionResponseDto subscribe(UUID userId, UUID broadcastId) {
-        subscriptionValidator.validateNotSubscribed(userId, broadcastId);
+        subscriptionValidator.validateNotSubscribed(userId, broadcastId); // 응답값 예쁘게 안 나옴
 
         BroadcastSubscription subscription = BroadcastSubscription.create(userId, broadcastId);
         subscriptionRepository.save(subscription);
@@ -41,9 +41,8 @@ public class BroadcastSubscriptionService {
 
         // 알림등록 요청 dto 생성
         BroadcastAlarmRegisterRequest alarmRegisterRequest = new BroadcastAlarmRegisterRequest(
-                userId,
+                "LIVE_BROADCAST",
                 broadcast.getLiveBroadcastId(),
-                //broadcast.getBroadcastName(),
                 notifyAt
         );
 
@@ -55,8 +54,6 @@ public class BroadcastSubscriptionService {
     @Transactional
     public void unsubscribe(UUID userId, UUID broadcastId) {
         BroadcastSubscription subscription = subscriptionValidator.getSubscriptionOrThrow(userId, broadcastId);
-
-        // TODO : 알림 해제 호출
 
         subscription.delete(userId);
     }
