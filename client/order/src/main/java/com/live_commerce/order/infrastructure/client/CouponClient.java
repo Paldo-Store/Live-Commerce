@@ -14,7 +14,7 @@ public interface CouponClient {
     ApiResponse<IssuedCouponListResponse> getIssuedCoupons();
 
     //쿠폰 정책 조회
-    @GetMapping("/api/v1/coupon-policies/{code}")
+    @GetMapping("/api/v1/coupon-policies/detail/{code}")
     ApiResponse<ReadCouponPolicyResponse> getCouponPolicy(@PathVariable("code") String code);
 
     /**
