@@ -9,13 +9,13 @@ public record OrderCreateResponse (
      UUID orderId,
      UUID productId,
      Integer productQuantity,
-     Long productTotalPrice,
+     Double productTotalPrice,
      String requirement,
      OrderStatus status,
      UUID broadcastId,
      String message,
      UUID couponId,
-     Long finalPaidPrice
+     Double finalPaidPrice
 ) {
     public static OrderCreateResponse of(Order order) {
         return new OrderCreateResponse(

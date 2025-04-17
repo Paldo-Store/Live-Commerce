@@ -40,7 +40,7 @@ public class QOrder extends EntityPathBase<Order> {
     //inherited
     public final BooleanPath deletedStatus = _super.deletedStatus;
 
-    public final NumberPath<Long> finalPaidPrice = createNumber("finalPaidPrice", Long.class);
+    public final NumberPath<Double> finalPaidPrice = createNumber("finalPaidPrice", Double.class);
 
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
@@ -48,7 +48,7 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final NumberPath<Integer> productQuantity = createNumber("productQuantity", Integer.class);
 
-    public final NumberPath<Long> productTotalPrice = createNumber("productTotalPrice", Long.class);
+    public final NumberPath<Double> productTotalPrice = createNumber("productTotalPrice", Double.class);
 
     public final StringPath requirement = createString("requirement");
 

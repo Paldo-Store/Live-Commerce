@@ -5,6 +5,6 @@ import java.util.UUID;
 
 public record PaymentReadyRequestDto(
         UUID orderId,
-        Long amount,
+        double amount,
         String itemName
 ) {}

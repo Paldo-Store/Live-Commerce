@@ -14,7 +14,7 @@ public record OrderUpdateRequest(
         String requirement,
         UUID couponId
 ) {
-    public Order toOrder(Long productTotalPrice, Long finalPaidPrice) {
+    public Order toOrder(double productTotalPrice, double finalPaidPrice) {
         return Order.builder()
                 .productId(this.productId)
                 .productQuantity(this.productQuantity)

@@ -4,6 +4,7 @@ import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import jakarta.validation.constraints.Min;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 // 주문 요청 내역
@@ -16,7 +17,7 @@ public record OrderCreateRequest (
 )
 {
     //OrderCreateRequest(요청데이터)를 내부에서 쓸 도메인 객체 Order로 변환하는 메서드
-    public Order toOrder(Long productTotalPrice, Long finalPaidPrice, UUID userId) {
+    public Order toOrder(double productTotalPrice, double finalPaidPrice, UUID userId) {
         return Order.builder()
                 .productId(productId) //요청에서 받은 상품 id
                 .userId(userId)

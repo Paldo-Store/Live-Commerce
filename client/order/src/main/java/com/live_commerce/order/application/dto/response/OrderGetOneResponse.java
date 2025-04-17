@@ -10,7 +10,7 @@ public record OrderGetOneResponse(
         UUID productId,
         UUID userId,
         Integer productQuantity,
-        Long productTotalPrice,
+        Double productTotalPrice,
         String requirement,
         OrderStatus status,
         UUID broadcastId,

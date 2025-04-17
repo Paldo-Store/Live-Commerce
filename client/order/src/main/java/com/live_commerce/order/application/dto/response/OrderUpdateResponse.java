@@ -11,7 +11,7 @@ public record OrderUpdateResponse(
         UUID orderId,
         UUID productId,
         Integer productQuantity,
-        Long productTotalPrice,
+        Double productTotalPrice,
         String requirement,
         String status,
         LocalDateTime updatedAt
