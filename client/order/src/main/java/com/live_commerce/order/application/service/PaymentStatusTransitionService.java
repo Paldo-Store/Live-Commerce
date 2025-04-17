@@ -7,8 +7,10 @@ import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
+import com.live_commerce.order.infrastructure.PaymentReadyResponseDto;
 import com.live_commerce.order.infrastructure.client.*;
 import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
+import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -63,7 +65,7 @@ public class PaymentStatusTransitionService {
 
             // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
             // TODO 결제 처리는 Payment에서 로직 처리
-            paymentClient.cancelPayment(order.getId(), order.getFinalPaidPrice());
+            paymentClient.refundPayment(order.getId());
 
             // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다. 재고 복구는 Product에서 로직 처리
             productClient.increaseInventory(new InventoryIncreaseRequestDto(
@@ -86,19 +88,19 @@ public class PaymentStatusTransitionService {
         // 결제 승인 요청
         // 주문 아이디와 최종 결제 금액을 payment로 보내줌 (order -> Panyemt)
         //TODO Payment에서 결제 로직 수행 (결제 진행 -> 결제 준비) -> ready
-        PaymentSuccessResponse response= paymentClient.approvePayment(order.getId(), order.getFinalPaidPrice());
+        ApiResponse<PaymentReadyResponseDto> response= paymentClient.readyPayment(new PaymentReadyRequestDto(order.getId(), order.getFinalPaidPrice(), order.getProductId().toString()));
 
         // TODO 2.5. Payment에서 응답 내려주기.
 
         //3. 결제 성공 응답확인
-        if (!response.success()) {
+        if (response == null) {
             throw new OrderException("결제가 성공하지 못했습니다. 다시 시도해주세요", HttpStatus.BAD_REQUEST);
         }
 
         // 4. 결제 금액 일치 여부 확인
-        if (!order.getFinalPaidPrice().equals(response.finalPaidPrice())) {
-            throw new OrderException("결제 금액이 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
-        }
+//        if (!order.getFinalPaidPrice().equals(response.finalPaidPrice())) {
+//            throw new OrderException("결제 금액이 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
+//        }
 
         // 5. Pending -> PAID (결제 완료 상태로 변경)
         order.changeStatus(newStatus);
@@ -108,7 +110,7 @@ public class PaymentStatusTransitionService {
 
         // 7. 쿠폰 사용 처리
         if (order.getCouponId() != null) {
-            couponClient.markCouponAsUsed(order.getCouponId());
+            couponClient.useCoupon(order.getCouponId());
         }
     }
 }
