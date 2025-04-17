@@ -6,21 +6,21 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@FeignClient(name = "coupon")
+@FeignClient(name = "coupon", url = "http://localhost:19091")
 public interface CouponClient {
 
     //쿠폰 목록 조회
-    @GetMapping("/")
+    @GetMapping("/api/v1/issued-coupons/")
     ApiResponse<IssuedCouponListResponse> getIssuedCoupons();
 
     //쿠폰 정책 조회
-    @GetMapping("/api/coupons/{code}")
+    @GetMapping("/api/v1/coupon-policies/{code}")
     ApiResponse<ReadCouponPolicyResponse> getCouponPolicy(@PathVariable("code") String code);
 
     /**
      * 쿠폰 사용 처리
      * @param couponId 쿠폰 ID
      */
-    @PatchMapping("/{couponId}/use")
+    @PatchMapping("/api/v1/coupon-policies/{couponId}/use")
     ApiResponse<UsedIssuedCouponResponse> useCoupon(@PathVariable("couponId") UUID couponId);
 }
