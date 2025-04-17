@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,7 +42,7 @@ public class Order extends BaseEntity {
 
     // 상품 총 가격 - 할인 적용 전, 상품 총 합산 금액
     @Column(name = "product_total_price")
-    private Long productTotalPrice;
+    private Double productTotalPrice;
 
     // 요청 사항
     @Column(name = "requirement")
@@ -62,7 +63,7 @@ public class Order extends BaseEntity {
 
     // 쿠폰을 적용한 할인 후 최종 결제 예정 금액
     @Column(name = "final_paid_price")
-    private Long finalPaidPrice;
+    private double finalPaidPrice;
 
     //주문 수정 update 함수
     public void updateOrder(Order updateOrder) {
@@ -96,15 +97,5 @@ public class Order extends BaseEntity {
         }
 
         this.status = newStatus;
-    }
-
-    //주문 수정 개수로 productTotalPrice update 하기
-    public void updateProductTotalPrice(Long productTotalPrice) {
-        this.productTotalPrice = productTotalPrice;
-    }
-
-    //쿠폰 적용 후 최종 결제 금액 finalPaidPrice -> update 하기
-    public void updateFinalPaidPrice(Long finalPaidPrice) {
-        this.finalPaidPrice = finalPaidPrice;
     }
 }
