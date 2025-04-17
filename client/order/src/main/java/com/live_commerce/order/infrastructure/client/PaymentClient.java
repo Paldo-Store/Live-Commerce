@@ -16,7 +16,11 @@ public interface PaymentClient {
     @PostMapping("/ready")
     ApiResponse<PaymentReadyResponseDto> readyPayment(@RequestBody PaymentReadyRequestDto requestDto);
 
-    //결제 환북 요청
+    //결제 요청으로 전송
+    @PostMapping("/approve")
+    ApiResponse<PaymentApproveResponseDto> approvePayment(@RequestBody PaymentApproveRequestDto requestDto);
+
+    //결제 환불 요청
     @PostMapping("/{orderId}/refund")
     ApiResponse<PaymentRefundResponseDto> refundPayment(@PathVariable("orderId") UUID orderId);
 }

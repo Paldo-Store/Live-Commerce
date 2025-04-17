@@ -63,7 +63,7 @@ public class Order extends BaseEntity {
 
     // 쿠폰을 적용한 할인 후 최종 결제 예정 금액
     @Column(name = "final_paid_price")
-    private double finalPaidPrice;
+    private Double finalPaidPrice;
 
     //주문 수정 update 함수
     public void updateOrder(Order updateOrder) {
