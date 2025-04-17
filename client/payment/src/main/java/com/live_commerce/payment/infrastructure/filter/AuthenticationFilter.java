@@ -29,12 +29,19 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		String requestUri = request.getRequestURI();
 
 		// 인증이 필요 없는 경로는 필터를 통과시킴
-		if ((requestUri.startsWith("/api/v1/auth/") && !requestUri.equals("/api/v1/auth/logout")) ||
+		if ((requestUri.startsWith("/api/v1/auth/") &&
+			!requestUri.startsWith("/api/v1/auth/approve") &&
+			!requestUri.equals("/api/v1/auth/logout")) ||
 			requestUri.startsWith("/swagger-ui/") ||
 			requestUri.startsWith("/v3/api-docs") ||
 			requestUri.startsWith("/actuator")) {
 			filterChain.doFilter(request, response);
 			return;
+		}
+
+		String token = request.getHeader("Authorization");
+		if (token != null && token.startsWith("Bearer ")) {
+			token = token.substring(7); // "Bearer " 제거
 		}
 
 		// 요청 헤더에서 사용자 정보 추출
@@ -64,7 +71,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
 		// 인증 정보 설정
 		UsernamePasswordAuthenticationToken authentication =
-			new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+			new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// 필터 체인으로 넘김
