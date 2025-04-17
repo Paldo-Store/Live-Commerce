@@ -1,6 +1,5 @@
 package com.live_commerce.payment.application.service;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -11,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +31,8 @@ import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 import com.live_commerce.payment.infrastructure.lock.DistributedLock;
-import com.live_commerce.payment.infrastructure.messaging.producer.PaymentCancelEventProducer;
-import com.live_commerce.payment.infrastructure.messaging.producer.PaymentSuccessEventProducer;
+import com.live_commerce.payment.infrastructure.kafka.producer.PaymentCancelEventProducer;
+import com.live_commerce.payment.infrastructure.kafka.producer.PaymentSuccessEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 import lombok.RequiredArgsConstructor;
@@ -71,7 +69,6 @@ public class PaymentService {
 		String key = "payment:expire:" + dto.orderId();
 		RBucket<String> bucket = redissonClient.getBucket(key);
 		bucket.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
-
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}
