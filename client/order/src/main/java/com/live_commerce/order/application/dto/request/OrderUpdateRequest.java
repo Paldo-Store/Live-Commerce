@@ -9,14 +9,14 @@ import java.util.UUID;
 
 @Builder
 public record OrderUpdateRequest(
-        UUID productId,
+        //UUID productId,
         Integer productQuantity,
         String requirement,
         UUID couponId
 ) {
     public Order toOrder(double productTotalPrice, double finalPaidPrice) {
         return Order.builder()
-                .productId(this.productId)
+                //.productId(this.productId)
                 .productQuantity(this.productQuantity)
                 .productTotalPrice(productTotalPrice)
                 .finalPaidPrice(finalPaidPrice)

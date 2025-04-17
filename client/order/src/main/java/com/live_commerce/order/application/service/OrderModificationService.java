@@ -31,7 +31,7 @@ public class OrderModificationService {
     private final CouponClient couponClient;
 
     //주문 수정 service - 주문 상태 변경을 일어나지 않음.
-    //주문 개수, 상품 id, 요청 사항, 쿠폰만 수정 가능
+    //주문 개수, 요청 사항, 쿠폰만 수정 가능
     @Transactional
     public OrderUpdateResponse updateCreator(UUID orderId, OrderUpdateRequest request, UUID userId, String role) {
 
@@ -41,6 +41,7 @@ public class OrderModificationService {
         // orderId에 해당하는 주문 가져오기
         Order order  = orderRepository.findById(orderId).orElseThrow(()
                 -> new OrderException(OrderExceptionCode.NOT_FOUND));
+        UUID productId = order.getProductId();
 
         //고객일 경우 본인의 결제 내역만 수정 가능하게
         if ("ROLE_CUSTOMER".equals(role) && !order.getUserId().equals(userId)) {
@@ -53,19 +54,14 @@ public class OrderModificationService {
             throw new OrderException("주문 내역을 수정할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        // 상품 ID가 기존과 다를 경우 예외 발생 - 상품 id는 수정 불가. 수정하려면 주문 취소 후 다시 시도
-        if (!order.getProductId().equals(request.productId())) {
-            throw new OrderException("상품 ID는 수정할 수 없습니다. 만약 주문을 수정하고 싶다면 주문 취소 후 재주문해주세요.", HttpStatus.BAD_REQUEST);
-        }
-
         // [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         //주문 요청 상품 id, update할 상품 주문 개수 -> product
-        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(productId); //주문 요청 상품 id -> product
         ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
 
         // 재고 확인 로직
-        ApiResponse<InventoryCheckResponseDto> responseInventory = productClient.checkOrderableInventory(request.productId(), request.productQuantity());
+        ApiResponse<InventoryCheckResponseDto> responseInventory = productClient.checkOrderableInventory(productId, request.productQuantity());
         InventoryCheckResponseDto checkInventory = responseInventory.getData();
         if (!checkInventory.orderAvailable()) {
             throw new OrderException("재고가 없는 상태입니다.", HttpStatus.BAD_REQUEST);
@@ -79,7 +75,7 @@ public class OrderModificationService {
         }
 
         // 해당 상품의 남은 재고 수량 들고오기
-        ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = productClient.checkInventoryQuantity(request.productId(), request.productQuantity());
+        ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = productClient.checkInventoryQuantity(productId, request.productQuantity());
         InventoryCheckQuantityResponseDto getInventoryQuantity = responseInventoryByQuantity.getData();
 
 
@@ -103,7 +99,7 @@ public class OrderModificationService {
         if( (couponListByUser == null) || (couponListByUser.coupons() == null)){
             Order updateOrder = request.toOrder(productTotalPrice, finalPaidPrice);
             order.updateOrder(updateOrder);
-            OrderUpdateResponse.fromOrder(order);
+            return OrderUpdateResponse.fromOrder(order);
         }
 
         // 6-3. 유저 목록 쿠폰이 있다면 -> 요청에서 들어온 couponId확인
@@ -111,12 +107,13 @@ public class OrderModificationService {
 
         // 요청 couponId
         UUID requestCouponId = request.couponId();
+        log.info("요청 couponId : " +  requestCouponId );
 
         // 만약 요청 들어온 couponId가 없으면 원가 결제
         if (requestCouponId == null) {
             Order updateOrder = request.toOrder(productTotalPrice, finalPaidPrice);
             order.updateOrder(updateOrder);
-            OrderUpdateResponse.fromOrder(order);
+            return OrderUpdateResponse.fromOrder(order);
         }
 
         // 요청 들어온 couponId를 목록에서 찾고 그 일치하는 쿠폰 정보로 변수에 할당
