@@ -97,11 +97,10 @@ public class OrderModificationService {
         Long finalPaidPrice = productTotalPrice;
 
         // 6-1. 지금 로그인 한 유저에 대한 쿠폰 목록 리스트들을 전부 들고온다.
-        ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons(userId);
+        ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons();
         IssuedCouponListResponse couponListByUser = responseCouponList.getData();
 
         // 6-2. 쿠폰이 하나도 없다면 쿠폰 적용 없이 즉시 최종 결제 금액으로 반환 -> 원가로 결제
-        // TODO 요청들어오는 couponId는 controller에서 비필수로 설정
         if( (couponListByUser == null) || (couponListByUser.coupons() == null)){
             Order updateOrder = request.toOrder(productTotalPrice, finalPaidPrice);
             order.updateOrder(updateOrder);

@@ -2,10 +2,7 @@ package com.live_commerce.order.infrastructure.client;
 
 import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -13,8 +10,8 @@ import java.util.UUID;
 public interface CouponClient {
 
     //쿠폰 목록 조회
-    @GetMapping("/{userId}")
-    ApiResponse<IssuedCouponListResponse> getIssuedCoupons(@PathVariable UUID userId);
+    @GetMapping("/")
+    ApiResponse<IssuedCouponListResponse> getIssuedCoupons();
 
     //쿠폰 정책 조회
     @GetMapping("/api/coupons/{code}")
@@ -24,6 +21,6 @@ public interface CouponClient {
      * 쿠폰 사용 처리
      * @param couponId 쿠폰 ID
      */
-    @PostMapping("/api/v1/coupons/{couponId}/use")
-    void markCouponAsUsed(@PathVariable("couponId") UUID couponId);
+    @PatchMapping("/{couponId}/use")
+    ApiResponse<UsedIssuedCouponResponse> useCoupon(@PathVariable("couponId") UUID couponId);
 }

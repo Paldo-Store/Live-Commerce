@@ -55,8 +55,7 @@ public class OrderCreateService {
             throw new OrderException("해당 상품이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        //TODO product 로직으로 이동
-        // 이미 품절된 상품일 경우,
+        //product 로직에서 이미 품절된 상품일 경우,
         if(productResponseByOrder.getSoldOut()){
             throw new OrderException("해당 상품은 품절된 상품입니다", HttpStatus.BAD_REQUEST);
         }
@@ -70,21 +69,22 @@ public class OrderCreateService {
         }
         log.info("재고 존재 여부 확인 완료");
 
-
         int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
         log.info("재고 수량 들고오기");
 
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격
         Long productTotalPrice = (long) (orderQty * productResponseByOrder.getProductPrice());
-        log.info("총 주문 금액 계산");
+        log.info("총 상품 주문 금액 계산");
+
+        ///////////////////////////////////////////////////////////////////////////////
 
         // 6.  쿠폰에서 할인 적용할 금액 계산하도록 쿠폰아이디와 총 주문 금액(쿠폰 적용전) 넘겨주기
-        // 최종 결제 금액 필드 선언
+        // 최종 결제 금액 필드 초기화
         Long finalPaidPrice = productTotalPrice;
 
         // 6-1. 지금 로그인 한 유저에 대한 쿠폰 목록 리스트들을 전부 들고온다.
-        ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons(userId);
+        ApiResponse<IssuedCouponListResponse> responseCouponList = couponClient.getIssuedCoupons();
         IssuedCouponListResponse couponListByUser = responseCouponList.getData();
 
         // 6-2. 쿠폰이 하나도 없다면 쿠폰 적용 없이 즉시 최종 결제 금액으로 반환 -> 원가로 결제
@@ -117,8 +117,6 @@ public class OrderCreateService {
 
         // 7. 그 쿠폰에 해당하는 couponCode 찾기 (order -> coupon)
 
-        // 쿠폰 id와 목록 쿠폰id과 일치하는 couponId 변수에 할당
-        UUID matchedRequestCouponId = matchedCoupon.id();
         // couponCode 가져오기
         String requestCouponCode = matchedCoupon.couponCode();
 
