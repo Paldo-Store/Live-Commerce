@@ -44,7 +44,7 @@ public class BroadcastSubscriptionController {
         return ResponseUtil.success("구독이 취소되었습니다.");
     }
 
-    // 내 구독 목록 조회
+    // 내 구독 목록 조회 - 아직안만듦
     @GetMapping
     public ResponseEntity<List<SubscriptionResponseDto>> getMySubscriptions(
             @AuthenticationPrincipal RequestUserDetails userDetails

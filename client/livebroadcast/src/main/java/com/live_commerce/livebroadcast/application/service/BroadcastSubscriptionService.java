@@ -1,16 +1,21 @@
 package com.live_commerce.livebroadcast.application.service;
 
-import com.live_commerce.livebroadcast.application.dto.request.CreateSubscriptionRequestDto;
+import com.live_commerce.livebroadcast.infrastructure.client.notification.BroadcastAlarmRegisterRequest;
 import com.live_commerce.livebroadcast.application.dto.response.SubscriptionResponseDto;
 import com.live_commerce.livebroadcast.application.mapper.SubscriptionMapper;
+import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValidator;
 import com.live_commerce.livebroadcast.application.validation.SubscriptionValidator;
-import com.live_commerce.livebroadcast.domain.exception.LiveBroadcastException;
 import com.live_commerce.livebroadcast.domain.model.BroadcastSubscription;
+import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.domain.repository.BroadcastSubscriptionRepository;
+import com.live_commerce.livebroadcast.infrastructure.client.notification.NotificationClient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +25,8 @@ public class BroadcastSubscriptionService {
 
     private final BroadcastSubscriptionRepository subscriptionRepository;
     private final SubscriptionValidator subscriptionValidator;
+    private final LiveBroadcastValidator liveBroadcastValidator;
+    private final NotificationClient notificationClient;
 
     @Transactional
     public SubscriptionResponseDto subscribe(UUID userId, UUID broadcastId) {
@@ -28,7 +35,19 @@ public class BroadcastSubscriptionService {
         BroadcastSubscription subscription = BroadcastSubscription.create(userId, broadcastId);
         subscriptionRepository.save(subscription);
 
-        // TODO : 알림 등록 api 호출 - x
+        LiveBroadcast broadcast = liveBroadcastValidator.validateExists(broadcastId);
+
+        LocalDateTime notifyAt = broadcast.getStartTime().minusMinutes(30);
+
+        // 알림등록 요청 dto 생성
+        BroadcastAlarmRegisterRequest alarmRegisterRequest = new BroadcastAlarmRegisterRequest(
+                userId,
+                broadcast.getLiveBroadcastId(),
+                //broadcast.getBroadcastName(),
+                notifyAt
+        );
+
+        notificationClient.registerBroadcastAlarm(alarmRegisterRequest);
 
         return SubscriptionMapper.toResponse(subscription);
     }
@@ -48,16 +67,13 @@ public class BroadcastSubscriptionService {
         return subscriptionRepository.findAllByUserIdAndDeletedStatusFalse(userId);
     }
 
-    // 특정 방송의 유저 id 목록(페이징, 구독일순 정렬...?) 알림서비스에 보낼 용도...? 기둘
+    // 특정 방송의 유저 id 목록. 알림서비스에서 사용될 용도
     @Transactional(readOnly = true)
-    public List<UUID> getSubscriberUserIds(UUID broadcastId) {
-        return subscriptionRepository.findAllByBroadcastIdAndDeletedStatusFalse(broadcastId)
-                .stream()
-                .map(BroadcastSubscription::getUserId)
-                .toList();
-
-        // 이거슨
+    public Page<UUID> getSubscriberUserIds(UUID broadcastId, Pageable pageable) {
+        return subscriptionRepository.findAllByBroadcastId(broadcastId, pageable)
+                .map(BroadcastSubscription::getUserId);
     }
+
 
 
 }

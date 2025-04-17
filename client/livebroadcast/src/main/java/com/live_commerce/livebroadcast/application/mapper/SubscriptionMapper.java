@@ -1,6 +1,5 @@
 package com.live_commerce.livebroadcast.application.mapper;
 
-import com.live_commerce.livebroadcast.application.dto.request.CreateSubscriptionRequestDto;
 import com.live_commerce.livebroadcast.application.dto.response.SubscriptionResponseDto;
 import com.live_commerce.livebroadcast.domain.model.BroadcastSubscription;
 
@@ -23,4 +22,6 @@ public class SubscriptionMapper {
                 .map(BroadcastSubscription::getUserId)
                 .toList();
     }
+
+
 }
