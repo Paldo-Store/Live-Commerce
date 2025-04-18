@@ -12,6 +12,8 @@ import com.live_commerce.notification.presentation.dto.response.NotificationResp
 import com.live_commerce.notification.presentation.dto.response.ReadNotificationListResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,9 @@ public class NotificationService {
   public NotificationCreateResponse createNotificationForLiveBroadcast(
       NotificationCreateRequest request) {
 
+    if (notificationRepository.existsByTargetId(request.targetId())) {
+      throw new IllegalStateException("해당 알림은 이미 등록되었습니다.");
+    }
     Notification notification = Notification.reserve(
         request.notificationType(),
         request.targetId(),
@@ -62,38 +67,75 @@ public class NotificationService {
   @Scheduled(fixedRate = 60000)
   public void checkScheduledNotifications() {
     LocalDateTime now = LocalDateTime.now();
-
     List<Notification> toSend = notificationRepository.findAllByScheduledAtLessThanEqualAndIsSentFalse(
         now);
 
     for (Notification notification : toSend) {
-
-      if (checkType(notification.getType())) {
-
-        List<UserInfo> testUsers = List.of(
-            new UserInfo(UUID.randomUUID(), "홍길동"),
-            new UserInfo(UUID.randomUUID(), "김개발")
-        );
-
-        String broadcastTitle = "봄맞이 특가방송";
-
-//        BroadcastNotificationContext context = broadcastClient.getSubscribersWithTitle(notification.getTargetId());
-        BroadcastNotificationContext context = new BroadcastNotificationContext(testUsers,
-            broadcastTitle);
-
-        for (UserInfo user : context.users()) {
-          String msg = "[TEST]" + user.name() + "님, \"" + context.liveBroadcastName()
-              + "\" 방송이 30분 후 시작됩니다.";
-          consoleAlertSender.send(user.id(), msg);
-        }
+      if (!checkType(notification.getType())) {
+        continue;
       }
-      notificationRepository.save(notification.markAsSent());
+      processNotification(notification);
     }
-
   }
 
   private boolean checkType(NotificationType type) {
     return type == NotificationType.LIVE_BROADCAST;
   }
 
+  private void processNotification(Notification notification) {
+
+    List<UserInfo> testUsers = List.of(
+        new UserInfo(UUID.randomUUID(), "홍길동"),
+        new UserInfo(UUID.randomUUID(), "김개발")
+    );
+
+    String broadcastTitle = "봄맞이 특가방송";
+    //BroadcastNotificationContext context = broadcastClient.getSubscribersWithTitle(notification.getTargetId());
+    BroadcastNotificationContext context = new BroadcastNotificationContext(testUsers);
+
+    boolean success = trySendToAllUsers(notification, context);
+
+    if (success && !notification.isFailed()) {
+      notificationRepository.save(notification.markAsSent());
+    }
+  }
+
+  private boolean trySendToAllUsers(
+      Notification notification,
+      BroadcastNotificationContext context
+  ) {
+    // TODO: 통신으로 방송 이름만 가져오거나, requstBody에 포함해서 가져오는 걸로 변경.
+    String liveBroadcastName = "테스트 방송";
+    boolean allSuccess = true;
+
+    for (UserInfo user : context.users()) {
+      try {
+        consoleAlertSender.send(user.id(), user.name(), liveBroadcastName);
+      } catch (Exception e) {
+        allSuccess = false;
+        log.warn("⚠️ 사용자 알림 전송 실패: userId={}, msg={}", user.id(), e.getMessage());
+
+        notification = notification.increaseRetryCount();
+
+        if (notification.getRetryCount() >= 5 && !notification.isSent()) {
+          notification = notification.markAsFailed();
+          notificationRepository.save(notification);
+          break;
+        }
+
+      }
+
+    }
+    return allSuccess;
+  }
+
+
+  public void deleteNotification(UUID targetId) {
+
+    Notification notification = notificationRepository.findByTargetIdAndDeletedStatusFalse(targetId)
+        .orElseThrow(() -> new NoSuchElementException("알림이 존재하지 않습니다."));
+
+    notification.markAsDeleted(String.valueOf(notification.getTargetId()));
+    notificationRepository.save(notification);
+  }
 }

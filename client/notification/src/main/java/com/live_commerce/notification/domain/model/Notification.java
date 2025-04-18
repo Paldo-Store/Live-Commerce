@@ -2,6 +2,7 @@ package com.live_commerce.notification.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.live_commerce.notification.presentation.dto.request.NotificationCreateRequest;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -34,11 +35,16 @@ public class Notification extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private NotificationType type;
 
+  @Column(nullable = false, unique = true)
   private UUID targetId;
 
   private String message;
 
   private boolean isSent = false; // 전송 여부
+
+  private boolean isFailed = false;
+
+  private int retryCount = 0;
 
   private LocalDateTime scheduledAt; // 알림 예약 시간
 
@@ -52,6 +58,8 @@ public class Notification extends BaseEntity {
         .targetId(targetId)
         .message("")
         .isSent(false)
+        .isFailed(false)
+        .retryCount(0)
         .scheduledAt(scheduledAt)
         .sentAt(null)
         .build();
@@ -65,8 +73,43 @@ public class Notification extends BaseEntity {
         .targetId(this.targetId)
         .message(this.message)
         .isSent(true)
+        .isFailed(false)
+        .retryCount(this.retryCount)
         .scheduledAt(this.scheduledAt)
         .sentAt(LocalDateTime.now())
         .build();
   }
+
+  public Notification increaseRetryCount() {
+    return Notification.builder()
+        .id(this.id)
+        .type(this.type)
+        .targetId(this.targetId)
+        .message(this.message)
+        .isSent(this.isSent)
+        .isFailed(this.isFailed)
+        .retryCount(this.retryCount + 1)
+        .scheduledAt(this.scheduledAt)
+        .sentAt(this.sentAt)
+        .build();
+  }
+
+  // 재시로 횟수 초과 실패 처리
+  public Notification markAsFailed() {
+    return Notification.builder()
+        .id(this.id)
+        .type(this.type)
+        .targetId(this.targetId)
+        .message(this.message)
+        .isSent(true)           // 더 이상 재시도 안 함
+        .isFailed(true)         // 실패로 마무리
+        .retryCount(this.retryCount)
+        .scheduledAt(this.scheduledAt)
+        .sentAt(null)           // 전송은 안 됐으므로 null 유지
+        .build();
+  }
+
+
+
+
 }

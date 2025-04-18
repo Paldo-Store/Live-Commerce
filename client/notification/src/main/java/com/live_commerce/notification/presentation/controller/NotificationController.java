@@ -7,7 +7,7 @@ import com.live_commerce.notification.presentation.dto.request.NotificationCreat
 import com.live_commerce.notification.presentation.dto.response.NotificationCreateResponse;
 import com.live_commerce.notification.presentation.dto.response.ReadNotificationListResponse;
 import jakarta.validation.Valid;
-import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,5 +33,12 @@ public class NotificationController {
   public ResponseEntity<ApiResponse<ReadNotificationListResponse>> getAllNotifications() {
     ReadNotificationListResponse response = notificationService.getAllNotifications();
     return ResponseUtil.success(response);
+  }
+
+  @DeleteMapping("/{targetId}")
+  public ResponseEntity<ApiResponse<String>> deleteNotification(@PathVariable UUID targetId){
+
+    notificationService.deleteNotification(targetId);
+    return ResponseUtil.success("알림 삭제가 성공적으로 완료되었습니다.");
   }
 }
