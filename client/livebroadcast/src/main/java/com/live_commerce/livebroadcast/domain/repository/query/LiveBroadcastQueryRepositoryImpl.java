@@ -1,4 +1,4 @@
-package com.live_commerce.livebroadcast.domain.repository;
+package com.live_commerce.livebroadcast.domain.repository.query;
 
 import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.domain.model.QLiveBroadcast;

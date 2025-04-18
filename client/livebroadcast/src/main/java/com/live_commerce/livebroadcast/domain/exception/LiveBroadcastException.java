@@ -36,4 +36,12 @@ public class LiveBroadcastException extends CustomException {
     public static LiveBroadcastException forUpdateFieldRequired() {
         return new LiveBroadcastException(LiveBroadcastExceptionCode.EXCEPTION_FIELD_REQUIRED);
     }
+
+    public static LiveBroadcastException alreadySubscribed() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.ALREADY_SUBSCRIBED);
+    }
+
+    public static LiveBroadcastException forSubscriptionNotFound() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.SUBSCRIPTION_NOT_FOUND);
+    }
 }
