@@ -55,6 +55,19 @@ public class IssuedCoupon {
         .build();
   }
 
+  public static IssuedCoupon from(IssuedCouponRequest request,
+      Optional<CouponPolicy> couponPolicy, UUID userId) {
+    return IssuedCoupon.builder()
+        //        .id(UUID.randomUUID())
+        .userId(userId)
+        .couponCode(request.couponCode())
+        .isUsed(false)
+        .usedAt(null)
+        .expiresAt(couponPolicy.get().getEndAt())
+        .build();
+  }
+
+
   public void useCoupon() {
     if (this.isUsed) {
       throw new IllegalStateException("This coupon has already been used");

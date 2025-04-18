@@ -52,6 +52,7 @@ public class AuthenticationFilter implements GlobalFilter {
 			!path.startsWith("/api/v1/auth/approve") && (
 			path.startsWith("/api/v1/ai") ||
 				path.startsWith("/api/v1/auth/") ||
+				(path.startsWith("/api/v1/issued-coupons/") && path.endsWith("/signup-first")) ||
 				path.startsWith("/swagger-ui/") ||
 				path.startsWith("/v3/api-docs/") ||
 				path.startsWith("/actuator")
@@ -59,3 +60,4 @@ public class AuthenticationFilter implements GlobalFilter {
 	}
 
 }
+

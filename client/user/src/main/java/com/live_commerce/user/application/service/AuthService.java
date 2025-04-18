@@ -16,6 +16,7 @@ import com.live_commerce.user.application.exception.UserExceptionCode;
 import com.live_commerce.user.domain.model.User;
 import com.live_commerce.user.domain.model.UserRole;
 import com.live_commerce.user.domain.repository.UserRepository;
+import com.live_commerce.user.infrastructure.client.CouponClient;
 import com.live_commerce.user.infrastructure.common.JwtUtil;
 import com.live_commerce.user.infrastructure.common.PasswordGenerator;
 import com.live_commerce.user.infrastructure.common.RedisUtil;
@@ -33,6 +34,7 @@ public class AuthService {
 	private final JwtUtil jwtUtil;
 	private final RedisUtil redisUtil;
 	private final MailService mailService;
+	private final CouponClient couponClient;
 
 	private static final String REFRESH_KEY_PREFIX = "RT:";
 
@@ -61,6 +63,10 @@ public class AuthService {
 		String encodedPassword = passwordEncoder.encode(request.password());
 		User user = request.toEntity(encodedPassword, approved);
 		User savedUser = userRepository.save(user);
+
+		// 회원가입 성공 후 첫가입 쿠폰 발급 요청
+		couponClient.issueFirstCoupon(savedUser.getUserId());
+
 		return UserSignUpResponseDto.from(savedUser);
 	}
 

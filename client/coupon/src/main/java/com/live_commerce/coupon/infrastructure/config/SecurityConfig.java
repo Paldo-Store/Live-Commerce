@@ -38,7 +38,8 @@ public class SecurityConfig {
                 "/api/v1/auth/**", // 인증되지 않은 경로
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
-                "/actuator/**"
+                "/actuator/**",
+                "/api/v1/issued-coupons/{userId:[a-z0-9\\-]+}/signup-first"
             ).permitAll() // 인증 없이 접근 가능
             .anyRequest().authenticated() // 그 외의 요청은 인증 필요
         )

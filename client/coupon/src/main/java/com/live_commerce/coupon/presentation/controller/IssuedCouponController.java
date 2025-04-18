@@ -60,10 +60,11 @@ public class IssuedCouponController {
   }
 
   // 첫 회원가입 쿠폰 발급
-  @PostMapping("/signup-first")
+  @PostMapping("/{userId}/signup-first")
   public ResponseEntity<ApiResponse<FirstJoinCouponResponse>> issueFirstCoupon(
-      @AuthenticationPrincipal RequestUserDetails userDetails) {
-    FirstJoinCouponResponse response = issuedCouponService.issueFirstCoupon(userDetails);
+      @PathVariable UUID userId
+  ) {
+    FirstJoinCouponResponse response = issuedCouponService.issueFirstCoupon(userId);
     return ResponseUtil.success(response);
   }
 }
