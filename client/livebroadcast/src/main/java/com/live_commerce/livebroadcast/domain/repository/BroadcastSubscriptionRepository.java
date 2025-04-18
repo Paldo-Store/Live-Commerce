@@ -10,6 +10,8 @@ import java.util.UUID;
 
 public interface BroadcastSubscriptionRepository {
 
+    long count();
+
     <S extends BroadcastSubscription> S save(S broadcastSubscription);
 
     boolean existsByUserIdAndBroadcastIdAndDeletedStatusFalse(UUID userId, UUID broadcastId);

@@ -1,5 +1,6 @@
 package com.live_commerce.livebroadcast.application.service;
 
+import com.live_commerce.livebroadcast.application.dto.response.PageResponse;
 import com.live_commerce.livebroadcast.infrastructure.client.notification.BroadcastAlarmRegisterRequest;
 import com.live_commerce.livebroadcast.application.dto.response.SubscriptionResponseDto;
 import com.live_commerce.livebroadcast.application.mapper.SubscriptionMapper;
@@ -58,7 +59,7 @@ public class BroadcastSubscriptionService {
         subscription.delete(userId);
     }
 
-    // 사용자의 구독 목록 조회(페이징만 처리)
+    // 사용자의 구독 목록 조회
     @Transactional(readOnly = true)
     public List<BroadcastSubscription> getSubscriptionsByUserId(UUID userId) {
         return subscriptionRepository.findAllByUserIdAndDeletedStatusFalse(userId);
@@ -66,11 +67,11 @@ public class BroadcastSubscriptionService {
 
     // 특정 방송의 유저 id 목록. 알림서비스에서 사용될 용도
     @Transactional(readOnly = true)
-    public Page<UUID> getSubscriberUserIds(UUID broadcastId, Pageable pageable) {
-        return subscriptionRepository.findAllByBroadcastId(broadcastId, pageable)
+    public PageResponse<UUID> getSubscriberUserIds(UUID broadcastId, Pageable pageable) {
+        Page<UUID> page = subscriptionRepository.findAllByBroadcastId(broadcastId, pageable)
                 .map(BroadcastSubscription::getUserId);
+        return PageResponse.from(page);
     }
-
 
 
 }

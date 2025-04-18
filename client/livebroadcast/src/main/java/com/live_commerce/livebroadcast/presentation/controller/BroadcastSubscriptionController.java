@@ -2,6 +2,7 @@ package com.live_commerce.livebroadcast.presentation.controller;
 
 
 import com.live_commerce.livebroadcast.application.dto.request.CreateSubscriptionRequestDto;
+import com.live_commerce.livebroadcast.application.dto.response.PageResponse;
 import com.live_commerce.livebroadcast.application.dto.response.SubscriptionResponseDto;
 import com.live_commerce.livebroadcast.application.mapper.SubscriptionMapper;
 import com.live_commerce.livebroadcast.application.service.BroadcastSubscriptionService;
@@ -44,7 +45,7 @@ public class BroadcastSubscriptionController {
         return ResponseUtil.success("구독이 취소되었습니다.");
     }
 
-    // 내 구독 목록 조회 - 아직안만듦
+
     @GetMapping
     public ResponseEntity<List<SubscriptionResponseDto>> getMySubscriptions(
             @AuthenticationPrincipal RequestUserDetails userDetails
@@ -55,4 +56,5 @@ public class BroadcastSubscriptionController {
                 .toList();
         return ResponseEntity.ok(responseList);
     }
+
 }

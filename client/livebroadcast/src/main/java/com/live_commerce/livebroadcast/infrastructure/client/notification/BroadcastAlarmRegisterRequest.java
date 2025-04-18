@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record BroadcastAlarmRegisterRequest(
-        String notificationType,
+        String notificationType, // LIVE_BROADCAST 고정
         UUID targetId, // 방송id
         LocalDateTime notificationTime
 ) { }

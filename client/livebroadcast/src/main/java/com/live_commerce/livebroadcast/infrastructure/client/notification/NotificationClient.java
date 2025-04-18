@@ -8,15 +8,15 @@ import java.util.UUID;
 @FeignClient(name = "notification", url = "http://localhost:19091", path = "/api/v1/notifications")
 public interface NotificationClient {
 
-    @PostMapping("/create-for-broadcast")
+    @PostMapping("/broadcasts")
     void registerBroadcastAlarm(@RequestBody BroadcastAlarmRegisterRequest request);
 
     // 방송 스케줄 변경 시 알림도 수정
-    @PutMapping("/{broadcastId}")
+    @PutMapping("/broadcasts/{broadcastId}")
     void updateBroadcastAlarm(@PathVariable("broadcastId") UUID broadcastId, @RequestBody BroadcastAlarmRegisterRequest request);
 
     // 방송 삭제 시 알림 삭제
-    @DeleteMapping("/{broadcastId}")
+    @DeleteMapping("/broadcasts/{broadcastId}")
     void unregisterBroadcastAlarm(@PathVariable("broadcastId") UUID broadcastId);
 
 
