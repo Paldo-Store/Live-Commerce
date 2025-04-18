@@ -16,13 +16,20 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "p_inventory", schema = "inventories")
+@Table(
+        name = "p_inventory",
+        schema = "inventories",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "product_id")
+        }
+)
 public class Inventory extends BaseEntity{
 
     @Id
     @UuidGenerator
     private UUID inventoryId;
 
+    @Column(name = "product_id", nullable = false)
     private UUID productId;
 
     private Integer quantity;
