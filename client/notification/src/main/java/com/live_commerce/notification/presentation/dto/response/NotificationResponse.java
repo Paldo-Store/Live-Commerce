@@ -5,17 +5,17 @@ import com.live_commerce.notification.domain.model.NotificationType;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record NotificationCreateResponse(
+public record NotificationResponse(
     UUID id,
     NotificationType type,
     UUID targetId,
     String message,
     boolean isSent,
-    LocalDateTime scheduledAt,
-    LocalDateTime sentAt
+    LocalDateTime sentAt,
+    LocalDateTime scheduledAt
 ) {
-  public static NotificationCreateResponse from(Notification notification) {
-    return new NotificationCreateResponse(
+  public static NotificationResponse from(Notification notification) {
+    return new NotificationResponse(
         notification.getId(),
         notification.getType(),
         notification.getTargetId(),
@@ -26,3 +26,4 @@ public record NotificationCreateResponse(
     );
   }
 }
+
