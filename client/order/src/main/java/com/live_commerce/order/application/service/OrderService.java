@@ -9,10 +9,7 @@ import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.infrastructure.client.BroadcastClient;
-import com.live_commerce.order.infrastructure.client.CouponClient;
-import com.live_commerce.order.infrastructure.client.PaymentClient;
-import com.live_commerce.order.infrastructure.client.ProductClient;
+import com.live_commerce.order.infrastructure.client.*;
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
 import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
@@ -30,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.live_commerce.order.domain.model.OrderStatus.PAID;
 
 @Service
 @RequiredArgsConstructor
@@ -130,10 +129,37 @@ public class OrderService {
         return PageRequest.of(page, size, sortObj);
     }
 
-    //고객의 경우 본인의 주문만 수저으
+    //고객의 경우 본인의 주문만 수정가능
     public void validateCustomerOrderAccess(String role, UUID orderUserId, UUID currentUserId) {
         if ("ROLE_CUSTOMER".equals(role) && !orderUserId.equals(currentUserId)) {
             throw new OrderException("고객은 자신의 주문만 조회, 수정할 수 있습니다.", HttpStatus.FORBIDDEN);
         }
+    }
+
+    //결제 성공 응답 service 처리
+//    public PaymentSuccessResponseOrder getPaymentSuccess(UUID orderId, boolean request){
+//        boolean paymentSuccess = request.success(); //결제 성공이면 true
+//        return new PaymentSuccessResponseOrder(orderId, paymentSuccess);
+//    }
+
+    //결제 취소 응답 service 처리
+//    public boolean getPaymentFail(UUID orderId, PaymentFailRequest request){
+//        return request.success();  //취소 성공이면 true
+//    }
+
+    //결제 처리 응답
+    @Transactional
+    public PaymentSuccessResponseOrder updatePaymentSuccess(UUID orderId, PaymentSuccessRequest request){
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+        order.changeStatus(PAID);
+        //6. 재고 감소
+        //        //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+        //
+        // 7. 쿠폰 사용 처리
+        ////        if (order.getCouponId() != null) {
+        ////            couponClient.useCoupon(order.getCouponId());
+        ////        }
+        return new PaymentSuccessResponseOrder(order.getId(), request.success());
     }
 }

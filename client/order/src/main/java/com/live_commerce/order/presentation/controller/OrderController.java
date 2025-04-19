@@ -5,6 +5,9 @@ import com.live_commerce.order.application.dto.request.OrderStatusUpdateRequest;
 import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
 import com.live_commerce.order.application.dto.response.*;
 import com.live_commerce.order.application.service.OrderService;
+import com.live_commerce.order.infrastructure.client.PaymentFailRequest;
+import com.live_commerce.order.infrastructure.client.PaymentSuccessRequest;
+import com.live_commerce.order.infrastructure.client.PaymentSuccessResponseOrder;
 import com.live_commerce.order.infrastructure.common.ResponseUtil;
 import com.live_commerce.order.infrastructure.security.RequestUserDetails;
 import com.live_commerce.order.presentation.common.ApiResponse;
@@ -67,6 +70,7 @@ public class OrderController {
     }
 
     //주문 수정 API
+    //주문 수정 - 상품 개수 ~
     @PatchMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderUpdateResponse>> updateOrder(
             @PathVariable final UUID orderId,
@@ -101,6 +105,16 @@ public class OrderController {
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
         OrderDeleteResponse response = orderService.deleteOrder(orderId, userId, role);
+        return ResponseUtil.success(response);
+    }
+
+    //payment -> order 로 받는 controller 생성
+    // 결제 성공 응답 받는 Api
+    @PostMapping("/{orderId}/payment-success")
+    public ResponseEntity<ApiResponse<PaymentSuccessResponseOrder>> notifyPaymentSuccess(
+            @PathVariable UUID orderId,
+            @RequestBody PaymentSuccessRequest request){
+        PaymentSuccessResponseOrder response=  orderService.updatePaymentSuccess(orderId, request);
         return ResponseUtil.success(response);
     }
 }

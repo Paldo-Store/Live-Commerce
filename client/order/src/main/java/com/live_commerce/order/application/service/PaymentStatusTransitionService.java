@@ -10,12 +10,11 @@ import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.PaymentReadyResponseDto;
 import com.live_commerce.order.infrastructure.client.*;
-import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
-import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,7 +96,7 @@ public class PaymentStatusTransitionService {
         return OrderStatusUpdateResponse.fromOrder(order);
     }
 
-    //결제 성공 : PENDING -> PAID
+    //결제 대기 : PENDING -> PAID
     @Transactional
     public void updateOrderStatusToPaid(Order order, OrderStatus newStatus) {
 
@@ -105,59 +104,40 @@ public class PaymentStatusTransitionService {
         // 주문 아이디와 최종 결제 금액을 payment로 보내줌 (order -> Panyemt)
 
         BigDecimal amount = BigDecimal.valueOf(order.getFinalPaidPrice());
+        log.info("결제 예상금액 : " + amount);
+        log.info("주문 id" + order.getId());
+        log.info("결제 상품 id" + order.getId());
         /////// 결제 대기 요청
         //결제 대기 feign요청 -> 결제 대기 결과값 응답으로 받기
         ApiResponse<PaymentReadyResponseDto> responseReady= paymentClient.readyPayment(
                 new PaymentReadyRequestDto(order.getId(), amount, order.getProductId().toString()));
-
+        log.info("결제 대기 응답 받아오기");
+        PaymentReadyResponseDto res = responseReady.getData();
+        String tid = res.tid();
+        String url = res.nextRedirectUrl();
+        log.info(tid);
+        log.info(url);
         if(responseReady == null){
             throw new OrderException("결제 대기 요청 실패. 다시 시도하기", HttpStatus.BAD_REQUEST);
         }
-        
-        //결제 대기 결과값 데이터 꺼내기
-        PaymentReadyResponseDto responsePaymentReady = responseReady.getData();  
-        
-        //TODO 결제 대기 결과값 받아오기 tid, url 등등.
-        String tidReady = responsePaymentReady.tid();
-        String pgToken = null;
-       
         log.info("결제 대기 로직 수행 완료");
 
         ////////// 결제 승인 요청
-        //결제 승인 요청 ( order -> paymentClient.approvePayment)
-        //결제 승인 요청을 feign으로 보낸 후, 그 결과값을 받아온다.
-        ApiResponse<PaymentApproveResponseDto> responseApprove= paymentClient.approvePayment(
-                        new PaymentApproveRequestDto(tidReady, pgToken, order.getId()));
-        
-        if(responseApprove == null){
-            throw new OrderException("결제 승인 요청 실패. 다시 시도하기", HttpStatus.BAD_REQUEST);
-        }
-        
-        //결제 승인 결과값 데이터 꺼내기
-        PaymentApproveResponseDto responsePaymentApprove = responseApprove.getData();
-
-        String tidApprove = responsePaymentApprove.tid();
-        LocalDateTime approveTime = responsePaymentApprove.approvedAt();
-        
-        //3. 결제 승인 응답확인
-        if (approveTime == null) {
-            throw new OrderException("결제가 승인되지 못했습니다. 다시 시도해주세요", HttpStatus.BAD_REQUEST);
-        }
-
-        // 4. 결제 금액 일치 여부 확인
-//        if (!order.getFinalPaidPrice().equals(response.finalPaidPrice())) {
-//            throw new OrderException("결제 금액이 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
+//        if(responsePaymentSuccess == false) {  //false면
+//            throw new OrderException("결제 성공에 실패했습니다.", HttpStatus.BAD_REQUEST);
 //        }
+        //log.info("결제 성공 했습니다");
 
         // 5. Pending -> PAID (결제 완료 상태로 변경)
-        order.changeStatus(newStatus);
+        // order.changeStatus(newStatus);
+        // TODO notifyPaymentSuccess API 실행
 
         // 6. 재고 감소
-        productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+        //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
 
         // 7. 쿠폰 사용 처리
-        if (order.getCouponId() != null) {
-            couponClient.useCoupon(order.getCouponId());
-        }
+//        if (order.getCouponId() != null) {
+//            couponClient.useCoupon(order.getCouponId());
+//        }
     }
 }

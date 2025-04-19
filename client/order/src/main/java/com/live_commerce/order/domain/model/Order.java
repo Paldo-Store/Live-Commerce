@@ -95,7 +95,6 @@ public class Order extends BaseEntity {
         if (this.status == newStatus) {
             throw new OrderException("변경하려는 상태가 현재 상태와 같습니다.", HttpStatus.BAD_REQUEST);
         }
-
         this.status = newStatus;
     }
 }
