@@ -1,12 +1,13 @@
 package com.live_commerce.order.infrastructure.client;
 
+import com.live_commerce.order.infrastructure.config.FeignConfig;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@FeignClient(name = "coupon", url = "http://localhost:19091")
+@FeignClient(name = "coupon", url = "http://localhost:19091", configuration = FeignConfig.class)
 public interface CouponClient {
 
     //쿠폰 목록 조회
@@ -21,6 +22,6 @@ public interface CouponClient {
      * 쿠폰 사용 처리
      * @param couponId 쿠폰 ID
      */
-    @PatchMapping("/api/v1/coupon-policies/{couponId}/use")
+    @PatchMapping("/api/v1/issued-coupons/{couponId}/use")
     ApiResponse<UsedIssuedCouponResponse> useCoupon(@PathVariable("couponId") UUID couponId);
 }
