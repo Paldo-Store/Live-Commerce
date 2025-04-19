@@ -18,11 +18,11 @@ public interface ProductClient {
     ApiResponse<ProductCreateResponseDto> getProduct(@PathVariable("productId") UUID productId);
 
     //결제 취소시 재고 복구
-    @PostMapping("/api/v1/products/increase")
+    @PostMapping("/api/v1/inventories/increase")
     ResponseEntity<ApiResponse<String>> increaseInventory(@RequestBody InventoryIncreaseRequestDto requestDto);
 
     //결제 승인시 재고 감소
-    @PostMapping("/api/v1/products/decrease")
+    @PostMapping("/api/v1/inventories/decrease")
     ResponseEntity<ApiResponse<String>> decreaseInventory(@RequestBody InventoryDecreaseRequestDto requestDto);
 
     //재고 존재 확인용 -> 실제 주문이 가능한 상태인지를 반환해줌(재고가 있나없나 계산해줌)
