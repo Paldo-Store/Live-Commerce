@@ -28,3 +28,7 @@ gemini:
 
 internal:
   secret: ${INTERNAL_SECRET}
+
+slack:
+  bot-token: ${SLACK_BOT_TOKEN}
+  admin-user-id: ${SLACK_ADMIN_USER_ID}

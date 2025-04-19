@@ -43,6 +43,19 @@ public class IssuedCouponService {
     return issuedCoupon;
   }
 
+  public IssuedCoupon issueFirstCoupon(IssuedCouponRequest request, UUID userId) {
+    Optional<CouponPolicy> couponPolicy = couponPolicyRepository.findByCodeAndDeletedStatusFalse(
+        request.couponCode());
+
+    if (couponPolicy.isEmpty()) {
+      IssuedCouponException.couponPolicyNotFound();
+    }
+
+    IssuedCoupon issuedCoupon = IssuedCoupon.from(request, couponPolicy, userId);
+    return issuedCouponRepository.save(issuedCoupon);
+  }
+
+
   public IssuedCoupon useCoupon(UUID couponId, RequestUserDetails userDetails) {
 
     // TODO: 사용하지 않으 쿠폰만 조회
@@ -95,16 +108,16 @@ public class IssuedCouponService {
     return IssuedCouponListResponse.from(issuedCoupons);
   }
 
-  public FirstJoinCouponResponse issueFirstCoupon(RequestUserDetails userDetails) {
-
+  public FirstJoinCouponResponse issueFirstCoupon(UUID userId) {
     String couponCode = "FIRST_COUPON";
-    // TODO : 나중에는 이미 정의되어 있는 쿠폰 정책으로 쿠폰 발급이 이루어져야 함.
     CouponPolicy couponPolicy = createFirstCouponPolicy(couponCode);
 
-    IssuedCouponRequest request = new IssuedCouponRequest(couponPolicy.getCode());
-    IssuedCoupon issuedCoupon = issueCoupon(request, userDetails);
+    IssuedCouponRequest request = new IssuedCouponRequest(couponCode);
+    IssuedCoupon issuedCoupon = issueFirstCoupon(request, userId); // userId 기반
+
     return FirstJoinCouponResponse.from(issuedCoupon);
   }
+
 
   private CouponPolicy createFirstCouponPolicy(String couponCode) {
 

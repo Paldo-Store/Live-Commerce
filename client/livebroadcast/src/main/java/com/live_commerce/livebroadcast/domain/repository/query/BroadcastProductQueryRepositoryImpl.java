@@ -1,6 +1,5 @@
-package com.live_commerce.livebroadcast.domain.repository;
+package com.live_commerce.livebroadcast.domain.repository.query;
 
-import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductListResponseDto;
 import com.live_commerce.livebroadcast.domain.model.QBroadcastProduct;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;

@@ -4,12 +4,15 @@ import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastCrea
 import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastPageResponse;
 import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastUpdateRequestDto;
+import com.live_commerce.livebroadcast.application.dto.response.PageResponse;
+import com.live_commerce.livebroadcast.application.service.BroadcastSubscriptionService;
 import com.live_commerce.livebroadcast.application.service.LiveBroadcastService;
 import com.live_commerce.livebroadcast.infrastructure.common.ResponseUtil;
 import com.live_commerce.livebroadcast.presentation.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -26,6 +29,7 @@ import java.util.UUID;
 public class LiveBroadcastController {
 
     private final LiveBroadcastService liveBroadcastService;
+    private final BroadcastSubscriptionService broadcastSubscriptionService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<LiveBroadcastResponseDto>> createBroadcast(
@@ -69,4 +73,18 @@ public class LiveBroadcastController {
         LiveBroadcastPageResponse response = liveBroadcastService.searchLiveBroadcast(keyword, pageable);
         return ResponseUtil.success(response);
     }
+
+
+    @GetMapping("/{broadcastId}/subscribers")
+    public PageResponse<UUID> getSubscribers(
+            @PathVariable UUID broadcastId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        if (size != 100) { size = 100; }
+
+        Pageable pageable = PageRequest.of(page, size);
+        return broadcastSubscriptionService.getSubscriberUserIds(broadcastId, pageable);
+    }
+
 }

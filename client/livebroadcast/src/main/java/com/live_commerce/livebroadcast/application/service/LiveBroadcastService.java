@@ -8,8 +8,8 @@ import com.live_commerce.livebroadcast.application.mapper.LiveBroadcastMapper;
 import com.live_commerce.livebroadcast.application.validation.CompanyValidator;
 import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValidator;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
-import com.live_commerce.livebroadcast.domain.repository.LiveBroadcastQueryRepository;
 import com.live_commerce.livebroadcast.domain.repository.LiveBroadcastRepository;
+import com.live_commerce.livebroadcast.domain.repository.query.LiveBroadcastQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -55,7 +55,7 @@ public class LiveBroadcastService {
     @Transactional
     public void deleteBroadcast(UUID id) {
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(id);
-        broadcast.delete("temp");
+        broadcast.delete(UUID.randomUUID());
     }
 
     @Transactional(readOnly = true)

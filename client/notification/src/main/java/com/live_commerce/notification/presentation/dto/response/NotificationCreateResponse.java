@@ -7,18 +7,16 @@ import java.util.UUID;
 
 public record NotificationCreateResponse(
     UUID id,
-    UUID userId,
     NotificationType type,
     UUID targetId,
     String message,
     boolean isSent,
-    LocalDateTime sentAt,
-    LocalDateTime scheduledAt
+    LocalDateTime scheduledAt,
+    LocalDateTime sentAt
 ) {
   public static NotificationCreateResponse from(Notification notification) {
     return new NotificationCreateResponse(
         notification.getId(),
-        notification.getUserId(),
         notification.getType(),
         notification.getTargetId(),
         notification.getMessage(),
