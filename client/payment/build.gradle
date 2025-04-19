@@ -83,6 +83,10 @@ dependencies {
 
 	// Redisson
 	implementation 'org.redisson:redisson-spring-boot-starter:3.28.0'
+
+	// test db
+	testImplementation 'com.h2database:h2'
+
 }
 
 dependencyManagement {
