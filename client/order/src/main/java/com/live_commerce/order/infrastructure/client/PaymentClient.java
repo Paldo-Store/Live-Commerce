@@ -3,6 +3,8 @@ package com.live_commerce.order.infrastructure.client;
 import com.live_commerce.order.infrastructure.PaymentReadyResponseDto;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,4 +25,9 @@ public interface PaymentClient {
     //결제 환불 요청
     @PostMapping("/{orderId}/refund")
     ApiResponse<PaymentRefundResponseDto> refundPayment(@PathVariable("orderId") UUID orderId);
+
+    //결제 정보 받아오는 로직
+    @GetMapping("/{paymentId}")
+    ApiResponse<PaymentGetResponseDto> getPayment(
+            @PathVariable UUID paymentId);
 }

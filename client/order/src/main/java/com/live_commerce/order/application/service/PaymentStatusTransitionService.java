@@ -31,6 +31,7 @@ public class PaymentStatusTransitionService {
     private final PaymentClient paymentClient;
     private final CouponClient couponClient;
     private final OrderRepository orderRepository;
+    boolean changeChangeStatus = false;
 
     //결제 상태 변경
     public OrderStatusUpdateResponse updateCreator(UUID orderId, OrderStatusUpdateRequest request, UUID userId, String role){
@@ -55,12 +56,19 @@ public class PaymentStatusTransitionService {
             throw new OrderException("잘못된 주문 상태입니다.", HttpStatus.BAD_REQUEST);
         }
 
-        //결제 성공 : PENDING -> PAID
+        //결제 대기  : PENDING -> PAID 전 Ready(근데 요청은 PAID로 처리)
         //PaymentStatusTransitionService
-        if ( (currentStatus==OrderStatus.PENDING) &&  (newStatus == OrderStatus.PAID)){
+        if ( (currentStatus ==OrderStatus.PENDING) &&  (newStatus == OrderStatus.PAID)){
             log.info("상태를 결제 성공으로 바꾸는 로직으로 들어옴");
             this.updateOrderStatusToPaid(order, newStatus);  //같은 서비스라서 this 붙임
 
+            // 상태 변경 - 주문 취소는 상태 변경 불가, 같은 주문 상태 변경은 예외 발생
+            order.changeStatus(OrderStatus.READY);
+            changeChangeStatus = true;
+            log.info("상태 변경->  대기 상태로 변경 성공");
+            log.info("결제승인을 하려면 로그에 출력된 url 결제 후,");
+            log.info("tid값과 orderId, page의 Token값을 넣어서 http://localhost:19091/api/v1/payments/approve api 실행후");
+            log.info("notifyPaymentSuccess api 요청을 보내세요");
             //service 바로 종료
             return OrderStatusUpdateResponse.fromOrder(order);
         }
@@ -68,7 +76,7 @@ public class PaymentStatusTransitionService {
         //결제 취소 : PAID -> REFUNDED
         //RefundStatusTransitionService
         //PAID상태인 경우에만, 상품 상태 변경이 일어나 취소된다면 -> 재고 복구, 결제 취소 처리
-        if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.CANCELLED)) {
+        if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.REFUNDED)) {
             log.info("결제 취소 로직에 들어옴");
             
             // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
@@ -85,14 +93,24 @@ public class PaymentStatusTransitionService {
                     order.getProductQuantity()));
             log.info("결제 취소 후 재고 복구완료");
             log.info("결제 취소 완료");
+
+            // 상태 변경 - 주문 취소는 상태 변경 불가, 같은 주문 상태 변경은 예외 발생
+            order.changeStatus(newStatus);
+            changeChangeStatus = true;
+            log.info("상태 변경 성공");
         }
 
         //주문 접수 -> 주문 취소 : PENDING -> CANCELLED
         //그냥 통과.
+        if ( (currentStatus==OrderStatus.PENDING) && (newStatus == OrderStatus.CANCELLED)){
+            order.changeStatus(newStatus);
+            changeChangeStatus = true;
+            log.info("상태 변경 성공");
+        }
 
-        // 상태 변경 - 주문 취소는 상태 변경 불가, 같은 주문 상태 변경은 예외 발생
-        order.changeStatus(newStatus);
-        log.info("상태 변경 성공");
+        if(!changeChangeStatus){
+            throw new OrderException("주문 상태 요청이 잘못되었습니다. 다시 수정해서 시도해주세요", HttpStatus.BAD_REQUEST);
+        }
         return OrderStatusUpdateResponse.fromOrder(order);
     }
 

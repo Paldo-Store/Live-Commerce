@@ -13,7 +13,9 @@ import com.live_commerce.order.infrastructure.client.*;
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
 import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponse;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
+import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,7 @@ import java.util.UUID;
 
 import static com.live_commerce.order.domain.model.OrderStatus.PAID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -41,6 +44,11 @@ public class OrderService {
     private final PaymentStatusTransitionService paymentStatusTransitionService;  //@Lazy 적용
     private final OrderCreateService orderCreateService;
     private final OrderModificationService orderModificationService;
+
+    //feign 요청
+    private final ProductClient productClient;
+    private final PaymentClient paymentClient;
+    private final CouponClient couponClient;
 
     //주문 생성 service
     @Transactional
@@ -147,19 +155,43 @@ public class OrderService {
 //        return request.success();  //취소 성공이면 true
 //    }
 
-    //결제 처리 응답
+    //결제 처리 응답값 가져오기
     @Transactional
     public PaymentSuccessResponseOrder updatePaymentSuccess(UUID orderId, PaymentSuccessRequest request){
+//        Order order = orderRepository.findById(orderId)
+//                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+//        log.info("주문 들고오기 성공");
+//
+//        if(!(request.success())){
+//            throw new OrderException("결제 상태가 COMPLETED 되지 않은 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
+//        }
+//
+//        //상태 변경 PAID로 변경
+//        order.changeStatus(PAID);
+//        log.info("READY 에서 PAID로 변경 성공!");
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
+
+        ApiResponse<PaymentGetResponseDto> response = paymentClient.getPayment(request.paymentId());
+        PaymentGetResponseDto paymentGetResponseDto = response.getData();
+        log.info("paymentId에 해당하는 payment를 들고오기.");
+
+        //만약 payment의 결제 상태가 COMPLETED가 아니면 결제 안된것이다.
+        if( !(paymentGetResponseDto.status().equals(PaymentStatus.COMPLETED)) ){
+            throw new OrderException("결제 상태가 COMPLETED 되지 않은 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
+        }
+        //상태 변경 PAID로 변경
         order.changeStatus(PAID);
-        //6. 재고 감소
-        //        //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
-        //
+        log.info("READY 에서 PAID로 변경 성공!");
+
+        //재고 감소 진행
+        productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+
         // 7. 쿠폰 사용 처리
-        ////        if (order.getCouponId() != null) {
-        ////            couponClient.useCoupon(order.getCouponId());
-        ////        }
+        if (order.getCouponId() != null) {
+            couponClient.useCoupon(order.getCouponId());
+        }
         return new PaymentSuccessResponseOrder(order.getId(), request.success());
     }
 }
