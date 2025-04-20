@@ -31,6 +31,9 @@ public class LiveBroadcastController {
     private final LiveBroadcastService liveBroadcastService;
     private final BroadcastSubscriptionService broadcastSubscriptionService;
 
+    /**
+     * 방송 생성
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<LiveBroadcastResponseDto>> createBroadcast(
             @RequestBody @Valid LiveBroadcastCreateRequestDto requestDto
@@ -39,6 +42,9 @@ public class LiveBroadcastController {
         return ResponseUtil.success(responseDto);
     }
 
+    /**
+     * 방송 조회
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<LiveBroadcastResponseDto>> getBroadcast(
             @PathVariable UUID id
@@ -47,7 +53,10 @@ public class LiveBroadcastController {
         return ResponseUtil.success(responseDto);
     }
 
-
+    /**
+     * 방송 수정
+     * TODO 방송 시작시간 수정 시 알림 서비스 삭제후 재생성 로직 추가해야함
+     */
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<LiveBroadcastResponseDto>> updateBroadcast(
             @PathVariable UUID id,
@@ -57,6 +66,9 @@ public class LiveBroadcastController {
         return ResponseUtil.success(responseDto);
     }
 
+    /**
+     * 방송 삭제
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteBroadcast(
             @PathVariable UUID id
@@ -65,6 +77,9 @@ public class LiveBroadcastController {
         return ResponseUtil.success("라이브 방송이 삭제되었습니다.");
     }
 
+    /**
+     * 방송 검색
+     */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<LiveBroadcastPageResponse>> searchBroadcast(
             @RequestParam(required = false) String keyword,
@@ -75,6 +90,9 @@ public class LiveBroadcastController {
     }
 
 
+    /**
+     * 구독자 목록 조회 (알림서비스에서 사용)
+     */
     @GetMapping("/{broadcastId}/subscribers")
     public PageResponse<UUID> getSubscribers(
             @PathVariable UUID broadcastId,
@@ -86,5 +104,10 @@ public class LiveBroadcastController {
         Pageable pageable = PageRequest.of(page, size);
         return broadcastSubscriptionService.getSubscriberUserIds(broadcastId, pageable);
     }
+
+
+
+
+
 
 }

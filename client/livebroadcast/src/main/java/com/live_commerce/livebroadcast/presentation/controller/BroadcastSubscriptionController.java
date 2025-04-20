@@ -2,7 +2,6 @@ package com.live_commerce.livebroadcast.presentation.controller;
 
 
 import com.live_commerce.livebroadcast.application.dto.request.CreateSubscriptionRequestDto;
-import com.live_commerce.livebroadcast.application.dto.response.PageResponse;
 import com.live_commerce.livebroadcast.application.dto.response.SubscriptionResponseDto;
 import com.live_commerce.livebroadcast.application.mapper.SubscriptionMapper;
 import com.live_commerce.livebroadcast.application.service.BroadcastSubscriptionService;
@@ -25,7 +24,7 @@ public class BroadcastSubscriptionController {
 
     private final BroadcastSubscriptionService subscriptionService;
 
-    // 구독
+    // 사용자 관점 구독
     @PostMapping
     public ResponseEntity<ApiResponse<SubscriptionResponseDto>> subscribe(
             @AuthenticationPrincipal RequestUserDetails userDetails,
@@ -35,7 +34,7 @@ public class BroadcastSubscriptionController {
         return ResponseUtil.success(response);
     }
 
-    // 구독 취소
+    // 구독 취소 - 사용자 관점
     @DeleteMapping("/{broadcastId}")
     public ResponseEntity<ApiResponse<String>> unsubscribe(
             @AuthenticationPrincipal RequestUserDetails userDetails,
@@ -56,5 +55,17 @@ public class BroadcastSubscriptionController {
                 .toList();
         return ResponseEntity.ok(responseList);
     }
+
+    /**
+     * 방송 알림 등록
+     */
+    @PostMapping("/alarm")
+    public ResponseEntity<ApiResponse<String>> registerAlarm(
+            @RequestBody CreateSubscriptionRequestDto request
+    ) {
+        subscriptionService.registerBroadcastAlarm(request.broadcastId());
+        return ResponseUtil.success("알림이 등록되었습니다.");
+    }
+
 
 }
