@@ -158,29 +158,22 @@ public class OrderService {
     //결제 처리 응답값 가져오기
     @Transactional
     public PaymentSuccessResponseOrder updatePaymentSuccess(UUID orderId, PaymentSuccessRequest request){
-//        Order order = orderRepository.findById(orderId)
-//                .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
-//        log.info("주문 들고오기 성공");
-//
-//        if(!(request.success())){
-//            throw new OrderException("결제 상태가 COMPLETED 되지 않은 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
-//        }
-//
-//        //상태 변경 PAID로 변경
-//        order.changeStatus(PAID);
-//        log.info("READY 에서 PAID로 변경 성공!");
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
-
-        ApiResponse<PaymentGetResponseDto> response = paymentClient.getPayment(request.paymentId());
-        PaymentGetResponseDto paymentGetResponseDto = response.getData();
-        log.info("paymentId에 해당하는 payment를 들고오기.");
-
-        //만약 payment의 결제 상태가 COMPLETED가 아니면 결제 안된것이다.
-        if( !(paymentGetResponseDto.status().equals(PaymentStatus.COMPLETED)) ){
-            throw new OrderException("결제 상태가 COMPLETED 되지 않은 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
+        log.info("주문 들고오기 성공");
+        if(!(request.success())){
+            throw new OrderException("결제 상태가 COMPLETED가 아닌 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
         }
+
+        // 생각해보니 feign 통신 할 이유가 없음. 이미 결제 성공 상태이므로 order측 상태변경만 이루어진다.
+//        ApiResponse<PaymentGetResponseDto> response = paymentClient.getPayment(request.paymentId());
+//        PaymentGetResponseDto paymentGetResponseDto = response.getData();
+//        log.info("paymentId에 해당하는 payment를 들고오기.");
+//
+//        //만약 payment의 결제 상태가 COMPLETED가 아니면 결제 안된것이다.
+//        if( !(paymentGetResponseDto.status().equals(PaymentStatus.COMPLETED)) ){
+//            throw new OrderException("결제 상태가 COMPLETED 되지 않은 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
+//        }
         //상태 변경 PAID로 변경
         order.changeStatus(PAID);
         log.info("READY 에서 PAID로 변경 성공!");

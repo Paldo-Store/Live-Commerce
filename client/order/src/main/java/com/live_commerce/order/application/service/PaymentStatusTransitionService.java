@@ -44,9 +44,9 @@ public class PaymentStatusTransitionService {
         OrderStatus currentStatus = order.getStatus();
 
         // 권한 검증 - 고객은 주문 상태를 변경할 수 없음
-        if (role.equals("ROLE_CUSTOMER")) {
-            throw new OrderException("고객은 주문 상태를 변경할 수 없습니다.", HttpStatus.FORBIDDEN);
-        }
+//        if (role.equals("ROLE_CUSTOMER")) {
+//            throw new OrderException("고객은 주문 상태를 변경할 수 없습니다.", HttpStatus.FORBIDDEN);
+//        }
 
         // 새 주문 요청 상태 파싱 및 검증 - 바꾸려는 주문 상태(오타) 잘못들어오면 예외 발생
         OrderStatus newStatus;
