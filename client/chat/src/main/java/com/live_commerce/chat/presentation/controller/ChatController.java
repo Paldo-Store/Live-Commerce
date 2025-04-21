@@ -47,9 +47,6 @@ public class ChatController {
             @RequestParam(required = false) final String sort,
             @AuthenticationPrincipal RequestUserDetails userDetails){
 
-        //userId 가져오기
-        UUID userId = userDetails.getUserId();
-
         log.info("CHAT 전체 조회");
 
         ChatGetResponse response = chatService.getAllChats(page, size, sort, userDetails);
@@ -80,8 +77,11 @@ public class ChatController {
 
         //userId 가져오기
         UUID userId = userDetails.getUserId();
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
         ChatDeleteResponse resposne = chatService.deleteChat(chatId, userId, userDetails);
         return ResponseUtil.success(resposne);
     }
+
+
 }
