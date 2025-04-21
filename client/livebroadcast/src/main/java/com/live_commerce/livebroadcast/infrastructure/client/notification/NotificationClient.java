@@ -11,13 +11,7 @@ public interface NotificationClient {
     @PostMapping("/broadcasts")
     void registerBroadcastAlarm(@RequestBody BroadcastAlarmRegisterRequest request);
 
-    // 방송 스케줄 변경 시 알림도 수정
-    @PutMapping("/broadcasts/{broadcastId}")
-    void updateBroadcastAlarm(@PathVariable("broadcastId") UUID broadcastId, @RequestBody BroadcastAlarmRegisterRequest request);
-
-    // 방송 삭제 시 알림 삭제
-    @DeleteMapping("/broadcasts/{broadcastId}")
+    @DeleteMapping("/{broadcastId}")
     void unregisterBroadcastAlarm(@PathVariable("broadcastId") UUID broadcastId);
-
 
 }
