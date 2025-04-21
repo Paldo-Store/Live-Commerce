@@ -75,6 +75,10 @@ dependencies {
 
 	//feign patch 실행하기 위해 imple
 	implementation 'io.github.openfeign:feign-httpclient:13.5'
+
+	// monitoring
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 dependencyManagement {
