@@ -22,18 +22,18 @@ public class ProductValidator {
         System.out.println("🔍 ProductValidator.getValidProductOrThrow 호출됨, productId: " + productId);
         try {
             ApiResponse<ExternalProductResponseDto> productResponse = productClient.getProduct(productId);
-            System.out.println("✅ FeignClient 응답 수신 완료");
+            System.out.println("FeignClient 응답 수신 완료");
             if (productResponse.getData() == null) {
-                System.out.println("❌ 상품 없음");
+                System.out.println("상품 없음");
                 throw LiveBroadcastException.forExternalProductNotFound();
             }
 
             return productResponse.getData();
         } catch (FeignException.NotFound e) {
-            System.out.println("❌ Feign 404 오류 발생");
+            System.out.println("Feign 404 오류 발생");
             throw LiveBroadcastException.forExternalProductNotFound();
         } catch (FeignException e) {
-            System.out.println("❌ Feign 예외 발생: " + e.getMessage());
+            System.out.println("Feign 예외 발생: " + e.getMessage());
             throw new RuntimeException("상품 서비스 호출 실패", e);
         }
     }

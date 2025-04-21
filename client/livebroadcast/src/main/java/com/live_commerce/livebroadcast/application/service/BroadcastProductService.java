@@ -41,9 +41,7 @@ public class BroadcastProductService {
     @Transactional
     public BroadcastProductResponseDto connectBroadcastProduct(UUID liveBroadcastId, BroadcastProductConnectDto requestDto) {
 
-        System.out.println("🟡 서비스 진입: connectBroadcastProduct 호출됨");
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
-        System.out.println("✅ 라이브 방송 존재 확인 완료");
 
         ExternalProductResponseDto productDto = productValidator.getValidProductOrThrow(requestDto.productId());
 

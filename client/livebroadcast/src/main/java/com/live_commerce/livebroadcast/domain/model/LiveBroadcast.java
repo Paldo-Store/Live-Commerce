@@ -60,4 +60,8 @@ public class LiveBroadcast extends BaseEntity {
         if (dto.broadcastStatus() != null) this.broadcastStatus = dto.broadcastStatus();
     }
 
+    public void updateStatus(BroadcastStatus newStatus) {
+        this.broadcastStatus = newStatus;
+    }
+
 }

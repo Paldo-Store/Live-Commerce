@@ -44,4 +44,8 @@ public class LiveBroadcastException extends CustomException {
     public static LiveBroadcastException forSubscriptionNotFound() {
         return new LiveBroadcastException(LiveBroadcastExceptionCode.SUBSCRIPTION_NOT_FOUND);
     }
+
+    public static LiveBroadcastException forInvalidAlarmRequest() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.INVALID_ALARM_REQUEST);
+    }
 }
