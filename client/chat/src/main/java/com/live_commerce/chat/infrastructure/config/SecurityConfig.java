@@ -34,24 +34,20 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.disable())  // CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 상태를 사용하지 않음
                 .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(
-//                                "/**",
-//                                "/api/v1/auth/**", // 인증되지 않은 경로
-//                                "/swagger-ui/**",
-//                                "/v3/api-docs/**",
-//                                "/actuator/**"
-//                        ).permitAll() // 인증 없이 접근 가능
-//                        .anyRequest().authenticated() // 그 외의 요청은 인증 필요
-//                )
-//                .authorizeHttpRequests()
-//                        .requestMatchers("/api/v1/chats/**")
-                        .anyRequest().permitAll())
+                        .requestMatchers(
+                                "/**",
+                                "/ws/**",      //websocket 경로 추가
+                                "/api/v1/auth/**", // 인증되지 않은 경로
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**"
+                        ).permitAll() // 인증 없이 접근 가능
+                        .anyRequest().authenticated() // 그 외의 요청은 인증 필요
+                )
+                //            .authorizeHttpRequests()
+                //                     .requestMatchers("/api/v1/chats/**");
+//                        .anyRequest().permitAll())
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class); // 인증 필터 추가
-
         return http.build();
     }
-
-//    .authorizeHttpRequests()
-//    .requestMatchers("/api/v1/chats/**").hasRole("USER")
-//    .anyRequest().permitAll();
 }

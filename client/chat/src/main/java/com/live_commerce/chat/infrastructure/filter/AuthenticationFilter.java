@@ -33,7 +33,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 !requestUri.equals("/api/v1/auth/logout")) ||
                 requestUri.startsWith("/swagger-ui/") ||
                 requestUri.startsWith("/v3/api-docs") ||
-                requestUri.startsWith("/actuator")) {
+                requestUri.startsWith("/actuator") ||
+                requestUri.startsWith("/ws")) // 임시
+             {
             filterChain.doFilter(request, response);
             return;
         }
