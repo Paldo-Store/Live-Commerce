@@ -28,6 +28,7 @@ ext {
 }
 
 dependencies {
+
 	// queryDSL
 	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
 	implementation 'com.querydsl:querydsl-core'
@@ -59,7 +60,10 @@ dependencies {
 	// postgresql
 	implementation 'org.postgresql:postgresql:42.7.5'
 
-	// config
+	// WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	//config
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 

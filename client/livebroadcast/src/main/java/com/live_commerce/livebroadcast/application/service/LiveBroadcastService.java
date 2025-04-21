@@ -7,10 +7,13 @@ import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastUpda
 import com.live_commerce.livebroadcast.application.mapper.LiveBroadcastMapper;
 import com.live_commerce.livebroadcast.application.validation.CompanyValidator;
 import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValidator;
+import com.live_commerce.livebroadcast.application.validation.NotificationValidator;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.domain.repository.LiveBroadcastRepository;
 import com.live_commerce.livebroadcast.domain.repository.query.LiveBroadcastQueryRepository;
+import com.live_commerce.livebroadcast.infrastructure.client.notification.NotificationClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LiveBroadcastService {
@@ -28,6 +32,7 @@ public class LiveBroadcastService {
     private final LiveBroadcastValidator liveBroadcastValidator;
     private final CompanyValidator companyValidator;
     private final LiveBroadcastQueryRepository liveBroadcastQueryRepository;
+    private final NotificationValidator notificationValidator;
 
     @Transactional
     public LiveBroadcastResponseDto createBroadcast(LiveBroadcastCreateRequestDto requestDto) {
@@ -56,6 +61,8 @@ public class LiveBroadcastService {
     public void deleteBroadcast(UUID id) {
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(id);
         broadcast.delete(UUID.randomUUID());
+        // 알림 삭제 호출
+        notificationValidator.deleteAlarmOrLog(broadcast.getLiveBroadcastId());
     }
 
     @Transactional(readOnly = true)

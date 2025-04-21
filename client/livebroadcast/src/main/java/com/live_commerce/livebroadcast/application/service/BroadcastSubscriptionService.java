@@ -1,6 +1,7 @@
 package com.live_commerce.livebroadcast.application.service;
 
 import com.live_commerce.livebroadcast.application.dto.response.PageResponse;
+import com.live_commerce.livebroadcast.application.validation.NotificationValidator;
 import com.live_commerce.livebroadcast.infrastructure.client.notification.BroadcastAlarmRegisterRequest;
 import com.live_commerce.livebroadcast.application.dto.response.SubscriptionResponseDto;
 import com.live_commerce.livebroadcast.application.mapper.SubscriptionMapper;
@@ -27,27 +28,29 @@ public class BroadcastSubscriptionService {
     private final BroadcastSubscriptionRepository subscriptionRepository;
     private final SubscriptionValidator subscriptionValidator;
     private final LiveBroadcastValidator liveBroadcastValidator;
-    private final NotificationClient notificationClient;
+    private final NotificationValidator notificationValidator;
 
     @Transactional
-    public SubscriptionResponseDto subscribe(UUID userId, UUID broadcastId) {
-        subscriptionValidator.validateNotSubscribed(userId, broadcastId); // 응답값 예쁘게 안 나옴
-
-        BroadcastSubscription subscription = BroadcastSubscription.create(userId, broadcastId);
-        subscriptionRepository.save(subscription);
-
+    public void registerBroadcastAlarm(UUID broadcastId) {
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(broadcastId);
 
-        LocalDateTime notifyAt = broadcast.getStartTime().minusMinutes(30);
+        LocalDateTime notifyAt = broadcast.getStartTime().minusMinutes(10);
 
-        // 알림등록 요청 dto 생성
-        BroadcastAlarmRegisterRequest alarmRegisterRequest = new BroadcastAlarmRegisterRequest(
+        BroadcastAlarmRegisterRequest request = new BroadcastAlarmRegisterRequest(
                 "LIVE_BROADCAST",
                 broadcast.getLiveBroadcastId(),
                 notifyAt
         );
 
-        notificationClient.registerBroadcastAlarm(alarmRegisterRequest);
+        notificationValidator.registerAlarmOrThrow(request);
+    }
+
+    @Transactional
+    public SubscriptionResponseDto subscribe(UUID userId, UUID broadcastId) {
+        subscriptionValidator.validateNotSubscribed(userId, broadcastId);
+
+        BroadcastSubscription subscription = BroadcastSubscription.create(userId, broadcastId);
+        subscriptionRepository.save(subscription);
 
         return SubscriptionMapper.toResponse(subscription);
     }
@@ -55,7 +58,6 @@ public class BroadcastSubscriptionService {
     @Transactional
     public void unsubscribe(UUID userId, UUID broadcastId) {
         BroadcastSubscription subscription = subscriptionValidator.getSubscriptionOrThrow(userId, broadcastId);
-
         subscription.delete(userId);
     }
 
@@ -72,6 +74,7 @@ public class BroadcastSubscriptionService {
                 .map(BroadcastSubscription::getUserId);
         return PageResponse.from(page);
     }
+
 
 
 }
