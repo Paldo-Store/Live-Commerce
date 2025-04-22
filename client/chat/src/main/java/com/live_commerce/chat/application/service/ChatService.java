@@ -34,7 +34,7 @@ public class ChatService {
 
     //chat 생성 서비스
     @Transactional
-    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId, RequestUserDetails userDetails) {
+    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
         //chat 저장
         Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);

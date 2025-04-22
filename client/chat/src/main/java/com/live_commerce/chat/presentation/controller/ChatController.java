@@ -6,7 +6,7 @@ import com.live_commerce.chat.application.dto.response.ChatDeleteResponse;
 import com.live_commerce.chat.application.dto.response.ChatGetResponse;
 import com.live_commerce.chat.application.service.ChatService;
 import com.live_commerce.chat.infrastructure.common.ResponseUtil;
-import com.live_commerce.chat.infrastructure.config.WebSocketHandler;
+import com.live_commerce.chat.infrastructure.security.CustomWebSocketHandler;
 import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import com.live_commerce.chat.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class ChatController {
 
     private final ChatService chatService;
-    private final WebSocketHandler webSocketHandler;
+    private final CustomWebSocketHandler webSocketHandler;
 
     //chat 생성 API
     @PostMapping("/")
@@ -36,7 +36,7 @@ public class ChatController {
         UUID userId = userDetails.getUserId();
 
         //권한은 userDetails로 넘겨준다.
-        ChatCreateResponse response = chatService.createChat(request, userId, userDetails);
+        ChatCreateResponse response = chatService.createChat(request, userId);
 
         // WebSocket을 통해 메시지 전송
         webSocketHandler.broadcast(request.liveBroadcastId(), "새로운 메시지가 도착했습니다!");
@@ -52,9 +52,6 @@ public class ChatController {
             @RequestParam final int size,
             @RequestParam(required = false) final String sort,
             @AuthenticationPrincipal RequestUserDetails userDetails){
-
-        //userId 가져오기
-        UUID userId = userDetails.getUserId();
 
         log.info("CHAT 전체 조회");
 
