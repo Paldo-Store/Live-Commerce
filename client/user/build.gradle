@@ -74,7 +74,11 @@ dependencies {
 	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
 	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
+	// MailSender
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	// H2 DB
+	testRuntimeOnly 'com.h2database:h2'
 
 }
 
