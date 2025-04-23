@@ -188,7 +188,7 @@ public class PaymentService {
 			);
 		}
 
-		List<Payment> payments = paymentRepository.searchPayment(finalCondition);
+		List<Payment> payments = paymentRepository.searchPayment(finalCondition, pageable);
 		List<PaymentGetResponseDto> dtoList = payments.stream()
 			.map(PaymentGetResponseDto::from)
 			.toList();
