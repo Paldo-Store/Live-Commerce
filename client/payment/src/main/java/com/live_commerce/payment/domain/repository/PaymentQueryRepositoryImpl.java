@@ -49,4 +49,36 @@ public class PaymentQueryRepositoryImpl implements PaymentQueryRepository {
 			.limit(pageable.getPageSize())
 			.fetch();
 	}
+
+	@Override
+	public long countPayment(PaymentSearchCondition condition) {
+		QPayment payment = QPayment.payment;
+		BooleanBuilder builder = new BooleanBuilder();
+
+		builder.and(payment.deletedStatus.isFalse());
+
+		if (condition.userId() != null) {
+			builder.and(payment.userId.eq(condition.userId()));
+		}
+		if (condition.orderId() != null) {
+			builder.and(payment.orderId.eq(condition.orderId()));
+		}
+		if (condition.status() != null) {
+			builder.and(payment.status.eq(condition.status()));
+		}
+		if (condition.createdAtFrom() != null) {
+			builder.and(payment.createdAt.goe(condition.createdAtFrom()));
+		}
+		if (condition.createdAtTo() != null) {
+			builder.and(payment.createdAt.loe(condition.createdAtTo()));
+		}
+
+		return queryFactory
+			.select(payment.count())
+			.from(payment)
+			.where(builder)
+			.fetchOne();
+	}
+
+
 }

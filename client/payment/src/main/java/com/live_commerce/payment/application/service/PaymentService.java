@@ -189,11 +189,13 @@ public class PaymentService {
 		}
 
 		List<Payment> payments = paymentRepository.searchPayment(finalCondition, pageable);
+		long totalCount = paymentRepository.countPayment(finalCondition);
+
 		List<PaymentGetResponseDto> dtoList = payments.stream()
 			.map(PaymentGetResponseDto::from)
 			.toList();
 
-		return new PageImpl<>(dtoList, pageable, dtoList.size());
+		return new PageImpl<>(dtoList, pageable, totalCount);
 	}
 
 	@Transactional

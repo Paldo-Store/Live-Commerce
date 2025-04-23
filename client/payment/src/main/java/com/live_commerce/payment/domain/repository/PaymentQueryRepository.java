@@ -10,4 +10,5 @@ import com.live_commerce.payment.domain.model.Payment;
 public interface PaymentQueryRepository {
 	List<Payment> searchPayment(PaymentSearchCondition condition, Pageable pageable);
 
+	long countPayment(PaymentSearchCondition condition);
 }
