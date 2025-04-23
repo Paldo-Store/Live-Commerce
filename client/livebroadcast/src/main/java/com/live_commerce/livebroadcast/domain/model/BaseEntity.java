@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @EntityListeners(AuditingEntityListener.class)
@@ -33,7 +34,7 @@ public abstract class BaseEntity{
 
     private LocalDateTime deletedAt;
 
-    private String deletedBy;
+    private UUID deletedBy;
 
     @Column(nullable = false)
     private boolean deletedStatus;
@@ -42,7 +43,7 @@ public abstract class BaseEntity{
         this.deletedStatus = false;
     }
 
-    public void delete(String deletedBy) {
+    public void delete(UUID deletedBy) {
         this.deletedStatus = true;
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;

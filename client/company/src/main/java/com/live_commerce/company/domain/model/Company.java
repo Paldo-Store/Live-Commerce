@@ -25,6 +25,7 @@ public class Company extends BaseEntity {
 
     private UUID owner;
 
+    @Enumerated(EnumType.STRING)
     private CompanyType type;
 
     private String address;

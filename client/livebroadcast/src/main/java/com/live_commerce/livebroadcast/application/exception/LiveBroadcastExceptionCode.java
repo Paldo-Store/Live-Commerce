@@ -17,7 +17,10 @@ public enum LiveBroadcastExceptionCode implements ExceptionCode {
   PRODUCT_DISCONNECTED(HttpStatus.NOT_FOUND, "해당 방송과 연결된 상품이 없습니다."),
   EXTERNAL_COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "업체를 찾을 수 없습니다."),
   EXCEPTION_FIELD_REQUIRED(HttpStatus.BAD_REQUEST, "수정할 항목이 없습니다."),
-  INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "시작 시간은 종료 시간보다 빨라야 합니다.");
+  INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "시작 시간은 종료 시간보다 빨라야 합니다."),
+  ALREADY_SUBSCRIBED(HttpStatus.CONFLICT, "이미 구독한 방송입니다."),
+  SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 내역이 존재하지 않습니다."),
+  INVALID_ALARM_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 알림 등록요청입니다.");
 
 
 

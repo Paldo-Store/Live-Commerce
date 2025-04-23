@@ -23,6 +23,7 @@ import com.live_commerce.ai.domain.repository.AiRepository;
 import com.live_commerce.ai.domain.prompt.PromptGenerator;
 import com.live_commerce.ai.infrastructure.client.GeminiServiceAdapter;
 import com.live_commerce.ai.infrastructure.security.RequestUserDetails;
+import com.live_commerce.ai.infrastructure.slack.SlackSender;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,11 +35,15 @@ public class AiService {
 	private final PromptGenerator promptGenerator;
 	private final GeminiServiceAdapter geminiServiceAdapter;
 	private final ObjectMapper objectMapper;
+	private final SlackSender slackSender;
 
 	private static final int MAX_CHAT_MESSAGES = 50;
 
 	@Value("${internal.secret}")
 	private String internalSecret;
+	@Value("${slack.admin-user-id}")
+	private String adminSlackUserId;
+
 
 	public AiCreateResponseDto analyze(AiAnalyzeRequestDto request, String providedSecret) {
 		if (!internalSecret.equals(providedSecret)) {
@@ -54,6 +59,11 @@ public class AiService {
 		String prompt = promptGenerator.generate(trimmed);
 		String response = generateResponse(prompt);
 		String requestPayloadJson = serializeRequest(request);
+
+		// TODO: 현재는 관리자용 슬랙 ID로만 알림 전송함
+		//       추후에 쇼호스트 계정으로 전송 기능 구현 예정
+		slackSender.sendMessage(adminSlackUserId,
+			"채팅 분석 완료\n\n" + response);
 
 		AI saved = aiRepository.save(AI.of(request.live_broadcast_id(), requestPayloadJson, response));
 		return AiCreateResponseDto.from(saved);

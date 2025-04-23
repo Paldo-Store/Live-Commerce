@@ -9,11 +9,9 @@ import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValid
 import com.live_commerce.livebroadcast.application.validation.ProductValidator;
 import com.live_commerce.livebroadcast.domain.model.BroadcastProduct;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
-
-import com.live_commerce.livebroadcast.domain.repository.BroadcastProductQueryRepository;
 import com.live_commerce.livebroadcast.domain.repository.BroadcastProductRepository;
+import com.live_commerce.livebroadcast.domain.repository.query.BroadcastProductQueryRepository;
 import com.live_commerce.livebroadcast.infrastructure.client.product.ExternalProductResponseDto;
-import com.live_commerce.livebroadcast.infrastructure.client.product.ProductClient;
 import com.live_commerce.livebroadcast.infrastructure.client.product.ProductSummaryDto;
 
 import lombok.RequiredArgsConstructor;
@@ -43,9 +41,7 @@ public class BroadcastProductService {
     @Transactional
     public BroadcastProductResponseDto connectBroadcastProduct(UUID liveBroadcastId, BroadcastProductConnectDto requestDto) {
 
-        System.out.println("🟡 서비스 진입: connectBroadcastProduct 호출됨");
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
-        System.out.println("✅ 라이브 방송 존재 확인 완료");
 
         ExternalProductResponseDto productDto = productValidator.getValidProductOrThrow(requestDto.productId());
 
@@ -65,7 +61,7 @@ public class BroadcastProductService {
 
         BroadcastProduct broadcastProduct = liveBroadcastValidator.validateConnectedProductExists(broadcast.getLiveBroadcastId(), productId);
 
-        broadcastProduct.delete("temp");
+        broadcastProduct.delete(UUID.randomUUID());
     }
 
     @Transactional(readOnly = true)

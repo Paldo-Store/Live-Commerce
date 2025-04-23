@@ -45,3 +45,18 @@ kakao:
 
 gateway:
   base-url: ${GATEWAY_BASE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
