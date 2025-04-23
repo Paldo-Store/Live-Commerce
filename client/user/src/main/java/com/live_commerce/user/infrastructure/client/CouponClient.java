@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import com.live_commerce.user.infrastructure.client.dto.CouponIssueResponse;
 
-@FeignClient(name = "coupon", url = "http://localhost:19091", path = "/api/v1/issued-coupons")
+@FeignClient(name = "coupon", url = "${gateway.base-url}", path = "/api/v1/issued-coupons")
 public interface CouponClient {
 
 	@PostMapping("/{userId}/signup-first")

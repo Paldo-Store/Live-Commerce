@@ -1,38 +1,40 @@
 server:
   port: 19120
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:19090/eureka/
+
 spring:
   application:
     name: user
+  config:
+    import: optional:file:.env[.properties]
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: create
     defer-datasource-initialization: true
-
     properties:
       hibernate:
         show_sql: true
         format_sql: true
         use_sql_comments: true
         default_schema: users
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:db/create-user.sql
-
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
 
-  mail:
+  mail: # 안 넣으면 'JavaMailSender' Bean을 찾지못함
     host: smtp.gmail.com
     port: 587
     username: ${MAIL_USERNAME}
@@ -41,6 +43,17 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
 
 service:
   jwt:
@@ -51,18 +64,5 @@ service:
 user:
   master-key: ${MASTER_KEY}
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:19090/eureka/
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: refresh
-
 gateway:
-  base-url: http://localhost:19091
-
-
+  base-url: http://gateway:19091

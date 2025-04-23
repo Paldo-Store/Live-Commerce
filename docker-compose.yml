@@ -1,19 +1,218 @@
 services:
+
+#  eureka:
+#    build:
+#      context: ./server/eureka
+#    container_name: eureka
+#    ports:
+#      - "19090:19090"
+#    networks:
+#      - 8do-network
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  gateway:
+#    build:
+#      context: ./server/gateway
+#    container_name: gateway
+#    ports:
+#      - "19091:19091"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - eureka
+#    env_file:
+#      - ./client/gateway/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  company:
+#    build:
+#      context: ./client/company
+#    container_name: company
+#    ports:
+#      - "19020:19020"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/company/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  order:
+#    build:
+#      context: ./client/order
+#    container_name: order
+#    ports:
+#      - "19030:19030"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/order/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  chat:
+#    build:
+#      context: ./client/chat
+#    container_name: chat
+#    ports:
+#      - "19040:19040"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/chat/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  ai:
+#    build:
+#      context: ./client/ai
+#    container_name: ai
+#    ports:
+#      - "19050:19050"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/ai/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  livebroadcast:
+#    build:
+#      context: ./client/livebroadcast
+#    container_name: livebroadcast
+#    ports:
+#      - "19060:19060"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/livebroadcast/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  product:
+#    build:
+#      context: ./client/product
+#    container_name: product
+#    ports:
+#      - "19070:19070"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/product/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  payment:
+#    build:
+#      context: ./client/payment
+#    container_name: payment
+#    ports:
+#      - "19080:19080"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/payment/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  coupon:
+#    build:
+#      context: ./client/coupon
+#    container_name: coupon
+#    ports:
+#      - "19100:19100"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/coupon/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  notification:
+#    build:
+#      context: ./client/notification
+#    container_name: notification
+#    ports:
+#      - "19110:19110"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/notification/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+#
+#  user:
+#    build:
+#      context: ./client/user
+#    container_name: user
+#    ports:
+#      - "19120:19120"
+#    networks:
+#      - 8do-network
+#    depends_on:
+#      - postgres
+#      - eureka
+#    env_file:
+#      - ./client/user/.env.prod
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
   postgres:
     image: postgres:15
     container_name: live-commerce-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: livecommerce #logistics
-      POSTGRES_USER: postgres #postgres
-      POSTGRES_PASSWORD: 8dostore #8dostore
+      POSTGRES_DB: livecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 8dostore
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
-      - logistics-network
+      - 8do-network
 
   redis:
     image: redis:latest
@@ -25,7 +224,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - logistics-network
+      - 8do-network
 
   zipkin:
     image: openzipkin/zipkin:latest
@@ -34,7 +233,7 @@ services:
     ports:
       - "9411:9411"
     networks:
-      - logistics-network
+      - 8do-network
 
   zookeeper:
     image: wurstmeister/zookeeper:latest
@@ -45,7 +244,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     networks:
-      - logistics-network
+      - 8do-network
 
   kafka:
     image: wurstmeister/kafka:latest
@@ -64,7 +263,7 @@ services:
     depends_on:
       - zookeeper
     networks:
-      - logistics-network
+      - 8do-network
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -78,7 +277,7 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CLUSTERS_0_READONLY: "false"
     networks:
-      - logistics-network
+      - 8do-network
 
   prometheus:
     image: prom/prometheus
@@ -88,7 +287,7 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
-      - logistics-network
+      - 8do-network
 
   grafana:
     image: grafana/grafana
@@ -99,26 +298,13 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
-      - logistics-network
+      - 8do-network
 
-#    environment:
-#      - JAVA_OPTS=-XX:UseSVE=0
 
-#  rabbitmq:
-#    image: rabbitmq:management
-#    container_name: rabbitmq
-#    restart: unless-stopped
-#    ports:
-#      - "5672:5672"
-#      - "15672:15672"
-#    environment:
-#      RABBITMQ_DEFAULT_USER: guest
-#      RABBITMQ_DEFAULT_PASS: guest
-#    networks:
-#      - logistics-network
 
 networks:
-  logistics-network:
+  8do-network:
+    driver: bridge
 
 volumes:
   postgres-data:

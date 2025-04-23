@@ -1,9 +1,16 @@
 server:
   port: 19110
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:19090/eureka/
+
 spring:
   application:
     name: notification
+  config:
+    import: optional:file:.env[.properties]
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -15,29 +22,31 @@ spring:
         use_sql_comments: true
         default_schema: notifications
   datasource:
-    url: jdbc:postgresql://localhost:5432/livecommerce
-    username: postgres
-    password: 8dostore
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   kafka:
-    bootstrap-servers: localhost:9092  # 카프카 브로커 URL
+    bootstrap-servers: kafka:9092  # 카프카 브로커 URL
     consumer:
       group-id: notification-group  # 소비자 그룹 ID (필요에 따라 설정)
     producer:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:19090/eureka/
 
 management:
   endpoints:
     web:
       exposure:
         include: refresh
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
 
 gateway:
-  base-url: http://localhost:19091
+  base-url: http://gateway:19091
