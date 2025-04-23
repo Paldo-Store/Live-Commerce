@@ -46,16 +46,6 @@ public class NotificationService {
     return NotificationCreateResponse.from(notification);
   }
 
-
-  public void sendNotification(String message) {
-    // 알림 생성
-    Notification notification = Notification.builder()
-        .message(message)
-        .isSent(true)
-        .build();
-    notificationRepository.save(notification);
-  }
-
   public ReadNotificationListResponse getAllNotifications() {
     List<Notification> notifications = notificationRepository.findAll();
     List<NotificationResponse> responseList = notifications.stream()
