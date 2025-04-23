@@ -1,15 +1,32 @@
 server:
   port: 19060
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:19090/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
 spring:
   application:
     name: livebroadcast
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:.env.prod[.properties]
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
@@ -22,13 +39,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://eureka:19090/eureka/
+gateway:
+  base-url: http://gateway:19091
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: refresh
+

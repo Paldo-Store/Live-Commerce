@@ -1,43 +1,14 @@
 spring:
+  config:
+    import: "configserver:http://localhost:18080"
   application:
     name: notification
   profiles:
     active: dev
-  config:
-    import: "configserver:http://localhost:18080"
 
-  kafka:
-    bootstrap-servers: localhost:9092  # 카프카 브로커 URL
-    consumer:
-      group-id: notification-group  # 소비자 그룹 ID (필요에 따라 설정)
-    producer:
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-
-server:
-  port: 0
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:19090/eureka/
-
-message: "default message" # config server를 통과하지 않을 때
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: refresh
-
-# 카프카 설정 추가
-
-
-#springdoc:
-#  swagger-ui:
-#    enabled: true
-#    path: /docs
-#    operations-sorter: alpha
-#    tags-sorter: alpha
-#  api-docs:
-#    enabled: true
-#    path: /v3/api-docs/user
+#spring:
+#  profiles:
+#    active: prod
+#  cloud:
+#    config:
+#      enabled: false

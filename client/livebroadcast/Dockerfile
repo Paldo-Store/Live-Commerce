@@ -6,9 +6,8 @@ WORKDIR /app
 
 # 빌드된 JAR 복사 (Gradle 기준, build/libs에 생김)
 COPY build/libs/livebroadcast-0.0.1-SNAPSHOT.jar app.jar
-COPY .env .env
 
 # 실행 명령
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 
 EXPOSE 19060

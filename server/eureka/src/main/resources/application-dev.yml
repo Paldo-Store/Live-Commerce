@@ -1,0 +1,22 @@
+server:
+  port: 19090
+
+spring:
+  application:
+    name: eureka
+
+eureka:
+  instance:
+    instance-id: localhost:${server.port}
+    hostname: localhost
+    prefer-ip-address: false
+
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
+  server:
+    enable-self-preservation: false
+    defaultOpenForTrafficCount: 0

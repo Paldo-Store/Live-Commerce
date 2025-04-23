@@ -21,7 +21,10 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:db/data.sql
+#  sql:
+#    init:
+#      mode: always
+#      data-locations: classpath:db/data.sql
+
+gateway:
+  base-url: http://localhost:19091

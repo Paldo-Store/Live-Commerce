@@ -7,7 +7,7 @@ spring:
   main:
     web-application-type: reactive
   application:
-    name: gateway-server
+    name: gateway
   cloud:
     gateway:
       globalcors:

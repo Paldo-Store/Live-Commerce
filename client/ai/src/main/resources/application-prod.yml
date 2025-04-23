@@ -4,7 +4,7 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:19090/eureka/
+      defaultZone: http://eureka:19090/eureka/
 
 spring:
   application:
@@ -39,4 +39,16 @@ slack:
   admin-user-id: ${SLACK_ADMIN_USER_ID}
 
 gateway:
-  base-url: http://localhost:19091
+  base-url: http://gateway:19091
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
