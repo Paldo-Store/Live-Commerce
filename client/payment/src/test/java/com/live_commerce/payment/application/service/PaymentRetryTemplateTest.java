@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,9 +65,7 @@ public class PaymentRetryTemplateTest {
 	}
 
 
-	/**
-	 * 외부 API 호출 실패 시 RetryTemplate을 통해 재시도가 정상 동작하는지 테스트
-	 */
+	@DisplayName("카카오페이 API 실패 후 재시도 성공 - RetryTemplate 적용")
 	@Test
 	void should_retry_and_succeed_when_api_fails_multiple_times() {
 		UUID userId = UUID.randomUUID();

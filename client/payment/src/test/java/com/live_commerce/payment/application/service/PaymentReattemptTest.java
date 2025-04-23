@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -46,10 +47,7 @@ public class PaymentReattemptTest {
 		reset(kakaoPayClient);
 	}
 
-	/**
-	 * 결제 준비 요청 시 외부 API(KakaoPay)가 실패한 경우, 해당 결제 정보는 저장되지 않으며,
-	 * 이후 동일한 orderId로 재시도할 경우 정상적으로 결제 준비가 가능함을 검증합니다.
-	 */
+	@DisplayName("API 실패 후 동일 orderId로 재요청 시 결제 준비 성공")
 	@Test
 	void failedPayment_should_allow_repayment_on_same_orderId() {
 		UUID userId = UUID.randomUUID();

@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,10 +57,7 @@ public class PaymentDuplicateRequestTest {
 			.thenReturn(mockDto);
 	}
 
-	/**
-	 * 결제 준비 요청 시 외부 API(KakaoPay)가 실패한 경우, 해당 결제 정보는 저장되지 않으며,
-	 * 이후 동일한 orderId로 재시도할 경우 정상적으로 결제 준비가 가능함을 검증합니다.
-	 */
+	@DisplayName("동시 결제 요청 시 중복 결제 방지 테스트")
 	@Test
 	void duplicatePaymentRequest_should_create_only_one_payment() throws Exception {
 		UUID userId = UUID.randomUUID();
