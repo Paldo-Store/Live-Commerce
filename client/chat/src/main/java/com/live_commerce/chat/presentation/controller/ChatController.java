@@ -39,7 +39,7 @@ public class ChatController {
         ChatCreateResponse response = chatService.createChat(request, userId);
 
         // WebSocket을 통해 메시지 전송
-        webSocketHandler.broadcast(request.liveBroadcastId(), "새로운 메시지가 도착했습니다!");
+        webSocketHandler.broadcast(request.liveBroadcastId(), userId, "메시지 전송!");
 
         return ResponseUtil.success(response);
     }

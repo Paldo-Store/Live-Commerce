@@ -74,6 +74,7 @@ dependencies {
 
 	// WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.json:json:20231013'
 
 	//feign 의존성
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'

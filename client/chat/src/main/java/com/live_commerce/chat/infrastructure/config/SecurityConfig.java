@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/**",
+                                "/room",
                                 "/ws/**",      //websocket 경로 추가
                                 "/api/v1/auth/**", // 인증되지 않은 경로
                                 "/swagger-ui/**",
