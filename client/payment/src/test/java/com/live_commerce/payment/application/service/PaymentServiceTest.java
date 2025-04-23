@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,34 +58,36 @@ public class PaymentServiceTest {
 		orderId = UUID.randomUUID();
 	}
 
-	// 1. 단건 조회
+	@DisplayName("결제 단건 조회 - 소유자")
 	@Test
-	void getPayment_should_succeed_for_owner() {
+	void getPayment_byOwner_success() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(7000));
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		// When
-		var result = paymentService.getPayment(payment.getId(), userDetails);
+		PaymentGetResponseDto result = paymentService.getPayment(payment.getId(), userDetails);
 		// Then
 		assertEquals(payment.getId(), result.paymentId());
 		assertEquals(orderId, result.orderId());
 	}
 
+	@DisplayName("결제 단건 조회 - 마스터")
 	@Test
-	void getPayment_should_succeed_for_master() {
+	void getPayment_byMaster_success() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(7000));
 		paymentRepository.save(payment);
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
 		// When
-		var result = paymentService.getPayment(payment.getId(), master);
+		PaymentGetResponseDto result = paymentService.getPayment(payment.getId(), master);
 		// Then
 		assertEquals(payment.getId(), result.paymentId());
 	}
 
+	@DisplayName("결제 단건 조회 실패 - 권한 없음")
 	@Test
-	void getPayment_should_throw_if_not_owner_or_master() {
+	void getPayment_byUnauthorizedUser_fail() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
 		paymentRepository.save(payment);
@@ -96,9 +99,9 @@ public class PaymentServiceTest {
 		assertEquals(PaymentExceptionCode.UNAUTHORIZED, ex.getExceptionCode());
 	}
 
-	// 2. 전체 조회
+	@DisplayName("결제 전체 조회 - 소유자")
 	@Test
-	void getPayments_should_return_paginated_result_for_owner() {
+	void getPayments_byOwner_paginated_success() {
 		// Given
 		for (int i = 0; i < 12; i++) {
 			paymentRepository.save(Payment.of(userId, UUID.randomUUID(), BigDecimal.valueOf(1000 + i)));
@@ -116,8 +119,9 @@ public class PaymentServiceTest {
 		assertEquals(12, result.getTotalElements());
 	}
 
+	@DisplayName("결제 전체 조회 - 마스터")
 	@Test
-	void getPayments_should_return_all_for_master() {
+	void getPayments_byMaster_all_success() {
 		// Given
 		for (int i = 0; i < 5; i++) {
 			paymentRepository.save(Payment.of(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(1000 + i)));
@@ -134,9 +138,9 @@ public class PaymentServiceTest {
 		assertEquals(5, result.getContent().size());
 	}
 
-	// 3. 결제 취소
+	@DisplayName("결제 취소 - 상태가 PENDING일 경우 성공")
 	@Test
-	void cancelPayment_should_succeed_when_status_is_pending() {
+	void cancelPayment_pending_success() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
 		paymentRepository.save(payment);
@@ -148,8 +152,9 @@ public class PaymentServiceTest {
 		assertEquals(PaymentStatus.CANCELED, updated.getStatus());
 	}
 
+	@DisplayName("결제 취소 - 마스터가 다른 유저 결제 취소")
 	@Test
-	void cancelPayment_should_succeed_for_master_on_others_payment() {
+	void cancelPayment_byMaster_success() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8888));
 		paymentRepository.save(payment);
@@ -161,8 +166,9 @@ public class PaymentServiceTest {
 		assertEquals(PaymentStatus.CANCELED, updated.getStatus());
 	}
 
+	@DisplayName("결제 취소 실패 - 이미 COMPLETED 상태")
 	@Test
-	void cancelPayment_should_fail_if_already_completed() {
+	void cancelPayment_alreadyCompleted_fail() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(15000));
 		payment.updateStatus(PaymentStatus.COMPLETED);
@@ -175,8 +181,9 @@ public class PaymentServiceTest {
 		assertEquals(PaymentExceptionCode.INVALID_STATUS, ex.getExceptionCode());
 	}
 
+	@DisplayName("결제 취소 실패 - 소유자도 마스터도 아님")
 	@Test
-	void cancelPayment_should_throw_if_not_owner_and_not_master() {
+	void cancelPayment_unauthorizedUser_fail() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
 		paymentRepository.save(payment);
@@ -188,9 +195,9 @@ public class PaymentServiceTest {
 		assertEquals(PaymentExceptionCode.UNAUTHORIZED, ex.getExceptionCode());
 	}
 
-	// 4. 결제 환불
+	@DisplayName("결제 환불 - COMPLETED 상태에서 성공")
 	@Test
-	void refundPayment_should_succeed_if_completed() {
+	void refundPayment_completed_success() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(15000));
 		payment.updateStatus(PaymentStatus.COMPLETED);
@@ -205,8 +212,9 @@ public class PaymentServiceTest {
 		assertEquals(orderId, response.orderId());
 	}
 
+	@DisplayName("결제 환불 - 마스터가 다른 유저 결제 환불")
 	@Test
-	void refundPayment_should_succeed_for_master_on_others_payment() {
+	void refundPayment_byMaster_success() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(20000));
 		payment.updateStatus(PaymentStatus.COMPLETED);
@@ -215,14 +223,15 @@ public class PaymentServiceTest {
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
 		when(kakaoPayClient.requestKakaoPayCancel(any(), any())).thenReturn(null);
 		// When
-		var result = paymentService.refundPaymentByOrderId(orderId, master);
+		PaymentRefundResponseDto result = paymentService.refundPaymentByOrderId(orderId, master);
 		// Then
 		assertEquals(PaymentStatus.REFUND, paymentRepository.findByOrderId(orderId).get().getStatus());
 		assertEquals(orderId, result.orderId());
 	}
 
+	@DisplayName("결제 환불 실패 - 상태가 COMPLETED가 아님")
 	@Test
-	void refundPayment_should_fail_if_not_completed() {
+	void refundPayment_notCompleted_fail() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(15000));
 		payment.updateStatus(PaymentStatus.PENDING);
@@ -235,8 +244,9 @@ public class PaymentServiceTest {
 		assertEquals(PaymentExceptionCode.INVALID_STATUS, ex.getExceptionCode());
 	}
 
+	@DisplayName("결제 환불 실패 - 소유자도 마스터도 아님")
 	@Test
-	void refundPayment_should_throw_if_not_owner_and_not_master() {
+	void refundPayment_unauthorizedUser_fail() {
 		// Given
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(9999));
 		payment.updateStatus(PaymentStatus.COMPLETED);

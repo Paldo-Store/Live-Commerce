@@ -68,7 +68,7 @@ public class PaymentRetryTemplateTest {
 	 * 외부 API 호출 실패 시 RetryTemplate을 통해 재시도가 정상 동작하는지 테스트
 	 */
 	@Test
-	void retryTemplate_should_retry_on_failure_and_succeed() {
+	void should_retry_and_succeed_when_api_fails_multiple_times() {
 		UUID userId = UUID.randomUUID();
 		UUID orderId = UUID.randomUUID();
 		RequestUserDetails user = new RequestUserDetails(userId, null, Collections.emptyList());

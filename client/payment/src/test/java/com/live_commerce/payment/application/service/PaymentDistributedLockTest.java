@@ -56,7 +56,9 @@ public class PaymentDistributedLockTest {
 			} finally {
 				try {
 					lock.unlock();
-				} catch (Exception ignored) {}
+				} catch (Exception e) {
+					System.err.println("unlock 실패: " + e.getMessage());
+				}
 			}
 		};
 
