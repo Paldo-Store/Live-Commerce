@@ -34,12 +34,14 @@ public class ChatController {
 
         //userId 가져오기
         UUID userId = userDetails.getUserId();
+        log.info("userId 가져오기" + userId);
 
         //권한은 userDetails로 넘겨준다.
         ChatCreateResponse response = chatService.createChat(request, userId);
 
         // WebSocket을 통해 메시지 전송
         webSocketHandler.broadcast(request.liveBroadcastId(), userId, "메시지 전송!");
+        log.info("websocket 통해 메시지 전송" + request.liveBroadcastId());
 
         return ResponseUtil.success(response);
     }

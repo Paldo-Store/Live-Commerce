@@ -11,6 +11,7 @@ import com.live_commerce.chat.domain.repository.ChatRepository;
 import com.live_commerce.chat.infrastructure.repository.ChatQueryRepository;
 import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -36,8 +38,10 @@ public class ChatService {
     @Transactional
     public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
         //chat 저장
+        log.info("chat 저장!!!!!!!!!");
         Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);
+        log.info("chat 저장 성공!!!!!");
         return ChatCreateResponse.of(saved);
     }
 
