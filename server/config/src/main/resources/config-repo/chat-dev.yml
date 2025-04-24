@@ -1,6 +1,11 @@
 server:
   port: 19040
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
 spring:
   application:
     name: chat
@@ -21,8 +26,14 @@ spring:
     driver-class-name: org.postgresql.Driver
 
 ai-service:
-  url: http://gateway-server
+  url: http://gateway-server #http://gateway 로 바꾸어볼 것. 에러나면
 
 internal:
   secret: ${INTERNAL_SECRET}
 
+gateway:
+  base-url: http://localhost:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/chat

@@ -1,0 +1,51 @@
+spring:
+
+  cloud:
+    config:
+      enabled: false                # config server 비활성화
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        use_sql_comments: true
+
+  sql:
+    init:
+      mode: never  # schema.sql 사용 안 함
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+eureka:
+  client:
+    enabled: false
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace
+
+
+gateway:
+  base-url: localhost:9999
+
+service:
+  jwt:
+    access-expiration: 3600000
+    refresh-expiration: 604800000
+
+user:
+  master-key: test-master-key
+
+

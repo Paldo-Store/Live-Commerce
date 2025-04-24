@@ -1,6 +1,17 @@
 server:
   port: 19060
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
 spring:
   application:
     name: livebroadcast
@@ -21,7 +32,14 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:db/data.sql
+#  sql:
+#    init:
+#      mode: always
+#      data-locations: classpath:db/data.sql
+
+gateway:
+  base-url: http://localhost:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/livebroadcast

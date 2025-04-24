@@ -1,11 +1,13 @@
 package com.live_commerce.livebroadcast.application.service;
 
+import com.live_commerce.livebroadcast.domain.exception.LiveBroadcastException;
 import com.live_commerce.livebroadcast.application.dto.request.BroadcastProductConnectDto;
 import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductListResponseDto;
 import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductResponseDto;
 import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductPageResponse;
 import com.live_commerce.livebroadcast.application.mapper.BroadcastProductMapper;
 import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValidator;
+import com.live_commerce.livebroadcast.application.validation.PermissionValidator;
 import com.live_commerce.livebroadcast.application.validation.ProductValidator;
 import com.live_commerce.livebroadcast.domain.model.BroadcastProduct;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
@@ -14,6 +16,7 @@ import com.live_commerce.livebroadcast.domain.repository.query.BroadcastProductQ
 import com.live_commerce.livebroadcast.infrastructure.client.product.ExternalProductResponseDto;
 import com.live_commerce.livebroadcast.infrastructure.client.product.ProductSummaryDto;
 
+import com.live_commerce.livebroadcast.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -35,15 +38,20 @@ public class BroadcastProductService {
     private final BroadcastProductQueryRepository broadcastProductQueryRepository;
     private final LiveBroadcastValidator liveBroadcastValidator;
     private final ProductValidator productValidator;
-
-
+    private final PermissionValidator permissionValidator;
 
     @Transactional
-    public BroadcastProductResponseDto connectBroadcastProduct(UUID liveBroadcastId, BroadcastProductConnectDto requestDto) {
+    public BroadcastProductResponseDto connectBroadcastProduct(UUID liveBroadcastId, BroadcastProductConnectDto requestDto, RequestUserDetails userDetails) {
 
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
 
+        permissionValidator.validateOwnerOrMaster(userDetails, liveBroadcastId);
+
         ExternalProductResponseDto productDto = productValidator.getValidProductOrThrow(requestDto.productId());
+
+        if (!broadcast.getCompanyId().equals(productDto.companyId())) {
+            throw LiveBroadcastException.companyMismatch();
+        }
 
         liveBroadcastValidator.validateNotConnected(broadcast.getLiveBroadcastId(), productDto.productId());
 
@@ -56,12 +64,12 @@ public class BroadcastProductService {
     }
 
     @Transactional
-    public void disconnectBroadcastProduct(UUID liveBroadcastId, UUID productId) {
+    public void disconnectBroadcastProduct(UUID liveBroadcastId, UUID productId, RequestUserDetails userDetails) {
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(liveBroadcastId);
-
+        permissionValidator.validateOwnerOrMaster(userDetails, liveBroadcastId);
         BroadcastProduct broadcastProduct = liveBroadcastValidator.validateConnectedProductExists(broadcast.getLiveBroadcastId(), productId);
 
-        broadcastProduct.delete(UUID.randomUUID());
+        broadcastProduct.delete(userDetails.getUserId());
     }
 
     @Transactional(readOnly = true)

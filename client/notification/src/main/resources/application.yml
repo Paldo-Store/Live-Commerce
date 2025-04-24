@@ -1,10 +1,10 @@
 spring:
+  config:
+    import: "configserver:http://localhost:18080"
   application:
     name: notification
   profiles:
     active: dev
-  config:
-    import: "configserver:http://localhost:18080"
 
   kafka:
     bootstrap-servers: localhost:9092  # 카프카 브로커 URL
@@ -55,12 +55,9 @@ management:
 # 카프카 설정 추가
 
 
-#springdoc:
-#  swagger-ui:
-#    enabled: true
-#    path: /docs
-#    operations-sorter: alpha
-#    tags-sorter: alpha
-#  api-docs:
-#    enabled: true
-#    path: /v3/api-docs/user
+#spring:
+#  profiles:
+#    active: prod
+#  cloud:
+#    config:
+#      enabled: false

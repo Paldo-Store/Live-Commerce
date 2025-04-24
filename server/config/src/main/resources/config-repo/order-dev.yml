@@ -1,6 +1,11 @@
 server:
   port: 19030
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
 spring:
   application:
     name: order
@@ -34,3 +39,10 @@ management:
     export:
       prometheus:
         enabled: true
+
+gateway:
+  base-url: http://localhost:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/order

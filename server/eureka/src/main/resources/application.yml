@@ -1,14 +1,15 @@
-server:
-  port: 19090
+#spring:
+#  profiles:
+#    active: prod
+
 
 spring:
   application:
-    name: eureka-server
-
-eureka:
-  client:
-    register-with-eureka: false
-    fetch-registry: false
-
-  instance:
-    hostname: localhost
+    name: eureka
+  config:
+    import: "configserver:http://localhost:18080"
+  cloud:
+    config:
+      name: eureka
+      profile: dev
+      fail-fast: true

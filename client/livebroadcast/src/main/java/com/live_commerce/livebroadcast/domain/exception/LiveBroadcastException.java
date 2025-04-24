@@ -48,4 +48,12 @@ public class LiveBroadcastException extends CustomException {
     public static LiveBroadcastException forInvalidAlarmRequest() {
         return new LiveBroadcastException(LiveBroadcastExceptionCode.INVALID_ALARM_REQUEST);
     }
+
+    public static LiveBroadcastException accessDenied() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.ACCESS_DENIED);
+    }
+
+    public static LiveBroadcastException companyMismatch() {
+        return new LiveBroadcastException(LiveBroadcastExceptionCode.COMPANY_MISMATCH);
+    }
 }

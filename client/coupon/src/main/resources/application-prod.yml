@@ -1,0 +1,47 @@
+server:
+  port: 19100
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:19090/eureka/
+
+spring:
+  application:
+    name: coupon
+  config:
+    import: optional:file:.env[.properties]
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        default_schema: coupons
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
+gateway:
+  base-url: http://gateway:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/coupon

@@ -19,3 +19,29 @@ spring:
     username: postgres
     password: 8dostore
     driver-class-name: org.postgresql.Driver
+
+  kafka:
+    bootstrap-servers: localhost:9092  # 카프카 브로커 URL
+    consumer:
+      group-id: notification-group  # 소비자 그룹 ID (필요에 따라 설정)
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+gateway:
+  base-url: http://localhost:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/notification

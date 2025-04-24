@@ -34,7 +34,7 @@ public class BroadcastSubscriptionController {
         return ResponseUtil.success(response);
     }
 
-    // 구독 취소 - 사용자 관점
+    // 사용자 관점 구독 취소
     @DeleteMapping("/{broadcastId}")
     public ResponseEntity<ApiResponse<String>> unsubscribe(
             @AuthenticationPrincipal RequestUserDetails userDetails,

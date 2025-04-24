@@ -1,6 +1,11 @@
 server:
   port: 19080
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
 spring:
   application:
     name: payment
@@ -60,3 +65,7 @@ management:
     export:
       prometheus:
         enabled: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/payment
