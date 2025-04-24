@@ -40,3 +40,7 @@ slack:
 
 gateway:
   base-url: http://localhost:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/ai
