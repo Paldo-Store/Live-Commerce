@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -87,6 +88,35 @@ class UserServiceTest {
 		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.FORBIDDEN);
 	}
 
+	@Test
+	@DisplayName("조회 실패 - 존재하지 않는 유저")
+	void getUser_notFound() {
+		// given
+		RequestUserDetails self = createUserDetails(userId, "ROLE_CUSTOMER");
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		// expect
+		CustomException ex = catchThrowableOfType(() -> userService.getUser(userId, self), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.USER_NOT_FOUND);
+	}
+
+
+	@Test
+	@DisplayName("검색 실패 - 마스터가 아닌 유저")
+	void searchUser_forbidden() {
+		// given
+		RequestUserDetails normal = createUserDetails(UUID.randomUUID(), "ROLE_CUSTOMER");
+
+		// expect
+		CustomException ex = catchThrowableOfType(
+			() -> userService.searchUser(null, PageRequest.of(0, 10), normal),
+			CustomException.class
+		);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.FORBIDDEN);
+	}
+
 
 	@Test
 	@DisplayName("유저 정보 수정 성공")
@@ -139,6 +169,38 @@ class UserServiceTest {
 
 		// then
 		assertThat(user.isDeletedStatus()).isTrue();
+	}
+
+	@DisplayName("삭제 성공 - 일반 유저가 본인 계정 삭제")
+	@Test
+	void deleteUser_self_success() {
+		// Given
+		User user = createUser();
+		RequestUserDetails self = createUserDetails(userId, "ROLE_CUSTOMER");
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		// When
+		userService.deleteUser(userId, self);
+
+		// Then
+		assertThat(user.isDeletedStatus()).isTrue();
+	}
+
+	@Test
+	@DisplayName("삭제 실패 - 일반 유저가 타인 삭제 시도")
+	void deleteUser_others_forbidden() {
+		// Given
+		User user = createUser();
+		RequestUserDetails other = createUserDetails(UUID.randomUUID(), "ROLE_CUSTOMER");
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		// When & Then
+		CustomException ex = catchThrowableOfType(
+			() -> userService.deleteUser(userId, other), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.FORBIDDEN);
 	}
 
 
