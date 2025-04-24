@@ -33,7 +33,14 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public UserGetResponseDto getUser(UUID userId, RequestUserDetails userDetails) {
 		validateUserGetPermission(userId, userDetails);
-		User user = findUserById(userId);
+
+		User user;
+		if (hasMasterRole(userDetails)) {
+			user = findUserEvenIfDeleted(userId); // 마스터는 삭제 유저도 조회 가능
+		} else {
+			user = findUserById(userId); // 일반 유저는 삭제 유저 조회 시 예외
+		}
+
 		return UserGetResponseDto.from(user);
 	}
 
@@ -57,9 +64,17 @@ public class UserService {
 	@Transactional
 	public UserUpdateResponseDto updateUser(UUID userId, UserUpdateRequestDto requestDto, RequestUserDetails userDetails) {
 		validateUserUpdatePermission(userId, requestDto, userDetails);
-		User user = findUserById(userId);
+
+		User user;
+		if (hasMasterRole(userDetails)) {
+			user = findUserEvenIfDeleted(userId); // 마스터는 삭제 유저도 수정 가능
+		} else {
+			user = findUserById(userId); // 일반 유저는 삭제 유저 수정 시 예외
+		}
+
 		String updatedPassword = requestDto.password() != null
-			? passwordEncoder.encode(requestDto.password()) : user.getPassword();
+			? passwordEncoder.encode(requestDto.password())
+			: user.getPassword();
 
 		user.updateUser(
 			updatedPassword,
@@ -74,7 +89,7 @@ public class UserService {
 
 	@Transactional
 	public void deleteUser(UUID userId, RequestUserDetails userDetails) {
-		validateUserDeletePermission(userDetails);
+		validateUserDeletePermission(userId, userDetails);
 		User user = findUserById(userId);
 		user.markAsDeleted(userDetails.getUsername());
 	}
@@ -100,13 +115,23 @@ public class UserService {
 		}
 	}
 
-	private void validateUserDeletePermission(RequestUserDetails userDetails) {
-		if (!hasMasterRole(userDetails)) {
+	private void validateUserDeletePermission(UUID userId, RequestUserDetails userDetails) {
+		if (!isSelf(userId, userDetails) && !hasMasterRole(userDetails)) {
 			throw new CustomException(UserExceptionCode.FORBIDDEN);
 		}
 	}
 
 	private User findUserById(UUID userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
+
+		if (user.isDeletedStatus()) {
+			throw new CustomException(UserExceptionCode.DELETED_USER);
+		}
+		return user;
+	}
+
+	private User findUserEvenIfDeleted(UUID userId) {
 		return userRepository.findById(userId)
 			.orElseThrow(() -> new CustomException(UserExceptionCode.USER_NOT_FOUND));
 	}
