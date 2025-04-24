@@ -101,7 +101,6 @@ class UserServiceTest {
 		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.USER_NOT_FOUND);
 	}
 
-
 	@Test
 	@DisplayName("검색 실패 - 마스터가 아닌 유저")
 	void searchUser_forbidden() {
@@ -116,7 +115,6 @@ class UserServiceTest {
 
 		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.FORBIDDEN);
 	}
-
 
 	@Test
 	@DisplayName("유저 정보 수정 성공")
@@ -136,6 +134,80 @@ class UserServiceTest {
 		// then
 		assertThat(res.email()).isEqualTo("new@mail.com");
 		assertThat(res.nickname()).isEqualTo("newnick");
+	}
+
+	@Test
+	@DisplayName("마스터가 삭제된 유저 정보 수정 성공")
+	void updateUser_master_canUpdateDeletedUser() {
+		// given
+		User deletedUser = createUser();
+		deletedUser.markAsDeleted("admin");
+		RequestUserDetails master = createUserDetails(UUID.randomUUID(), "ROLE_MASTER");
+
+		UserUpdateRequestDto dto = new UserUpdateRequestDto("pw", "new@email.com", "newNick", true, null);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(deletedUser));
+		when(passwordEncoder.encode("pw")).thenReturn("encoded");
+
+		// when
+		UserUpdateResponseDto result = userService.updateUser(userId, dto, master);
+
+		// then
+		assertThat(result.email()).isEqualTo("new@email.com");
+		assertThat(result.nickname()).isEqualTo("newNick");
+	}
+
+	@Test
+	@DisplayName("마스터가 삭제된 유저 조회 성공")
+	void getUser_master_canViewDeletedUser() {
+		// given
+		User deletedUser = createUser();
+		deletedUser.markAsDeleted("admin");
+		RequestUserDetails master = createUserDetails(UUID.randomUUID(), "ROLE_MASTER");
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(deletedUser));
+
+		// when
+		UserGetResponseDto result = userService.getUser(userId, master);
+
+		// then
+		assertThat(result.getUsername()).isEqualTo("user");
+	}
+
+	@Test
+	@DisplayName("일반 유저가 삭제된 유저 조회 시 예외")
+	void getUser_deletedUser_forbidden() {
+		// given
+		User deletedUser = createUser();
+		deletedUser.markAsDeleted("admin");
+		RequestUserDetails self = createUserDetails(userId, "ROLE_CUSTOMER");
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(deletedUser));
+
+		// expect
+		CustomException ex = catchThrowableOfType(() ->
+			userService.getUser(userId, self), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.DELETED_USER);
+	}
+
+	@Test
+	@DisplayName("수정 실패 - 삭제된 유저")
+	void updateUser_deletedUser() {
+		// given
+		User user = createUser();
+		user.markAsDeleted("test");
+		UserUpdateRequestDto dto =
+			new UserUpdateRequestDto("pw", "email", "nick", true, null);
+		RequestUserDetails self = createUserDetails(userId, "ROLE_CUSTOMER");
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		// expect
+		CustomException ex = catchThrowableOfType(() ->
+			userService.updateUser(userId, dto, self), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.DELETED_USER);
 	}
 
 	@Test
