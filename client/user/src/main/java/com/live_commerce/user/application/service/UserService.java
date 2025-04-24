@@ -74,7 +74,7 @@ public class UserService {
 
 	@Transactional
 	public void deleteUser(UUID userId, RequestUserDetails userDetails) {
-		validateUserDeletePermission(userDetails);
+		validateUserDeletePermission(userId, userDetails);
 		User user = findUserById(userId);
 		user.markAsDeleted(userDetails.getUsername());
 	}
@@ -100,8 +100,8 @@ public class UserService {
 		}
 	}
 
-	private void validateUserDeletePermission(RequestUserDetails userDetails) {
-		if (!hasMasterRole(userDetails)) {
+	private void validateUserDeletePermission(UUID userId, RequestUserDetails userDetails) {
+		if (!isSelf(userId, userDetails) && !hasMasterRole(userDetails)) {
 			throw new CustomException(UserExceptionCode.FORBIDDEN);
 		}
 	}
