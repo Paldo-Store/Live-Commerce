@@ -22,43 +22,43 @@ spring:
         - id: ai
           uri: lb://ai
           predicates:
-            - Path=/api/v1/ai/**, /api-docs-ai
+            - Path=/api/v1/ai/**, /v3/api-docs/ai
         - id: chat
           uri: lb://chat
           predicates:
-            - Path=/api/v1/chattings/**, /api-docs-chat
+            - Path=/api/v1/chattings/**, /v3/api-docs/chat
         - id: company
           uri: lb://company
           predicates:
-            - Path=/api/v1/companies/**, /api-docs-company
+            - Path=/api/v1/companies/**, /v3/api-docs/company
         - id: coupon
           uri: lb://coupon
           predicates:
-            - Path=/api/v1/coupon-policies/**, /api/v1/issued-coupons/**, /api-docs-coupon
+            - Path=/api/v1/coupon-policies/**, /api/v1/issued-coupons/**, /v3/api-docs/coupon
         - id: livebroadcast
           uri: lb://livebroadcast
           predicates:
-            - Path=/api/v1/livebroadcasts/**, /ws/viewers/**, /api-docs-live-broadcast
+            - Path=/api/v1/livebroadcasts/**, /ws/viewers/**, /v3/api-docs/livebroadcast
         - id: notification
           uri: lb://notification
           predicates:
-            - Path=/api/v1/notifications/**, /api-docs-notification
+            - Path=/api/v1/notifications/**, /v3/api-docs/notification
         - id: order
           uri: lb://order
           predicates:
-            - Path=/api/v1/orders/**, /api-docs-order
+            - Path=/api/v1/orders/**, /v3/api-docs/order
         - id: payment
           uri: lb://payment
           predicates:
-            - Path=/api/v1/payments/**, /api-docs-payment
+            - Path=/api/v1/payments/**, /v3/api-docs/payment
         - id: product
           uri: lb://product
           predicates:
-            - Path=/api/v1/products/**, /api/v1/inventories/**, /api-docs-product
+            - Path=/api/v1/products/**, /api/v1/inventories/**, /v3/api-docs/product
         - id: user
           uri: lb://user
           predicates:
-            - Path=/api/v1/users/**, /api/v1/auth/**, /v3/api-docs/user, /api-docs-user
+            - Path=/api/v1/users/**, /api/v1/auth/**, /v3/api-docs/user
 
 
 eureka:
@@ -69,6 +69,37 @@ eureka:
 service:
   jwt:
     secret-key: ${JWT_SECRET_KEY}
+
+  whitelist:
+    paths:
+      - "/swagger-ui/**"
+      - "/swagger-ui.html"
+      - "/v3/api-docs/**"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    urls:
+      - name: user
+        url: /v3/api-docs/user
+      - name: company
+        url: /v3/api-docs/company
+      - name: coupon
+        url: /v3/api-docs/coupon
+      - name: livebroadcast
+        url: /v3/api-docs/livebroadcast
+      - name: notification
+        url: /v3/api-docs/notification
+      - name: order
+        url: /v3/api-docs/order
+      - name: payment
+        url: /v3/api-docs/payment
+      - name: product
+        url: /v3/api-docs/product
+      - name: chat
+        url: /v3/api-docs/chat
+      - name: ai
+        url: /v3/api-docs/ai
 
 management:
   endpoints:

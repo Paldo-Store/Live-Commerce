@@ -52,3 +52,7 @@ management:
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/ai

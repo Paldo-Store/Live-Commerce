@@ -19,8 +19,9 @@ public class AuthenticationFilter implements GlobalFilter {
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		String path = exchange.getRequest().getURI().getPath();
+		String method = exchange.getRequest().getMethod().name();
 
-		if (isPublicPath(path)) {
+		if (isPublicPath(path, method)) {
 			return chain.filter(exchange);
 		}
 
@@ -35,29 +36,27 @@ public class AuthenticationFilter implements GlobalFilter {
 		String userId = claims.get("userId", String.class);
 		String username = claims.get("username", String.class);
 		String role = claims.get("role", String.class);
+		String finalRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
 
 		ServerWebExchange modifiedExchange = exchange.mutate()
 			.request(exchange.getRequest().mutate()
 				.header("X-User-Id", userId)
 				.header("X-User-Username", username)
-				.header("X-User-Role", role)
+				.header("X-User-Role", finalRole)
 				.build())
 			.build();
 
 		return chain.filter(modifiedExchange);
 	}
 
-	private boolean isPublicPath(String path) {
-		return !path.equals("/api/v1/auth/logout") &&
-			!path.startsWith("/api/v1/auth/approve") && (
-			path.startsWith("/api/v1/ai") ||
-				path.startsWith("/api/v1/auth/") ||
-				(path.startsWith("/api/v1/issued-coupons/") && path.endsWith("/signup-first")) ||
-				path.startsWith("/swagger-ui/") ||
-				path.startsWith("/v3/api-docs/") ||
-				path.startsWith("/actuator")
-		);
+	private boolean isPublicPath(String path, String method) {
+		return (path.equals("/api/v1/ai") && method.equalsIgnoreCase("POST")) ||
+			path.startsWith("/api/v1/auth/") ||
+			path.startsWith("/swagger-ui/") ||
+			path.startsWith("/v3/api-docs") ||
+			path.startsWith("/actuator");
 	}
+
 
 }
 

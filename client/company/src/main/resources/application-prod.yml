@@ -43,3 +43,6 @@ management:
     pathmatch:
       matching-strategy: ant_path_matcher
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs/company
