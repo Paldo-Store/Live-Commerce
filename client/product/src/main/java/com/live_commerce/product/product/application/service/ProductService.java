@@ -4,6 +4,7 @@ import com.live_commerce.product.inventory.application.service.InventoryService;
 import com.live_commerce.product.product.application.dto.*;
 import com.live_commerce.product.product.application.mapper.ProductMapper;
 import com.live_commerce.product.product.application.validation.CompanyValidator;
+import com.live_commerce.product.product.application.validation.PermissionValidator;
 import com.live_commerce.product.product.application.validation.ProductValidator;
 import com.live_commerce.product.product.domain.exception.ProductException;
 import com.live_commerce.product.product.domain.model.Product;
@@ -11,12 +12,14 @@ import com.live_commerce.product.product.domain.repository.ProductQueryRepositor
 import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.product.infrastructure.client.CompanyClient;
 import com.live_commerce.product.product.infrastructure.client.ExternalCompanyResponseDto;
+import com.live_commerce.product.product.infrastructure.security.RequestUserDetails;
 import com.live_commerce.product.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.Authenticator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,6 +33,7 @@ public class ProductService {
     private final CompanyValidator companyValidator;
     private final ProductQueryRepository productQueryRepository;
     private final InventoryService inventoryService;
+    private final PermissionValidator permissionValidator;
 
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
 
@@ -45,8 +49,10 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductCreateResponseDto createProduct(ProductCreateRequestDto requestDto) {
+    public ProductCreateResponseDto createProduct(ProductCreateRequestDto requestDto, RequestUserDetails user) {
         companyValidator.validateExistsAndActiveOrThrow(requestDto.companyId());
+
+        permissionValidator.validateOwnerOrMasterByCompanyId(user, requestDto.companyId());
 
         Product product = ProductMapper.createDtoToEntity(requestDto, requestDto.companyId());
         productRepository.save(product);
@@ -63,8 +69,9 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponseDto updateProduct(UUID productId, ProductUpdateRequestDto requestDto) {
+    public ProductResponseDto updateProduct(UUID productId, ProductUpdateRequestDto requestDto, RequestUserDetails user) {
         Product product = productValidator.validateAndFindProduct(productId);
+        permissionValidator.validateOwnerOrMaster(user, product);
         boolean soldOut = inventoryService.isSoldOut(product.getProductId());
 
         product.update(requestDto);
@@ -72,10 +79,10 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(UUID productId) {
+    public void deleteProduct(UUID productId, RequestUserDetails user) {
         Product product = productValidator.validateAndFindProduct(productId);
-
-        product.delete("temp");
+        permissionValidator.validateOwnerOrMaster(user, product);
+        product.delete(user.getUserId());
     }
 
     @Transactional(readOnly = true)
@@ -97,11 +104,15 @@ public class ProductService {
         return ProductPageResponseDto.from(page);
     }
 
+    private static final int MAX_PRODUCT_IDS = 100;
 
     public List<ProductSummaryDto> getProductsByIds(List<UUID> productIds) {
+        if (productIds.size() > MAX_PRODUCT_IDS) {
+            throw ProductException.exceedsMaxRequestLimit();
+        }
+
         return productRepository.findAllByProductIdInAndDeletedStatusFalse(productIds).stream()
                 .map(ProductSummaryDto::fromEntity)
                 .collect(Collectors.toList());
-        // TODO: 추후 성능 고려하여 요청 개수 제한 로직 추가할 것
     }
 }

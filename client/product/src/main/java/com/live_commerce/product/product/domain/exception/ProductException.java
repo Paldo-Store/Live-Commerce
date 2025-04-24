@@ -15,4 +15,12 @@ public class ProductException extends CustomException {
     public static ProductException forExternalCompanyNotFound() {
         return new ProductException(ProductExceptionCode.EXTERNAL_COMPANY_NOT_FOUND);
     }
+
+    public static ProductException accessDenied() {
+        return new ProductException(ProductExceptionCode.ACCESS_DENIED);
+    }
+
+    public static ProductException exceedsMaxRequestLimit() {
+        return new ProductException(ProductExceptionCode.EXCEEDS_MAX_REQUEST_LIMIT);
+    }
 }
