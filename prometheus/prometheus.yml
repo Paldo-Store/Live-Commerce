@@ -9,3 +9,7 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:19030']
 
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:19110']
