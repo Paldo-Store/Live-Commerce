@@ -38,4 +38,10 @@ public class RequestUserDetails implements UserDetails {
 	@Override public boolean isAccountNonLocked() { return true; }
 	@Override public boolean isCredentialsNonExpired() { return true; }
 	@Override public boolean isEnabled() { return true; }
+
+	public boolean isMaster() {
+		return authorities.stream()
+				.map(GrantedAuthority::getAuthority)
+				.anyMatch(role -> role.equals("ROLE_MASTER"));
+	}
 }

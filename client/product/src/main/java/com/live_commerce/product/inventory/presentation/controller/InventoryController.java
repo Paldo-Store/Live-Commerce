@@ -13,6 +13,7 @@ import com.live_commerce.product.inventory.presentation.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    @PreAuthorize("hasAnyRole('MASTER', 'SELLER')")
     @PostMapping
     public ResponseEntity<ApiResponse<InventoryResponseDto>> createInventory(@RequestBody InventoryCreateRequestDto requestDto) {
         InventoryResponseDto responseDto = inventoryService.createInventory(requestDto);

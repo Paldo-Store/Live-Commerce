@@ -33,7 +33,6 @@ public class InventoryService {
         if (!productRepository.existsByProductIdAndDeletedStatusFalse(requestDto.productId())) {
             throw InventoryException.forProductNotFound();
         }
-        // TODO 상품 한 개당 재고 정보 한 개만 붙어야함
 
         Inventory inventory = InventoryMapper.createDtoToEntity(requestDto);
         inventoryRepository.save(inventory);
@@ -78,14 +77,12 @@ public class InventoryService {
         return inventory.getQuantity() <= 0;
     }
 
-    // get
+
     public InventoryCheckQuantityResponseDto checkInventoryQuantity(UUID productId) {
         Inventory inventory = inventoryValidator.validateAndGetActiveInventory(productId);
         return InventoryMapper.toCheckQuantityDto(inventory);
     }
 
-
-    // get - 파라미터로 만들어.
     public InventoryCheckOrderableResponseDto checkOrderableInventory(UUID productId, int orderQuantity) {
         boolean orderable = inventoryValidator.checkOrderable(productId, orderQuantity);
         return InventoryMapper.toCheckResponseDto(orderable);

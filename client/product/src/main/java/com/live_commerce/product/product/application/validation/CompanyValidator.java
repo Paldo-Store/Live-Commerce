@@ -30,4 +30,22 @@ public class CompanyValidator {
             throw new RuntimeException("업체 서비스 호출 실패", e);
         }
     }
+
+    public ExternalCompanyResponseDto getValidCompanyOrThrow(UUID companyId) {
+        try {
+            ApiResponse<ExternalCompanyResponseDto> response = companyClient.getCompany(companyId);
+            ExternalCompanyResponseDto company = response.getData();
+
+            if (company == null) {
+                throw ProductException.forExternalCompanyNotFound();
+            }
+
+            return company;
+        } catch (FeignException.NotFound e) {
+            throw ProductException.forExternalCompanyNotFound();
+        } catch (FeignException e) {
+            throw new RuntimeException("업체 서비스 호출 실패", e);
+        }
+    }
+
 }
