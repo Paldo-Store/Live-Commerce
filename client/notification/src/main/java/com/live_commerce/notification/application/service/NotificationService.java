@@ -1,5 +1,7 @@
 package com.live_commerce.notification.application.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.live_commerce.notification.application.alert.ConsoleAlertSender;
 import com.live_commerce.notification.domain.model.Notification;
 import com.live_commerce.notification.domain.model.NotificationType;
@@ -10,6 +12,8 @@ import com.live_commerce.notification.presentation.dto.request.UserInfo;
 import com.live_commerce.notification.presentation.dto.response.NotificationCreateResponse;
 import com.live_commerce.notification.presentation.dto.response.NotificationResponse;
 import com.live_commerce.notification.presentation.dto.response.ReadNotificationListResponse;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -28,6 +32,7 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
 
   private final ConsoleAlertSender consoleAlertSender;
+  private final ObjectMapper objectMapper;
 
   public NotificationCreateResponse createNotificationForLiveBroadcast(
       NotificationCreateRequest request) {
@@ -53,9 +58,15 @@ public class NotificationService {
         .toList();
     return new ReadNotificationListResponse(responseList);
   }
+  // users.json 파일에서 사용자 리스트를 읽어오기
+  public List<UserInfo> getAllUsersFromJson() throws IOException {
+    File file = new File(getClass().getClassLoader().getResource("data/users.json").getFile());
+    return objectMapper.readValue(file, new TypeReference<List<UserInfo>>(){});
+  }
 
-  @Scheduled(fixedRate = 60000)
-  public void checkScheduledNotifications() {
+
+//  @Scheduled(fixedRate = 60000)
+  public void checkScheduledNotifications() throws IOException {
     LocalDateTime now = LocalDateTime.now();
     List<Notification> toSend = notificationRepository.findAllByScheduledAtLessThanEqualAndIsSentFalse(
         now);
@@ -68,17 +79,17 @@ public class NotificationService {
     }
   }
 
+  // 테스트용으로 직접 호출할 수 있도록 하는 메서드 추가
+  public void triggerScheduledNotifications() throws IOException {
+    checkScheduledNotifications();
+  }
+
   private boolean checkType(NotificationType type) {
     return type == NotificationType.LIVE_BROADCAST;
   }
 
-  private void processNotification(Notification notification) {
-
-    List<UserInfo> testUsers = List.of(
-        new UserInfo(UUID.randomUUID(), "홍길동"),
-        new UserInfo(UUID.randomUUID(), "김개발")
-    );
-
+  private void processNotification(Notification notification) throws IOException {
+    List<UserInfo> testUsers = getAllUsersFromJson();
     String broadcastTitle = "봄맞이 특가방송";
     //BroadcastNotificationContext context = broadcastClient.getSubscribersWithTitle(notification.getTargetId());
     BroadcastNotificationContext context = new BroadcastNotificationContext(testUsers);
@@ -121,10 +132,8 @@ public class NotificationService {
 
 
   public void deleteNotification(UUID targetId) {
-
     Notification notification = notificationRepository.findByTargetIdAndDeletedStatusFalse(targetId)
         .orElseThrow(() -> new NoSuchElementException("알림이 존재하지 않습니다."));
-
     notification.markAsDeleted(String.valueOf(notification.getTargetId()));
     notificationRepository.save(notification);
   }

@@ -7,6 +7,7 @@ import com.live_commerce.notification.presentation.dto.request.NotificationCreat
 import com.live_commerce.notification.presentation.dto.response.NotificationCreateResponse;
 import com.live_commerce.notification.presentation.dto.response.ReadNotificationListResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,4 +42,12 @@ public class NotificationController {
     notificationService.deleteNotification(targetId);
     return ResponseUtil.success("알림 삭제가 성공적으로 완료되었습니다.");
   }
+
+  // 직접 스케줄러 호출을 위한 API 추가
+  @PostMapping("/trigger-scheduled-notifications")
+  public ResponseEntity<ApiResponse<String>> triggerScheduledNotifications() throws IOException {
+    notificationService.triggerScheduledNotifications();  // 메서드 호출
+    return ResponseUtil.success("🔥🔥🔥"+"테스트 알림 호출!");
+  }
+
 }
