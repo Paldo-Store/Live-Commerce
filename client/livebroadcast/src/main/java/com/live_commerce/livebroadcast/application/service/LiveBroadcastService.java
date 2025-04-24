@@ -4,14 +4,15 @@ import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastCrea
 import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastPageResponse;
 import com.live_commerce.livebroadcast.application.dto.response.LiveBroadcastResponseDto;
 import com.live_commerce.livebroadcast.application.dto.request.LiveBroadcastUpdateRequestDto;
+import com.live_commerce.livebroadcast.application.manager.BroadcastAlarmManager;
 import com.live_commerce.livebroadcast.application.mapper.LiveBroadcastMapper;
 import com.live_commerce.livebroadcast.application.validation.CompanyValidator;
 import com.live_commerce.livebroadcast.application.validation.LiveBroadcastValidator;
-import com.live_commerce.livebroadcast.application.validation.NotificationValidator;
+import com.live_commerce.livebroadcast.application.validation.PermissionValidator;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.domain.repository.LiveBroadcastRepository;
 import com.live_commerce.livebroadcast.domain.repository.query.LiveBroadcastQueryRepository;
-import com.live_commerce.livebroadcast.infrastructure.client.notification.NotificationClient;
+import com.live_commerce.livebroadcast.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,7 +33,8 @@ public class LiveBroadcastService {
     private final LiveBroadcastValidator liveBroadcastValidator;
     private final CompanyValidator companyValidator;
     private final LiveBroadcastQueryRepository liveBroadcastQueryRepository;
-    private final NotificationValidator notificationValidator;
+    private final PermissionValidator permissionValidator;
+    private final BroadcastAlarmManager broadcastAlarmManager;
 
     @Transactional
     public LiveBroadcastResponseDto createBroadcast(LiveBroadcastCreateRequestDto requestDto) {
@@ -50,19 +52,24 @@ public class LiveBroadcastService {
     }
 
     @Transactional
-    public LiveBroadcastResponseDto updateLiveBroadcast(UUID id, LiveBroadcastUpdateRequestDto requestDto) {
+    public LiveBroadcastResponseDto updateLiveBroadcast(UUID id, LiveBroadcastUpdateRequestDto requestDto, RequestUserDetails userDetails) {
         LiveBroadcast liveBroadcast = liveBroadcastValidator.validateExists(id);
+        permissionValidator.validateOwnerOrMaster(userDetails, id);
         liveBroadcastValidator.validateUpdateRequest(requestDto, liveBroadcast);
         liveBroadcast.update(requestDto);
+
+        broadcastAlarmManager.delete(id);
+        broadcastAlarmManager.register(id, liveBroadcast.getStartTime());
+
         return LiveBroadcastMapper.entityToDto(liveBroadcast);
     }
 
     @Transactional
-    public void deleteBroadcast(UUID id) {
+    public void deleteBroadcast(UUID id, RequestUserDetails userDetails) {
         LiveBroadcast broadcast = liveBroadcastValidator.validateExists(id);
+        permissionValidator.validateOwnerOrMaster(userDetails, id);
         broadcast.delete(UUID.randomUUID());
-        // 알림 삭제 호출
-        notificationValidator.deleteAlarmOrLog(broadcast.getLiveBroadcastId());
+        broadcastAlarmManager.delete(userDetails.getUserId());
     }
 
     @Transactional(readOnly = true)
@@ -84,4 +91,5 @@ public class LiveBroadcastService {
 
         return LiveBroadcastPageResponse.from(page);
     }
+
 }
