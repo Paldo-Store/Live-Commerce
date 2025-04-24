@@ -100,6 +100,25 @@ class AuthServiceTest {
 		verify(redisUtil).setDataExpire(startsWith("RT:"), eq("refresh-token"), anyLong());
 	}
 
+	@Test
+	@DisplayName("로그인 실패 - 탈퇴 유저")
+	void signIn_deletedUser() {
+		// Given
+		User user = User.of("user", "encoded", "email", "nick", true, UserRole.CUSTOMER, true);
+		user.markAsDeleted("admin");
+
+		when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("password", "encoded")).thenReturn(true);
+
+		// When & Then
+		CustomException ex = catchThrowableOfType(
+			() -> authService.signIn(new UserSignInRequestDto("user", "password")),
+			CustomException.class
+		);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.DELETED_USER);
+	}
+
 	@DisplayName("토큰 재발급 성공")
 	@Test
 	void reissueToken_success() {
@@ -136,6 +155,92 @@ class AuthServiceTest {
 		verify(redisUtil).deleteData("RT:" + userId);
 	}
 
+	@Test
+	@DisplayName("아이디 찾기 성공")
+	void findUsername_success() {
+		// Given
+		String email = "user@email.com";
+		String expectedUsername = "testuser";
+		String inputCode = "123456";
+
+		User user = User.of(expectedUsername, "pw", email, "nick", true, UserRole.CUSTOMER, false);
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(redisUtil.getData(email)).thenReturn(inputCode);
+
+		// When
+		String username = authService.confirmFindUsernameCode(email, inputCode);
+
+		// Then
+		assertThat(username).isEqualTo(expectedUsername);
+		verify(redisUtil).deleteData(email);
+	}
+
+	@Test
+	@DisplayName("아이디 찾기 실패 - 인증코드 만료")
+	void findUsername_codeExpired() {
+		// Given
+		String email = "user@email.com";
+		when(redisUtil.getData(email)).thenReturn(null); // 없으면 만료
+
+		// When & Then
+		CustomException ex = catchThrowableOfType(() ->
+			authService.confirmFindUsernameCode(email, "123456"), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.VERIFICATION_CODE_EXPIRED);
+	}
+
+	@Test
+	@DisplayName("아이디 찾기 실패 - 인증코드 불일치")
+	void findUsername_invalidCode() {
+		// Given
+		String email = "user@email.com";
+		when(redisUtil.getData(email)).thenReturn("actual-code");
+
+		// When & Then
+		CustomException ex = catchThrowableOfType(() ->
+			authService.confirmFindUsernameCode(email, "wrong-code"), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.INVALID_VERIFICATION_CODE);
+	}
+
+	@Test
+	@DisplayName("아이디 찾기 실패 - 유저 없음")
+	void findUsername_userNotFound() {
+		// Given
+		String email = "user@email.com";
+		String inputCode = "123456";
+
+		when(redisUtil.getData(email)).thenReturn(inputCode);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+		// When & Then
+		CustomException ex = catchThrowableOfType(() ->
+			authService.confirmFindUsernameCode(email, inputCode), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.USER_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("아이디 찾기 실패 - 탈퇴 유저")
+	void findUsername_deletedUser() {
+		// given
+		String email = "user@email.com";
+		String inputCode = "123456";
+
+		User user = User.of("deletedUser", "pw", email, "nick", true, UserRole.CUSTOMER, true);
+		user.markAsDeleted("test"); // 삭제 상태로 변경
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(redisUtil.getData(email)).thenReturn(inputCode);
+
+		// when & then
+		CustomException ex = catchThrowableOfType(
+			() -> authService.confirmFindUsernameCode(email, inputCode), CustomException.class);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.DELETED_USER);
+	}
+
 	@DisplayName("임시 비밀번호 전송 성공")
 	@Test
 	void resetPasswordAndSendTempPassword_success() {
@@ -151,4 +256,24 @@ class AuthServiceTest {
 		verify(userRepository).findByUsernameAndEmail("user", "email");
 		verify(mailService).sendTemporaryPassword(eq("email"), any());
 	}
+
+	@Test
+	@DisplayName("임시 비밀번호 전송 실패 - 탈퇴 유저")
+	void resetPassword_deletedUser() {
+		// Given
+		User deletedUser = User.of("user", "pw", "email", "nickname", true, UserRole.CUSTOMER, true);
+		deletedUser.markAsDeleted("admin");
+
+		when(userRepository.findByUsernameAndEmail("user", "email"))
+			.thenReturn(Optional.of(deletedUser));
+
+		// When & Then
+		CustomException ex = catchThrowableOfType(
+			() -> authService.resetPasswordAndSendTempPassword("user", "email"),
+			CustomException.class
+		);
+
+		assertThat(ex.getExceptionCode()).isEqualTo(UserExceptionCode.DELETED_USER);
+	}
+
 }
