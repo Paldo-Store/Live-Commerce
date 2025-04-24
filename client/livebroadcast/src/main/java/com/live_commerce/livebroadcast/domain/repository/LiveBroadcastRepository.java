@@ -3,6 +3,7 @@ package com.live_commerce.livebroadcast.domain.repository;
 import com.live_commerce.livebroadcast.domain.model.BroadcastStatus;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface LiveBroadcastRepository {
     boolean existsByLiveBroadcastIdAndDeletedStatusFalse(UUID broadcastId);
 
     List<LiveBroadcast> findAllByDeletedStatusFalseAndBroadcastStatusIn(List<BroadcastStatus> statuses);
+
+    UUID findHostIdByBroadcastId(@Param("id") UUID broadcastId);
 }

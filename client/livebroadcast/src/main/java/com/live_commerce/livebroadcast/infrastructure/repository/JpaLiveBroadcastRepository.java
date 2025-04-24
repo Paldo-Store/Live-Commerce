@@ -4,6 +4,8 @@ import com.live_commerce.livebroadcast.domain.model.BroadcastStatus;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.domain.repository.LiveBroadcastRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,5 +20,8 @@ public interface JpaLiveBroadcastRepository extends JpaRepository<LiveBroadcast,
     boolean existsByLiveBroadcastIdAndDeletedStatusFalse(UUID broadcastId);
 
     List<LiveBroadcast> findAllByDeletedStatusFalseAndBroadcastStatusIn(List<BroadcastStatus> statuses);
+
+    @Query("SELECT lb.hostId FROM LiveBroadcast lb WHERE lb.liveBroadcastId = :id AND lb.deletedStatus = false")
+    UUID findHostIdByBroadcastId(@Param("id") UUID broadcastId);
 
 }

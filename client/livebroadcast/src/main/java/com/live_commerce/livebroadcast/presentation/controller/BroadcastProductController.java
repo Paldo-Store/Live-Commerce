@@ -5,12 +5,14 @@ import com.live_commerce.livebroadcast.application.dto.response.BroadcastProduct
 import com.live_commerce.livebroadcast.application.dto.response.BroadcastProductPageResponse;
 import com.live_commerce.livebroadcast.application.service.BroadcastProductService;
 import com.live_commerce.livebroadcast.infrastructure.common.ResponseUtil;
+import com.live_commerce.livebroadcast.infrastructure.security.RequestUserDetails;
 import com.live_commerce.livebroadcast.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,18 +28,20 @@ public class BroadcastProductController {
     @PostMapping
     public ResponseEntity<ApiResponse<BroadcastProductResponseDto>> connectBroadcastProduct(
             @RequestBody BroadcastProductConnectDto requestDto,
-            @PathVariable UUID broadcastId
+            @PathVariable UUID broadcastId,
+            @AuthenticationPrincipal RequestUserDetails userDetails
     ) {
-        System.out.println("🚀 컨트롤러 진입: broadcastId=" + broadcastId + ", productId=" + requestDto.productId());
-        BroadcastProductResponseDto responseDto = broadcastProductService.connectBroadcastProduct(broadcastId,requestDto);
+        BroadcastProductResponseDto responseDto = broadcastProductService.connectBroadcastProduct(broadcastId, requestDto, userDetails);
         return ResponseUtil.success(responseDto);
     }
 
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<String>> disconnectBroadcastProduct(
             @PathVariable UUID productId,
-            @PathVariable UUID broadcastId) {
-        broadcastProductService.disconnectBroadcastProduct(broadcastId, productId);
+            @PathVariable UUID broadcastId,
+            @AuthenticationPrincipal RequestUserDetails userDetails
+    ) {
+        broadcastProductService.disconnectBroadcastProduct(broadcastId, productId, userDetails);
         return ResponseUtil.success("해당 방송과 연결된 상품을 해제하였습니다.");
     }
 
