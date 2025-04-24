@@ -27,12 +27,13 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		throws ServletException, IOException {
 
 		String requestUri = request.getRequestURI();
+		String method = request.getMethod();
 
 		// 인증이 필요 없는 경로는 필터를 통과시킴
 		if ((requestUri.startsWith("/api/v1/auth/") && !requestUri.equals("/api/v1/auth/logout")) ||
 			requestUri.startsWith("/swagger-ui/") ||
 			requestUri.startsWith("/v3/api-docs") ||
-			requestUri.startsWith("/api/v1/ai") ||
+			(requestUri.equals("/api/v1/ai") && method.equals("POST")) ||
 			requestUri.startsWith("/actuator")) {
 			filterChain.doFilter(request, response);
 			return;

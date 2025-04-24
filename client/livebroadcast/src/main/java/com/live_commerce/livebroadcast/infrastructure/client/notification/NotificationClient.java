@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@FeignClient(name = "notification", url = "http://localhost:19091", path = "/api/v1/notifications")
+@FeignClient(name = "notification", url = "${gateway.base-url}", path = "/api/v1/notifications")
 public interface NotificationClient {
 
     @PostMapping("/broadcasts")

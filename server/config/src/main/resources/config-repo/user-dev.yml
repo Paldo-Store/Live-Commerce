@@ -51,4 +51,20 @@ service:
 user:
   master-key: ${MASTER_KEY}
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+gateway:
+  base-url: http://localhost:19091
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/user

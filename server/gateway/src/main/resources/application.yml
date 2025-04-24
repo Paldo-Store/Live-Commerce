@@ -1,20 +1,28 @@
+#spring:
+#  config:
+#    import: "configserver:http://localhost:18080"
+#  application:
+#    name: gateway
+#  profiles:
+#    active: dev
+
+#spring:
+#  profiles:
+#    active: prod
+#  cloud:
+#    config:
+#      enabled: false
+
+
 spring:
   application:
     name: gateway
-  profiles:
-    active: dev
+  main:
+    web-application-type: reactive
   config:
-    import: "configserver:http://localhost:18080"  # Config Server ?? ??
-
-server:
-  port: 0
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:19090/eureka/
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: refresh
+    import: "configserver:http://localhost:18080"
+  cloud:
+    config:
+      name: gateway
+      profile: dev
+      fail-fast: true
