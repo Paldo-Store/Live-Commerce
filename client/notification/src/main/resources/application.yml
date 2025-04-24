@@ -29,14 +29,28 @@ management:
       access: unrestricted
     health:
       show-details: always
+
   endpoints:
     web:
       exposure:
-        include: "health,info,prometheus"
+        include: [health, info, prometheus]
+
   prometheus:
-    metrics:
-      export:
-        enabled: true
+    metrics.export.enabled: true
+
+  metrics:
+    distribution:
+      # 1) 히스토그램
+      percentiles-histogram:
+        "[http.server.requests]": true        # 대괄호 → IDE 경고 X
+      # 2) 퍼센타일
+      percentiles:
+        "[http.server.requests]": 0.95,0.99
+      # 3) SLO 버킷
+      slo:
+        "[http.server.requests]": 100ms,300ms,500ms,1s,3s
+
+
 
 # 카프카 설정 추가
 
