@@ -11,6 +11,7 @@ import com.live_commerce.chat.infrastructure.client.BroadcastClient;
 import com.live_commerce.chat.infrastructure.client.BroadcastStatus;
 import com.live_commerce.chat.infrastructure.client.BroadcastStatusResponse;
 import com.live_commerce.chat.presentation.common.ApiResponse;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -54,7 +56,7 @@ public class CustomWebSocketHandler extends TextWebSocketHandler {
 //        session.getAttributes().put("role", role);
 //
 //        log.info("WebSocket 연결됨 - userId: {}, role: {}", userId, role);
-        log.info("WebSocket 연결됨: {}", session.getId());
+        log.info("WebSocket 연결됨: {}");
     }
 
     @Override
@@ -75,12 +77,12 @@ public class CustomWebSocketHandler extends TextWebSocketHandler {
         UUID userId = request.userId();
 
         //방송중인지 검증
-        ApiResponse<BroadcastStatusResponse> response = broadcastClient.getBroadcast(request.liveBroadcastId());
-        BroadcastStatusResponse statusResponse = response.getData();
-        if (statusResponse == null || statusResponse.broadcastStatus() != BroadcastStatus.LIVE) {
-            throw new ChatException("방송 중일 때만 채팅이 가능합니다.");
-        }
-        log.info("방송 체크 완료");
+//        ApiResponse<BroadcastStatusResponse> response = broadcastClient.getBroadcast(request.liveBroadcastId());
+//        BroadcastStatusResponse statusResponse = response.getData();
+//        if (statusResponse == null || statusResponse.broadcastStatus() != BroadcastStatus.LIVE) {
+//            throw new ChatException("방송 중일 때만 채팅이 가능합니다.");
+//        }
+//        log.info("방송 체크 완료");
 
         // 메시지 타입에 따른 처리
         String broadcastId = request.liveBroadcastId().toString();
