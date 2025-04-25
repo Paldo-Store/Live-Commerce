@@ -80,6 +80,8 @@ dependencies {
 
 	// kafka
 	implementation 'org.springframework.kafka:spring-kafka'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	// Redisson
 	implementation 'org.redisson:redisson-spring-boot-starter:3.28.0'

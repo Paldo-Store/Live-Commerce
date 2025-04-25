@@ -117,4 +117,13 @@ public class OrderController {
         PaymentSuccessResponseOrder response=  orderService.updatePaymentSuccess(orderId, request);
         return ResponseUtil.success(response);
     }
+
+    //kafka
+    @GetMapping("/send")
+    public String sendMessage(@RequestParam("topic") String topic,
+                              @RequestParam("key") String key,
+                              @RequestParam("message") String message) {
+        orderService.sendMessage(topic, key, message);
+        return "Message sent to Kafka topic";
+    }
 }

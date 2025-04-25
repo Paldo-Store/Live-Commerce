@@ -22,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,8 +48,10 @@ public class OrderService {
 
     //feign 요청
     private final ProductClient productClient;
-    private final PaymentClient paymentClient;
     private final CouponClient couponClient;
+
+    //kafka
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     //주문 생성 service
     @Transactional
@@ -186,5 +189,12 @@ public class OrderService {
             couponClient.useCoupon(order.getCouponId());
         }
         return new PaymentSuccessResponseOrder(order.getId(), request.success());
+    }
+
+    //kafka
+    public void sendMessage(String topic , String key, String message) {
+        for (int i = 0; i < 10; i++) {
+            kafkaTemplate.send(topic, key, message + " " + i);
+        }
     }
 }
