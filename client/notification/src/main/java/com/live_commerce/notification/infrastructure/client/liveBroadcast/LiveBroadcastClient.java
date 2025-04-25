@@ -6,9 +6,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "livebroadcast")
+@FeignClient(name = "livebroadcast", url = "${gateway.base-url}", path = "${/api/v1/livebroadcasts}")
 public interface LiveBroadcastClient {
 
-  @GetMapping("/api/v1/livebroadcasts/{broadcastId}/subscribers")
+  @GetMapping("/{broadcastId}/subscribers")
   BroadcastNotificationContext getSubscribersWithName(@PathVariable UUID broadcastId);
 }
