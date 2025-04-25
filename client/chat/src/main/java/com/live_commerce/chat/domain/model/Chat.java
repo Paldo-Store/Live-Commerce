@@ -42,4 +42,18 @@ public class Chat extends BaseEntity {
         this.liveBroadcastId = liveBroadcastId;
         this.type = type;
     }
+
+    public void newConnect() {
+        this.chatting = "새로운 사용자가 접속했습니다.";
+        this.type = MessageType.ENTER;
+    }
+
+    public void closeConnect() {
+        this.chatting = "사용자가 나갔습니다.";
+        this.type = MessageType.LEAVE;
+    }
+
+    public void setSender(UUID sessionId){
+        this.userId = sessionId;
+    }
 }

@@ -11,6 +11,7 @@ import com.live_commerce.chat.domain.repository.ChatRepository;
 import com.live_commerce.chat.infrastructure.repository.ChatQueryRepository;
 import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -34,10 +36,12 @@ public class ChatService {
 
     //chat 생성 서비스
     @Transactional
-    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId, RequestUserDetails userDetails) {
+    public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
         //chat 저장
+        log.info("chat 저장!!!!!!!!!");
         Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);
+        log.info("chat 저장 성공!!!!!");
         return ChatCreateResponse.of(saved);
     }
 
@@ -48,7 +52,7 @@ public class ChatService {
         logger.info("User role: " + role);
 
         // 권한 검증: 관리자와 쇼호스트만 접근 허용
-        if (!role.equals("ROLE_MASTER") && !role.equals("SHOW_HOST")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("ROLE_SHOW_HOST")) {
             throw new ChatException("권한이 없습니다. 관리자 또는 쇼호스트만 접근 가능합니다.");
         }
 
@@ -87,7 +91,7 @@ public class ChatService {
         Pageable pageable = getPageable(page, size, sort);
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
         // 권한 검증: 관리자와 쇼호스트만 접근 허용
-        if (!role.equals("ROLE_MASTER") && !role.equals("SHOW_HOST")) {
+        if (!role.equals("ROLE_MASTER") && !role.equals("ROLE_SHOW_HOST")) {
             throw new ChatException("권한이 없습니다. 관리자 또는 쇼호스트만 접근 가능합니다.");
         }
 
@@ -103,7 +107,7 @@ public class ChatService {
                 .orElseThrow(() -> new ChatException("채팅이 존재하지 않습니다."));
 
         //고객인 경우에는 본인 채팅만 삭제 가능
-        if (role.equals("CUSTOMER") && !chat.getUserId().toString().equals(userId)) {
+        if (role.equals("ROLE_CUSTOMER") && !chat.getUserId().toString().equals(userId)) {
             throw new ChatException("해당 채팅에 대한 삭제 권한이 없습니다.");
         }
 
@@ -123,8 +127,6 @@ public class ChatService {
             ))
             .toList();
     }
-
-
 
     private boolean hasMasterRole(RequestUserDetails userDetails) {
         return userDetails.getAuthorities().stream()
