@@ -1,7 +1,5 @@
 package com.live_commerce.notification.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.live_commerce.notification.presentation.dto.request.NotificationCreateRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

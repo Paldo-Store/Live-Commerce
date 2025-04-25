@@ -1,0 +1,21 @@
+groups:
+  - name: notification_latency
+    interval: 30s
+    rules:
+      - record: notification:http_req:p95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_server_requests_seconds_bucket{job="notification-service"}[5m])) by (le)
+          )
+
+      - record: notification:http_req:p99
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum(rate(http_server_requests_seconds_bucket{job="notification-service"}[5m])) by (le)
+          )
+
+      - record: notification:http_req:rps
+        expr: |
+          sum(rate(http_server_requests_seconds_count{job="notification-service"}[1m]))

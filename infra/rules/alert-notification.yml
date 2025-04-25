@@ -1,0 +1,45 @@
+groups:
+  - name: notification_alerts
+    interval: 30s
+    rules:
+      ## P95 지연 알람
+      - alert: NotificationHighP95
+        expr: notification:http_req:p95 > 0.5       # 예: P95 > 0.5초
+        for: 10s                                    # 10s 연속 발생 시
+        labels:
+          severity: warning
+        annotations:
+          summary: "📢 Notification 서비스 P95 지연 초과 ({{ $value }}s)"
+          description: |
+            서비스: {{ $labels.job }}
+            임계치: 0.5s
+            현재값: {{ $value }}s
+            기간: 연속 {{ $labels.for }} 발생
+
+      ## P99 지연 알람
+      - alert: NotificationHighP99
+        expr: notification:http_req:p99 > 1.0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "📢 Notification 서비스 P99 지연 초과 ({{ $value }}s)"
+          description: |
+            서비스: {{ $labels.job }}
+            임계치: 1.0s
+            현재값: {{ $value }}s
+            기간: 연속 {{ $labels.for }} 발생
+
+      ## RPS 저하 알람
+      - alert: NotificationLowRPS
+        expr: notification:http_req:rps < 5
+        for: 10s
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ Notification 서비스 RPS 저하 ({{ $value }}req/s)"
+          description: |
+            서비스: {{ $labels.job }}
+            임계치: 5 req/s
+            현재값: {{ $value }} req/s
+            기간: 연속 {{ $labels.for }} 발생
