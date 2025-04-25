@@ -12,6 +12,10 @@ import com.live_commerce.chat.infrastructure.repository.ChatQueryRepository;
 import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RSet;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +39,10 @@ public class ChatService {
     private final ChatQueryRepository chatQueryRepository;
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
+    private final RedissonClient redisson;
+    private static final int MIN_CHAT_THRESHOLD = 20;
+
+
     //chat 생성 서비스
     @Transactional
     public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
@@ -41,6 +50,19 @@ public class ChatService {
         log.info("chat 저장!!!!!!!!!");
         Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);
+
+        // Redisson을 이용한 채팅 카운팅 + 방송 등록
+        String roomKey = "chat:count:" + request.liveBroadcastId();
+        RAtomicLong counter = redisson.getAtomicLong(roomKey);
+        long count = counter.incrementAndGet();
+        counter.expire(Duration.ofMinutes(10)); // 10분간 유지
+
+        if (count >= MIN_CHAT_THRESHOLD) {
+            RSet<String> activeBroadcastSet = redisson.getSet("chat:active");
+            activeBroadcastSet.add(request.liveBroadcastId().toString());
+            activeBroadcastSet.expire(Duration.ofMinutes(15));
+        }
+
         log.info("chat 저장 성공!!!!!");
         return ChatCreateResponse.of(saved);
     }
