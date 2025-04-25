@@ -1,9 +1,13 @@
-package com.live_commerce.order.infrastructure.client;
+package com.live_commerce.order.infrastructure.client.feign;
 
 import com.live_commerce.order.infrastructure.PaymentReadyResponseDto;
+import com.live_commerce.order.infrastructure.client.request.PaymentApproveRequestDto;
+import com.live_commerce.order.infrastructure.client.request.PaymentReadyRequestDto;
+import com.live_commerce.order.infrastructure.client.response.PaymentApproveResponseDto;
+import com.live_commerce.order.infrastructure.client.response.PaymentGetResponseDto;
+import com.live_commerce.order.infrastructure.client.response.PaymentRefundResponseDto;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -2,15 +2,14 @@ package com.live_commerce.order.application.service;
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
 import com.live_commerce.order.application.dto.response.OrderCreateResponse;
-import com.live_commerce.order.application.dto.response.OrderProductResponse;
-import com.live_commerce.order.application.exception.CustomException;
 import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.infrastructure.client.*;
-import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
-import com.live_commerce.order.infrastructure.client.response.InventoryCheckQuantityResponseDto;
-import com.live_commerce.order.infrastructure.client.response.InventoryCheckResponseDto;
+import com.live_commerce.order.infrastructure.client.feign.BroadcastClient;
+import com.live_commerce.order.infrastructure.client.feign.CouponClient;
+import com.live_commerce.order.infrastructure.client.feign.ProductClient;
+import com.live_commerce.order.infrastructure.client.feignEnum.BroadcastStatus;
+import com.live_commerce.order.infrastructure.client.response.*;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.UUID;
 
 //주문 생성 service

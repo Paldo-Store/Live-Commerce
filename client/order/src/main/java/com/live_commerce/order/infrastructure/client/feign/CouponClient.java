@@ -1,5 +1,8 @@
-package com.live_commerce.order.infrastructure.client;
+package com.live_commerce.order.infrastructure.client.feign;
 
+import com.live_commerce.order.infrastructure.client.response.IssuedCouponListResponse;
+import com.live_commerce.order.infrastructure.client.response.ReadCouponPolicyResponse;
+import com.live_commerce.order.infrastructure.client.response.UsedIssuedCouponResponse;
 import com.live_commerce.order.infrastructure.config.FeignConfig;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;

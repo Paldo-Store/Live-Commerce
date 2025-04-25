@@ -1,4 +1,4 @@
-package com.live_commerce.order.infrastructure.client;
+package com.live_commerce.order.infrastructure.client.feignEnum;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

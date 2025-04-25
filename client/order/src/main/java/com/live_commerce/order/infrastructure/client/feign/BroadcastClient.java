@@ -1,4 +1,4 @@
-package com.live_commerce.order.infrastructure.client;
+package com.live_commerce.order.infrastructure.client.feign;
 
 import com.live_commerce.order.infrastructure.client.response.BroadcastStatusResponse;
 import com.live_commerce.order.presentation.common.ApiResponse;

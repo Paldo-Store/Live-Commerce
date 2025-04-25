@@ -1,7 +1,7 @@
 package com.live_commerce.order.application.dto.response;
 
-import com.live_commerce.order.infrastructure.client.ProductCategory;
-import com.live_commerce.order.infrastructure.client.ProductStatus;
+import com.live_commerce.order.infrastructure.client.feignEnum.ProductCategory;
+import com.live_commerce.order.infrastructure.client.feignEnum.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,4 +1,7 @@
-package com.live_commerce.order.infrastructure.client;
+package com.live_commerce.order.infrastructure.client.response;
+
+import com.live_commerce.order.infrastructure.client.feignEnum.ProductCategory;
+import com.live_commerce.order.infrastructure.client.feignEnum.ProductStatus;
 
 import java.util.UUID;
 

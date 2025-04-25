@@ -1,14 +1,4 @@
-package com.live_commerce.order.infrastructure.client;
-
-import com.live_commerce.order.infrastructure.client.response.InventoryCheckQuantityResponseDto;
-import com.live_commerce.order.infrastructure.client.response.InventoryCheckResponseDto;
-import com.live_commerce.order.presentation.common.ApiResponse;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.UUID;
+package com.live_commerce.order.infrastructure.client.feign;
 
 //@FeignClient(name = "inventory" , url = "http://localhost:19091", path = "/api/v1/inventories")
 //public interface InventoryClient {

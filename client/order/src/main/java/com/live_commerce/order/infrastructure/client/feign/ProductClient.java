@@ -1,6 +1,8 @@
-package com.live_commerce.order.infrastructure.client;
+package com.live_commerce.order.infrastructure.client.feign;
 
-import com.live_commerce.order.application.dto.response.OrderProductResponse;
+import com.live_commerce.order.infrastructure.client.request.InventoryDecreaseRequestDto;
+import com.live_commerce.order.infrastructure.client.request.InventoryIncreaseRequestDto;
+import com.live_commerce.order.infrastructure.client.response.ProductCreateResponseDto;
 import com.live_commerce.order.infrastructure.client.response.InventoryCheckQuantityResponseDto;
 import com.live_commerce.order.infrastructure.client.response.InventoryCheckResponseDto;
 import com.live_commerce.order.presentation.common.ApiResponse;
