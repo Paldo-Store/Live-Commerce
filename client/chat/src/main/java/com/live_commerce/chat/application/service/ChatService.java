@@ -139,14 +139,10 @@ public class ChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChatAnalyzeRequestDto> getChatsSince(LocalDateTime sinceTime) {
-        List<Chat> chats = chatRepository.findRecentValidChats(sinceTime);
-
+    public List<ChatAnalyzeRequestDto> getChatsSince(UUID broadcastId, LocalDateTime sinceTime) {
+        List<Chat> chats = chatRepository.findRecentChats(broadcastId, sinceTime);
         return chats.stream()
-            .map(chat -> new ChatAnalyzeRequestDto(
-                chat.getLiveBroadcastId(),
-                chat.getChatting()
-            ))
+            .map(chat -> new ChatAnalyzeRequestDto(chat.getLiveBroadcastId(), chat.getChatting()))
             .toList();
     }
 
