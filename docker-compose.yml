@@ -300,7 +300,17 @@ services:
     networks:
       - 8do-network
 
-
+  alertmanager:
+    image: prom/alertmanager:v0.24.0
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - 8do-network
+    env_file:
+      - ./.env
+    volumes:
+      - ./infra/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
 
 networks:
   8do-network:
