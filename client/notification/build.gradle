@@ -28,6 +28,9 @@ ext {
 }
 
 dependencies {
+	// prometheus
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
 	// kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 
