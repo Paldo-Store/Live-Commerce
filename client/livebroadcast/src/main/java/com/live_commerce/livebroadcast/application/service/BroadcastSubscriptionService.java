@@ -10,7 +10,6 @@ import com.live_commerce.livebroadcast.application.validation.SubscriptionValida
 import com.live_commerce.livebroadcast.domain.model.BroadcastSubscription;
 import com.live_commerce.livebroadcast.domain.model.LiveBroadcast;
 import com.live_commerce.livebroadcast.domain.repository.BroadcastSubscriptionRepository;
-import com.live_commerce.livebroadcast.infrastructure.client.notification.NotificationClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -74,7 +73,5 @@ public class BroadcastSubscriptionService {
                 .map(BroadcastSubscription::getUserId);
         return PageResponse.from(page);
     }
-
-
 
 }

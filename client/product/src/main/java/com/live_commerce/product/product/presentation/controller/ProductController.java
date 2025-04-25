@@ -3,11 +3,14 @@ package com.live_commerce.product.product.presentation.controller;
 import com.live_commerce.product.product.application.dto.*;
 import com.live_commerce.product.product.application.service.ProductService;
 import com.live_commerce.product.product.infrastructure.common.ResponseUtil;
+import com.live_commerce.product.product.infrastructure.security.RequestUserDetails;
 import com.live_commerce.product.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +23,13 @@ public class ProductController {
 
     private final ProductService productService;
 
+    @PreAuthorize("hasAnyRole('MASTER','SELLER')")
     @PostMapping
-    public ResponseEntity<ApiResponse<ProductCreateResponseDto>> createProduct(@RequestBody ProductCreateRequestDto requestDto) {
-        ProductCreateResponseDto responseDto = productService.createProduct(requestDto);
+    public ResponseEntity<ApiResponse<ProductCreateResponseDto>> createProduct(
+            @RequestBody ProductCreateRequestDto requestDto,
+            @AuthenticationPrincipal RequestUserDetails user
+    ) {
+        ProductCreateResponseDto responseDto = productService.createProduct(requestDto, user);
         return ResponseUtil.success(responseDto);
     }
 
@@ -32,15 +39,24 @@ public class ProductController {
         return ResponseUtil.success(responseDto);
     }
 
+    @PreAuthorize("hasAnyRole('MASTER','SELLER')")
     @PatchMapping("/{productId}")
-    public ResponseEntity<ApiResponse<ProductResponseDto>> updateProduct(@PathVariable UUID productId, @RequestBody ProductUpdateRequestDto requestDto) {
-        ProductResponseDto responseDto = productService.updateProduct(productId, requestDto);
+    public ResponseEntity<ApiResponse<ProductResponseDto>> updateProduct(
+            @PathVariable UUID productId,
+            @RequestBody ProductUpdateRequestDto requestDto,
+            @AuthenticationPrincipal RequestUserDetails user
+    ) {
+        ProductResponseDto responseDto = productService.updateProduct(productId, requestDto, user);
         return ResponseUtil.success(responseDto);
     }
 
+    @PreAuthorize("hasAnyRole('MASTER','SELLER')")
     @DeleteMapping("/{productId}")
-    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable UUID productId) {
-        productService.deleteProduct(productId);
+    public ResponseEntity<ApiResponse<String>> deleteProduct(
+            @PathVariable UUID productId,
+            @AuthenticationPrincipal RequestUserDetails user
+    ) {
+        productService.deleteProduct(productId, user);
         return ResponseUtil.success("상품이 삭제되었습니다.");
     }
 
@@ -54,6 +70,7 @@ public class ProductController {
     }
 
 
+    @PreAuthorize("hasRole('MASTER')")
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse<List<ProductSummaryDto>>> getProductByIds(
             @RequestBody List<UUID> productIds

@@ -5,5 +5,6 @@ import java.util.UUID;
 
 
 public record ExternalCompanyResponseDto (
-        UUID companyId
+        UUID companyId,
+        UUID owner
 ) { }
