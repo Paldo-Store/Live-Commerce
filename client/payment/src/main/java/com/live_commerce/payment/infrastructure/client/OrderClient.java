@@ -11,7 +11,7 @@ import com.live_commerce.payment.infrastructure.client.dto.PaymentCancelRequest;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentFailRequest;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentSuccessRequest;
 
-@FeignClient(name = "order", url = "http://localhost:19091", path = "/api/v1/orders")
+@FeignClient(name = "order", url = "${gateway.base-url}", path = "/api/v1/orders")
 public interface OrderClient {
 
 	@PostMapping("/{orderId}/payment-success")
