@@ -12,6 +12,5 @@ import java.util.UUID;
 
 @Repository
 public interface ChatRepository extends JpaRepository<Chat, UUID> {
-	@Query("SELECT c FROM Chat c WHERE c.createdAt > :since AND c.deletedStatus = false")
-	List<Chat> findRecentValidChats(@Param("since") LocalDateTime since);
-}
+	@Query("SELECT c FROM Chat c WHERE c.liveBroadcastId = :broadcastId AND c.createdAt > :since")
+	List<Chat> findRecentChats(@Param("broadcastId") UUID broadcastId, @Param("since") LocalDateTime since);}

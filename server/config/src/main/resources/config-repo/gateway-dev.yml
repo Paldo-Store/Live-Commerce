@@ -67,7 +67,7 @@ spring:
         - id: chat
           uri: lb://chat
           predicates:
-            - Path=/api/v1/chattings/**, /v3/api-docs/chat
+            - Path=/api/v1/chats/**, /v3/api-docs/chat
 
         - id: ai
           uri: lb://ai
