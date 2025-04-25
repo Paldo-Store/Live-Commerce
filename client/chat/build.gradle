@@ -82,6 +82,9 @@ dependencies {
 	// WebFlux(비동기 통신용)
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+	// Redisson
+	implementation 'org.redisson:redisson-spring-boot-starter:3.28.0'
+
 }
 
 dependencyManagement {
