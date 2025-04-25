@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "livebroadcast", url = "http://localhost:19091", path = "/api/v1/livebroadcasts")
+@FeignClient(name = "livebroadcast", url = "${gateway.base-url}", path = "/api/v1/livebroadcasts")
 public interface BroadcastClient {
 
     // 방송 조회 feign 요청
