@@ -24,9 +24,13 @@ spring:
     username: postgres
     password: 8dostore
     driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 ai-service:
-  url: http://gateway-server #http://gateway 로 바꾸어볼 것. 에러나면
+  url: http://gateway
 
 internal:
   secret: ${INTERNAL_SECRET}

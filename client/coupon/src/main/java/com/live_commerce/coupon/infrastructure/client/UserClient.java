@@ -5,9 +5,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "user")
+@FeignClient(name = "user", url = "${gateway.base-url}", path = "/api/v1")
 public interface UserClient {
 
-  @GetMapping("/api/v1/users/")
+  @GetMapping("/users")
   UUID getUserId(@PathVariable UUID userId);
 }
