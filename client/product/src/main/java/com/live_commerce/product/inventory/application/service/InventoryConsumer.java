@@ -17,7 +17,7 @@ public class InventoryConsumer {
 
     @KafkaListener(topics = "order-created", groupId = "inventory-group", containerFactory = "kafkaListenerContainerFactory")
     public void consumeOrderCreated(OrderCreatedEvent event) {
-        log.info("order.created 이벤트 수신: {}", event);
+        log.info("order-created 이벤트 수신: {}", event);
 
         try {
             inventoryService.decreaseInventoryV2(event.productId(), event.quantity());

@@ -27,6 +27,6 @@ public class InventoryTestProducerController {
         OrderCreatedEvent event = new OrderCreatedEvent(orderId, productId, quantity);
         kafkaTemplate.send("order-created", event);
 
-        return "order.created 이벤트 발행 완료";
+        return "order-created 이벤트 발행 완료";
     }
 }
