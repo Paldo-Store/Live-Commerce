@@ -63,4 +63,7 @@ public class Product extends BaseEntity{
         if (dto.productStatus() != null) { this.productStatus = dto.productStatus(); }
     }
 
+    public void changeStatus(ProductStatus productStatus) {
+        this.productStatus = productStatus;
+    }
 }

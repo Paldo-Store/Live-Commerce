@@ -15,7 +15,6 @@ public class ProductValidator {
     private final ProductRepository productRepository;
 
     public Product validateAndFindProduct(UUID productId) {
-        System.out.println("validateAndFindProduct 호출됨: " + productId);
         return productRepository.findByProductIdAndDeletedStatusFalse(productId)
                 .orElseThrow(ProductException::forProductNotFound);
     }

@@ -90,4 +90,7 @@ public class Inventory extends BaseEntity{
         this.inventoryStatus = InventoryStatus.DISCONTINUED;
     }
 
+    public void changeStatus(InventoryStatus inventoryStatus) {
+        this.inventoryStatus = inventoryStatus;
+    }
 }

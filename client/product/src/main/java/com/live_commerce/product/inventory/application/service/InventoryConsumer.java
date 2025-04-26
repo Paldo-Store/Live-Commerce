@@ -17,10 +17,10 @@ public class InventoryConsumer {
 
     @KafkaListener(topics = "order-created", groupId = "inventory-group", containerFactory = "kafkaListenerContainerFactory")
     public void consumeOrderCreated(OrderCreatedEvent event) {
-        log.info("order.created 이벤트 수신: {}", event);
+        log.info("order-created 이벤트 수신: {}", event);
 
         try {
-            inventoryService.decreaseInventory(event.productId(), event.quantity());
+            inventoryService.decreaseInventoryV2(event.productId(), event.quantity());
 
             InventoryDecreasedEvent decreasedEvent = new InventoryDecreasedEvent(
                     event.orderId(),
@@ -31,7 +31,15 @@ public class InventoryConsumer {
             log.info("inventory-decreased 이벤트 발행 완료: {}", decreasedEvent);
         } catch (InventoryException e) {
             log.error("재고 차감 실패: {}", e.getMessage());
-            // 실패 이벤트 추가 (보상 트랜잭션)
+            // 실패 이벤트
+            InventoryFailedEvent failedEvent = new InventoryFailedEvent(
+                    event.orderId(),
+                    event.productId(),
+                    event.quantity(),
+                    e.getMessage()
+            );
+            kafkaTemplate.send("inventory-failed", failedEvent);
+            log.info("inventory-failed 이벤트 발행 완료: {}", failedEvent);
         }
     }
 

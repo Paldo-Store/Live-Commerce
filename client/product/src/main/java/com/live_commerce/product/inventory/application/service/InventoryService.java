@@ -8,11 +8,13 @@ import com.live_commerce.product.inventory.application.mapper.InventoryMapper;
 import com.live_commerce.product.inventory.application.validation.InventoryValidator;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import com.live_commerce.product.inventory.domain.model.Inventory;
+import com.live_commerce.product.inventory.domain.model.InventoryStatus;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,7 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
     private final InventoryValidator inventoryValidator;
-
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
@@ -65,6 +67,25 @@ public class InventoryService {
         int updated = inventoryRepository.increaseInventoryAtomically(productId, quantity);
         if (updated == 0) {
             throw InventoryException.forInventoryNotFound();
+        }
+    }
+
+    @Transactional
+    @DistributedLock(key = "#productId")
+    public void decreaseInventoryV2(UUID productId, int quantity) {
+        int updated = inventoryRepository.decreaseInventoryAtomically(productId, quantity);
+        if (updated == 0) {
+            throw InventoryException.forInventoryOutOfStock();
+        }
+
+        Inventory inventory = inventoryValidator.validateAndGetActiveInventory(productId);
+
+        if (inventory.getAvailableQuantity() == 0) {
+            inventory.changeStatus(InventoryStatus.OUT_OF_STOCK);
+
+            InventorySoldOutEvent soldOutEvent = new InventorySoldOutEvent(productId);
+            kafkaTemplate.send("inventory-sold-out", soldOutEvent);
+            log.info("inventory-sold-out 이벤트 발행 완료: {}", soldOutEvent);
         }
     }
 
