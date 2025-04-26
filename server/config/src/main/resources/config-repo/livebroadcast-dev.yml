@@ -32,6 +32,16 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: inventory-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+
 #  sql:
 #    init:
 #      mode: always
@@ -39,6 +49,8 @@ spring:
 
 gateway:
   base-url: http://localhost:19091
+
+
 
 springdoc:
   api-docs:
