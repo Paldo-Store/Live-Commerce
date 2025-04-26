@@ -20,7 +20,7 @@ public class InventoryConsumer {
         log.info("order.created 이벤트 수신: {}", event);
 
         try {
-            inventoryService.decreaseInventory(event.productId(), event.quantity());
+            inventoryService.decreaseInventoryV2(event.productId(), event.quantity());
 
             InventoryDecreasedEvent decreasedEvent = new InventoryDecreasedEvent(
                     event.orderId(),

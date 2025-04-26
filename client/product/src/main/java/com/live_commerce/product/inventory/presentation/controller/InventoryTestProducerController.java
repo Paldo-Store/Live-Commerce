@@ -23,9 +23,9 @@ public class InventoryTestProducerController {
             @RequestParam int quantity
     ) {
         UUID orderId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        UUID productId = UUID.fromString("30000000-0000-0000-0000-000000000001");
+        UUID productId = UUID.fromString("30000000-0000-0000-0000-00000000001e");
         OrderCreatedEvent event = new OrderCreatedEvent(orderId, productId, quantity);
-        kafkaTemplate.send("order.created", event);
+        kafkaTemplate.send("order-created", event);
 
         return "order.created 이벤트 발행 완료";
     }
