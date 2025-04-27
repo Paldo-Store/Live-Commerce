@@ -2,10 +2,13 @@ package com.live_commerce.notification.application.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.live_commerce.notification.application.alert.AlertSender;
 import com.live_commerce.notification.application.alert.ConsoleAlertSender;
+import com.live_commerce.notification.application.dto.NotificationMessage;
 import com.live_commerce.notification.domain.model.Notification;
 import com.live_commerce.notification.domain.model.NotificationType;
 import com.live_commerce.notification.domain.repository.NotificationRepository;
+import com.live_commerce.notification.infrastructure.kafka.producer.NotificationProducer;
 import com.live_commerce.notification.presentation.dto.request.BroadcastNotificationContext;
 import com.live_commerce.notification.presentation.dto.request.NotificationCreateRequest;
 import com.live_commerce.notification.presentation.dto.request.UserInfo;
@@ -17,11 +20,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -32,7 +33,9 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
 
   private final ConsoleAlertSender consoleAlertSender;
+  private final NotificationProducer producer;
   private final ObjectMapper objectMapper;
+  private final AlertSender alertSender;
 
   public NotificationCreateResponse createNotificationForLiveBroadcast(
       NotificationCreateRequest request) {
@@ -58,14 +61,20 @@ public class NotificationService {
         .toList();
     return new ReadNotificationListResponse(responseList);
   }
+
   // users.json 파일에서 사용자 리스트를 읽어오기
   public List<UserInfo> getAllUsersFromJson() throws IOException {
     File file = new File(getClass().getClassLoader().getResource("data/users.json").getFile());
-    return objectMapper.readValue(file, new TypeReference<List<UserInfo>>(){});
+    return objectMapper.readValue(file, new TypeReference<List<UserInfo>>() {
+    });
   }
 
+  // 테스트용으로 직접 호출할 수 있도록 하는 메서드 추가
+  public void triggerScheduledNotifications() throws IOException {
+    checkScheduledNotifications();
+  }
 
-//  @Scheduled(fixedRate = 60000)
+  //  @Scheduled(fixedRate = 60000)
   public void checkScheduledNotifications() throws IOException {
     LocalDateTime now = LocalDateTime.now();
     List<Notification> toSend = notificationRepository.findAllByScheduledAtLessThanEqualAndIsSentFalse(
@@ -77,11 +86,6 @@ public class NotificationService {
       }
       processNotification(notification);
     }
-  }
-
-  // 테스트용으로 직접 호출할 수 있도록 하는 메서드 추가
-  public void triggerScheduledNotifications() throws IOException {
-    checkScheduledNotifications();
   }
 
   private boolean checkType(NotificationType type) {
@@ -135,6 +139,48 @@ public class NotificationService {
     Notification notification = notificationRepository.findByTargetIdAndDeletedStatusFalse(targetId)
         .orElseThrow(() -> new NoSuchElementException("알림이 존재하지 않습니다."));
     notification.markAsDeleted(String.valueOf(notification.getTargetId()));
+    notificationRepository.save(notification);
+  }
+
+  // Kafka 도입
+  public void triggerKafkaNotifications() throws IOException {
+    publishScheduledNotifications();
+  }
+
+  //  @Scheduled(fixedDelay = 60_000)
+  public void publishScheduledNotifications() {
+    List<Notification> list = notificationRepository.findAllByScheduledAtLessThanEqualAndIsSentFalse(
+        LocalDateTime.now());
+    for (Notification n : list) {
+      NotificationMessage msg = new NotificationMessage(
+          n.getId(), n.getType(), n.getTargetId(), n.getScheduledAt()
+      );
+      producer.send(msg);
+    }
+  }
+
+  public void processByMessage(NotificationMessage msg) throws IOException {
+    Notification notification = notificationRepository.findById(msg.notificationId())
+        .orElseThrow(() -> new IllegalArgumentException("알림 없음: " + msg.notificationId()));
+
+    if (notification.isSent()) {
+      return;
+    }
+
+    List<UserInfo> users = getAllUsersFromJson();
+
+    boolean allSuccess = true;
+    for (UserInfo user : users) {
+      try {
+        alertSender.send(user.id(), user.name(), "kafka messsage 테스트");
+      } catch (Exception e) {
+        allSuccess = false;
+        log.warn("⚠️ 알림 전송 실패: userId={}, {}", user.id(), e.getMessage());
+      }
+    }
+    if (allSuccess) {
+      notification = notification.markAsSent();
+    }
     notificationRepository.save(notification);
   }
 }
