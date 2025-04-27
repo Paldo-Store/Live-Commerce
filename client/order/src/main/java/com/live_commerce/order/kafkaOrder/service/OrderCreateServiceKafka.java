@@ -37,6 +37,8 @@ public class OrderCreateServiceKafka {
     //kafka
     private final KafkaTemplate<String, BroadcastStatusRequestMessage> kafkaTemplate;
     private final BroadcastStatusResponseStore broadcastStatusResponseStore;
+    private final BroadcastStatusResponseConsumer broadcastStatusResponseConsumer;
+    private final BroadcastStatusRequestProducer broadcastStatusRequestProducer;
 
     //주문 생성 함수
     @Transactional
@@ -177,15 +179,17 @@ public class OrderCreateServiceKafka {
         // 1. 요청 식별을 위한 고유 requestId 생성
         String requestId = UUID.randomUUID().toString();
 
-        // 2. 방송 상태 요청 메시지 전송
-        BroadcastStatusRequestMessage requestMessage = new BroadcastStatusRequestMessage(broadcastId);
-        kafkaTemplate.send("broadcast-status-request",requestMessage);
+        // 2. 요청을 등록하고 future를 받는다
+        CompletableFuture<BroadcastStatusResponseMessage> future = broadcastStatusResponseConsumer.waitForResponse(requestId);
+
+        // 3. 방송 상태 요청 메시지 전송-kafka로 메시지 보내기
+        broadcastStatusRequestProducer.requestBroadcastStatus(requestId, broadcastId);
 
         try {
-            // 3. 요청 ID로 응답 기다리기 (3초 타임아웃)
-            BroadcastStatusResponseMessage responseMessage = broadcastStatusResponseStore.waitForResponse(requestId, 3, TimeUnit.SECONDS);
+            // 4. future를 통해 응답 대기 (3초 타임아웃)
+            BroadcastStatusResponseMessage responseMessage = future.get(3, TimeUnit.SECONDS);
 
-            // 4. 응답 확인: 방송 상태가 LIVE가 아니면 예외
+            // 5. 방송 상태 확인
             if (responseMessage.broadcastStatus() != BroadcastStatus.LIVE) {
                 throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
             }
@@ -194,13 +198,5 @@ public class OrderCreateServiceKafka {
         } catch (Exception e) {
             throw new RuntimeException("방송 상태 확인 실패", e);
         }
-//        CompletableFuture<BroadcastStatusResponse> future = responseRegistry.createRequest(request.broadcastId());
-//        BroadcastStatusResponseEvent responseEvent = future.get(5, TimeUnit.SECONDS); // 타임아웃 설정
-//
-//        if (responseEvent == null || responseEvent.getBroadcastStatus() != BroadcastStatus.LIVE) {
-//            throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
-//        }
-
     }
-
 }
