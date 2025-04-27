@@ -10,7 +10,9 @@ import com.live_commerce.order.infrastructure.client.feign.CouponClient;
 import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.client.feignEnum.BroadcastStatus;
 import com.live_commerce.order.infrastructure.client.response.*;
-import com.live_commerce.order.kafkaOrder.*;
+import com.live_commerce.order.kafkaOrder.broadcast.*;
+import com.live_commerce.order.kafkaOrder.product.consumer.ProductResponseConsumer;
+import com.live_commerce.order.kafkaOrder.product.producer.ProductRequestProducer;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,12 @@ public class OrderCreateServiceKafka {
     private final BroadcastStatusResponseConsumer broadcastStatusResponseConsumer;
     private final BroadcastStatusRequestProducer broadcastStatusRequestProducer;
 
+    //kafka - product
+    private final ProductRequestProducer productRequestProducer;
+    private final ProductResponseConsumer productResponseConsumer;
+
+
+
     //주문 생성 함수
     @Transactional
     public OrderCreateResponse orderCreator(OrderCreateRequest request, UUID userId) {
@@ -62,19 +70,16 @@ public class OrderCreateServiceKafka {
         // 1. [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         // order -> product (productId, productQuantity)
-        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
-        ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
+//        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+//        ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
+        ProductCreateResponseDto productResponseByOrder = getProductKafka(request.productId());
+        log.info("상품 정보 들고오기" + productResponseByOrder);
 
         // productId에 해당하는 상품이 아예 없는 경우
         if (productResponseByOrder == null) {
             throw new OrderException("해당 상품이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
-
-        //product 로직에서 이미 품절된 상품일 경우,
-//        if(productResponseByOrder.getSoldOut()){
-//            throw new OrderException("해당 상품은 품절된 상품입니다", HttpStatus.BAD_REQUEST);
-//        }
-        log.info("상품 조회 완료");
+        log.info("상품 검증 완료");
 
         // 2. 재고가 주문보다 많나 체크 - 주문이 현재 가능한 상태인지 확인 로직
         ApiResponse<InventoryCheckResponseDto> responseInventory = productClient.checkOrderableInventory(request.productId(), request.orderQuantity());
@@ -197,6 +202,24 @@ public class OrderCreateServiceKafka {
             throw new OrderException("방송 상태 확인 타임아웃", HttpStatus.REQUEST_TIMEOUT);
         } catch (Exception e) {
             throw new RuntimeException("방송 상태 확인 실패", e);
+        }
+    }
+
+    // kafka product - 상품 조회 메서드
+    public ProductCreateResponseDto getProductKafka(UUID productId) {
+        String requestId = UUID.randomUUID().toString();
+
+        // 1. 요청을 Kafka로 전송
+        productRequestProducer.requestProduct(productId);
+
+        // 응답을 기다림 (타임아웃 설정 가능)
+        try {
+            CompletableFuture<ProductCreateResponseDto> future = productResponseConsumer.waitForResponse(requestId);
+            return future.get(5, TimeUnit.SECONDS);  // 5초 대기
+        } catch (TimeoutException e) {
+            throw new RuntimeException("상품 조회 타임아웃");
+        } catch (Exception e) {
+            throw new RuntimeException("상품 조회 실패", e);
         }
     }
 }
