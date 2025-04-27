@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.live_commerce.payment.application.dto.event.PaymentCompletedEvent;
+import com.live_commerce.payment.infrastructure.kafka.dto.PaymentCompletedEvent;
 import com.live_commerce.payment.infrastructure.kafka.dto.PaymentFailedEvent;
 
 import lombok.RequiredArgsConstructor;
