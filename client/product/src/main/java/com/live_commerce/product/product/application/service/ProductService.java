@@ -15,6 +15,8 @@ import com.live_commerce.product.product.infrastructure.client.ExternalCompanyRe
 import com.live_commerce.product.product.infrastructure.security.RequestUserDetails;
 import com.live_commerce.product.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +62,7 @@ public class ProductService {
         return ProductMapper.entityToCreateDto(product);
     }
 
+    @Cacheable(value = "productDetail", key = "#productId")
     @Transactional(readOnly = true)
     public ProductResponseDto getProduct(UUID productId) {
         Product product = productValidator.validateAndFindProduct(productId);
@@ -68,6 +71,7 @@ public class ProductService {
         return ProductMapper.entityToDto(product, soldOut);
     }
 
+    @CacheEvict(value = "productDetail", key = "#productId")
     @Transactional
     public ProductResponseDto updateProduct(UUID productId, ProductUpdateRequestDto requestDto, RequestUserDetails user) {
         Product product = productValidator.validateAndFindProduct(productId);
@@ -78,6 +82,7 @@ public class ProductService {
         return ProductMapper.entityToDto(product, soldOut);
     }
 
+    @CacheEvict(value = "productDetail", key = "#productId")
     @Transactional
     public void deleteProduct(UUID productId, RequestUserDetails user) {
         Product product = productValidator.validateAndFindProduct(productId);
