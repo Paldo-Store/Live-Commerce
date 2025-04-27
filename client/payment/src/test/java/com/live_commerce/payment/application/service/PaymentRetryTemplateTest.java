@@ -24,8 +24,6 @@ import com.live_commerce.payment.application.port.KakaoPayClient;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentCancelEventProducer;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentSuccessEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 @SpringBootTest
@@ -43,10 +41,7 @@ public class PaymentRetryTemplateTest {
 
 	@MockitoBean
 	private KakaoPayClient kakaoPayClient;
-	@MockitoBean
-	private PaymentSuccessEventProducer paymentSuccessEventProducer;
-	@MockitoBean
-	private PaymentCancelEventProducer paymentCancelEventProducer;
+
 	@MockitoBean
 	private RestTemplate restTemplate;
 

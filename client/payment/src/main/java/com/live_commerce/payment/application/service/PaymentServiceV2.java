@@ -30,8 +30,9 @@ import com.live_commerce.payment.infrastructure.client.OrderClient;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentCancelRequest;
-import com.live_commerce.payment.infrastructure.client.dto.PaymentFailRequest;
-import com.live_commerce.payment.infrastructure.client.dto.PaymentSuccessRequest;
+import com.live_commerce.payment.infrastructure.kafka.dto.PaymentCompletedEvent;
+import com.live_commerce.payment.infrastructure.kafka.dto.PaymentFailedEvent;
+import com.live_commerce.payment.infrastructure.kafka.producer.PaymentEventProducer;
 import com.live_commerce.payment.infrastructure.lock.DistributedLock;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
@@ -41,13 +42,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PaymentService {
+public class PaymentServiceV2 {
 
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
 	private final OrderClient orderClient;
-
 	private final RedissonClient redissonClient;
+	private final PaymentEventProducer paymentEventProducer;
 
 	@DistributedLock(key = "#dto.orderId")
 	@Transactional
@@ -78,57 +79,39 @@ public class PaymentService {
 		Payment payment = paymentRepository.findByOrderId(UUID.fromString(requestDto.orderId()))
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
-		// 1) 승인 가능한 상태인지 체크
 		if (payment.getStatus() != PaymentStatus.PENDING) {
-			payment.updateStatus(PaymentStatus.FAILED); // 승인 전 상태가 아니면 실패 처리
+			payment.updateStatus(PaymentStatus.FAILED);
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
-		// 2) 승인 요청 시도
 		KakaoPayApproveDto approveDto;
 		try {
 			approveDto = kakaoPayClient.requestKakaoPayApprove(
-				requestDto.tid(),
-				requestDto.pgToken(),
-				requestDto.orderId(),
-				userId.toString()
+				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(), userId.toString()
 			);
 		} catch (Exception e) {
-			// 카카오 API 호출 자체가 실패한 경우
 			payment.updateStatus(PaymentStatus.FAILED);
 
-
-			// 주문 서비스에 결제 실패 알림
-			try {
-				orderClient.notifyPaymentFail(
-					payment.getOrderId(),
-					new PaymentFailRequest(false, "카카오페이 승인 실패")
-				);
-			} catch (Exception ex) {
-				log.warn("주문 서비스에 결제 실패 알림 전송 실패: {}", ex.getMessage());
-			}
-
+			// 카프카로 결제 실패 이벤트 발행
+			paymentEventProducer.sendPaymentFailed(
+				new PaymentFailedEvent(payment.getOrderId(), "카카오페이 승인 실패")
+			);
 
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
 		}
 
-		// 3) 성공적으로 승인됐으면 상태 변경
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
-		// 주문 서비스에 결제 성공 알림
-		try {
-			PaymentSuccessRequest request = new PaymentSuccessRequest(
-				true,
-				"결제 처리 완료",
+		// 카프카로 결제 완료 이벤트 발행
+		paymentEventProducer.sendPaymentCompleted(
+			new PaymentCompletedEvent(
+				payment.getOrderId(),
+				"결제 완료",
 				payment.getAmount()
-			);
+			)
+		);
 
-			orderClient.notifyPaymentSuccess(payment.getOrderId(), request);
-		} catch (Exception e) {
-			log.warn("주문 서비스에 결제 성공 알림 실패: {}", e.getMessage());
-		}
 
-		// 4) 응답 DTO 반환
 		return PaymentApproveResponseDto.from(approveDto);
 	}
 
@@ -148,27 +131,19 @@ public class PaymentService {
 	) {
 		validatePaymentSearchPermission(userDetails);
 
-		// 페이지 사이즈 검증
 		int size = pageable.getPageSize();
 		if (size != 10 && size != 30 && size != 50) {
 			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
 		}
 
-		// 마스터 권한이 아니라면 userId 강제 세팅
-		PaymentSearchCondition finalCondition;
-		if (hasMasterRole(userDetails)) {
-			// 마스터면 원본 condition 그대로 사용
-			finalCondition = condition;
-		} else {
-			// 일반 유저면 userId만 자기 것으로 덮어씌운다
-			finalCondition = new PaymentSearchCondition(
+		PaymentSearchCondition finalCondition = hasMasterRole(userDetails) ? condition :
+			new PaymentSearchCondition(
 				userDetails.getUserId(),
 				condition.orderId(),
 				condition.status(),
 				condition.createdAtFrom(),
 				condition.createdAtTo()
 			);
-		}
 
 		List<Payment> payments = paymentRepository.searchPayment(finalCondition, pageable);
 		long totalCount = paymentRepository.countPayment(finalCondition);
@@ -193,34 +168,25 @@ public class PaymentService {
 		payment.updateStatus(PaymentStatus.REFUND);
 
 		try {
-			orderClient.notifyOrderCancel(
-				orderId,
-				new PaymentCancelRequest(false, "결제 취소 처리됨")
-			);
+			orderClient.notifyOrderCancel(orderId, new PaymentCancelRequest(false, "결제 취소 처리됨"));
 		} catch (Exception e) {
 			log.warn("주문 서비스에 결제 취소 알림 실패: {}", e.getMessage());
 		}
 
-
 		return PaymentRefundResponseDto.from(payment);
 	}
-
 
 	@Transactional
 	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
 		Payment payment = findPaymentByOrderId(orderId);
 		validatePaymentCancelPermission(payment, userDetails);
 
-		// 상태 확인: 아직 결제가 승인되지 않은 상태여야 함
 		if (payment.getStatus() != PaymentStatus.PENDING) {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
 		try {
-			orderClient.notifyOrderCancel(
-				orderId,
-				new PaymentCancelRequest(false, "결제 취소 처리됨")
-			);
+			orderClient.notifyOrderCancel(orderId, new PaymentCancelRequest(false, "결제 취소 처리됨"));
 		} catch (Exception e) {
 			log.warn("주문 서비스에 결제 취소 알림 실패: {}", e.getMessage());
 		}
@@ -228,6 +194,32 @@ public class PaymentService {
 		payment.updateStatus(PaymentStatus.CANCELED);
 	}
 
+	@Transactional
+	public void compensateRefundByOrderId(UUID orderId, String message) {
+		Payment payment = paymentRepository.findByOrderId(orderId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+
+		if (payment.getStatus() != PaymentStatus.COMPLETED) {
+			log.info("[Payment] 보상 처리 스킵: 이미 취소/실패한 결제입니다. orderId={}, status={}", orderId, payment.getStatus());
+			return;
+		}
+
+		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		payment.updateStatus(PaymentStatus.REFUND);
+
+		log.info("[Payment] 보상 결제 취소 완료: orderId = {}, message = {}", orderId, message);
+	}
+
+
+	private Payment findPaymentById(UUID paymentId) {
+		return paymentRepository.findById(paymentId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
+
+	private Payment findPaymentByOrderId(UUID orderId) {
+		return paymentRepository.findByOrderId(orderId)
+			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
+	}
 
 	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
 		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
@@ -261,16 +253,4 @@ public class PaymentService {
 		return userDetails.getAuthorities().stream()
 			.anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
 	}
-
-	private Payment findPaymentById(UUID paymentId) {
-		return paymentRepository.findById(paymentId)
-			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-	}
-
-	private Payment findPaymentByOrderId(UUID orderId) {
-		return paymentRepository.findByOrderId(orderId)
-			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-	}
-
-
 }
