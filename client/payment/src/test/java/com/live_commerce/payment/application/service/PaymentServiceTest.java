@@ -30,8 +30,6 @@ import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.OrderClient;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentCancelEventProducer;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentSuccessEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 @SpringBootTest
@@ -39,14 +37,17 @@ import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 @Transactional
 public class PaymentServiceTest {
 
-	@Autowired private PaymentService paymentService;
-	@Autowired private PaymentRepository paymentRepository;
-	@Autowired private RedissonClient redissonClient;
+	@Autowired
+	private PaymentService paymentService;
+	@Autowired
+	private PaymentRepository paymentRepository;
+	@Autowired
+	private RedissonClient redissonClient;
 
-	@MockitoBean private OrderClient orderClient;
-	@MockitoBean private PaymentSuccessEventProducer paymentSuccessEventProducer;
-	@MockitoBean private PaymentCancelEventProducer paymentCancelEventProducer;
-	@MockitoBean private KakaoPayClient kakaoPayClient;
+	@MockitoBean
+	private OrderClient orderClient;
+	@MockitoBean
+	private KakaoPayClient kakaoPayClient;
 
 	private UUID userId;
 	private UUID orderId;

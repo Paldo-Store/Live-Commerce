@@ -23,6 +23,7 @@ import com.live_commerce.payment.application.dto.response.PaymentApproveResponse
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
 import com.live_commerce.payment.application.service.PaymentService;
+import com.live_commerce.payment.application.service.PaymentServiceV2;
 import com.live_commerce.payment.infrastructure.common.ResponseUtil;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 import com.live_commerce.payment.presentation.common.ApiResponse;
@@ -34,14 +35,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentController {
 
-	private final PaymentService paymentService;
+	private final PaymentServiceV2 paymentServiceV2;
 
 	@PostMapping("/ready")
 	public ResponseEntity<ApiResponse<PaymentReadyResponseDto>> readyPayment(
 		@AuthenticationPrincipal RequestUserDetails requestUserDetails,
 		@RequestBody PaymentReadyRequestDto requestDto
 	) {
-		PaymentReadyResponseDto response = paymentService.readyPayment(requestUserDetails, requestDto);
+		PaymentReadyResponseDto response = paymentServiceV2.readyPayment(requestUserDetails, requestDto);
 		return ResponseUtil.success(response);
 	}
 
@@ -50,7 +51,7 @@ public class PaymentController {
 		@AuthenticationPrincipal RequestUserDetails userDetails,
 		@RequestBody PaymentApproveRequestDto requestDto
 	) {
-		PaymentApproveResponseDto response = paymentService.approvePayment(
+		PaymentApproveResponseDto response = paymentServiceV2.approvePayment(
 			requestDto,
 			userDetails.getUserId()
 		);
@@ -62,7 +63,7 @@ public class PaymentController {
 		@PathVariable UUID paymentId,
 		@AuthenticationPrincipal RequestUserDetails userDetails
 	) {
-		PaymentGetResponseDto response = paymentService.getPayment(paymentId, userDetails);
+		PaymentGetResponseDto response = paymentServiceV2.getPayment(paymentId, userDetails);
 		return ResponseUtil.success(response);
 	}
 
@@ -72,7 +73,7 @@ public class PaymentController {
 		@AuthenticationPrincipal RequestUserDetails userDetails,
 		@PageableDefault(size = 10) Pageable pageable
 	) {
-		Page<PaymentGetResponseDto> result = paymentService.getPayments(condition, userDetails, pageable);
+		Page<PaymentGetResponseDto> result = paymentServiceV2.getPayments(condition, userDetails, pageable);
 		return ResponseUtil.success(result);
 	}
 
@@ -81,7 +82,7 @@ public class PaymentController {
 		@PathVariable UUID orderId,
 		@AuthenticationPrincipal RequestUserDetails userDetails
 	) {
-		PaymentRefundResponseDto response = paymentService.refundPaymentByOrderId(orderId, userDetails);
+		PaymentRefundResponseDto response = paymentServiceV2.refundPaymentByOrderId(orderId, userDetails);
 		return ResponseUtil.success(response);
 	}
 
@@ -90,7 +91,7 @@ public class PaymentController {
 		@PathVariable UUID orderId,
 		@AuthenticationPrincipal RequestUserDetails userDetails
 	) {
-		paymentService.cancelPaymentByOrderId(orderId, userDetails);
+		paymentServiceV2.cancelPaymentByOrderId(orderId, userDetails);
 		return ResponseUtil.noContent();
 	}
 

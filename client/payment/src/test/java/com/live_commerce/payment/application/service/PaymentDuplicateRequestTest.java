@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -21,11 +20,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
 import com.live_commerce.payment.application.port.KakaoPayClient;
-import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentCancelEventProducer;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentSuccessEventProducer;
+import com.live_commerce.payment.infrastructure.kafka.consumer.PaymentEventConsumer;
+import com.live_commerce.payment.infrastructure.kafka.producer.PaymentEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 @SpringBootTest
@@ -40,10 +38,6 @@ public class PaymentDuplicateRequestTest {
 
 	@MockitoBean
 	private KakaoPayClient kakaoPayClient;
-	@MockitoBean
-	private PaymentSuccessEventProducer paymentSuccessEventProducer;
-	@MockitoBean
-	private PaymentCancelEventProducer paymentCancelEventProducer;
 
 	@BeforeEach
 	void setUp() {

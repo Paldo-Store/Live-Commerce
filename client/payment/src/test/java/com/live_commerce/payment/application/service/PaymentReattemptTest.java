@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +20,6 @@ import com.live_commerce.payment.application.port.KakaoPayClient;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentCancelEventProducer;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentSuccessEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 @SpringBootTest
@@ -37,10 +34,6 @@ public class PaymentReattemptTest {
 
 	@MockitoBean
 	private KakaoPayClient kakaoPayClient;
-	@MockitoBean
-	private PaymentSuccessEventProducer paymentSuccessEventProducer;
-	@MockitoBean
-	private PaymentCancelEventProducer paymentCancelEventProducer;
 
 	@BeforeEach
 	void setUp() {
