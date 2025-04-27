@@ -22,9 +22,9 @@ public class PaymentEventConsumer {
 	public void listenOrderFailed(String message) {
 		try {
 			OrderFailedEvent event = objectMapper.readValue(message, OrderFailedEvent.class);
-			log.info("[Kafka] 주문 실패 이벤트 수신: orderId = {}, reason = {}", event.orderId(), event.reason());
+			log.info("[Kafka] 주문 실패 이벤트 수신: orderId = {}, message = {}", event.orderId(), event.message());
 
-			paymentServiceV2.compensateRefundByOrderId(event.orderId(), event.reason());
+			paymentServiceV2.compensateRefundByOrderId(event.orderId(), event.message());
 		} catch (Exception e) {
 			log.error("[Kafka] 주문 실패 이벤트 처리 실패: {}", e.getMessage(), e);
 		}
