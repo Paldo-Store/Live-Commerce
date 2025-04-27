@@ -1,4 +1,4 @@
-package com.live_commerce.order.kafkaOrder;
+package com.live_commerce.order.kafkaOrder.broadcast;
 
 import com.live_commerce.order.infrastructure.client.feignEnum.BroadcastStatus;
 

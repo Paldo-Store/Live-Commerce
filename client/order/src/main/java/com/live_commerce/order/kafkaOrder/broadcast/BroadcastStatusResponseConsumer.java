@@ -1,4 +1,4 @@
-package com.live_commerce.order.kafkaOrder;
+package com.live_commerce.order.kafkaOrder.broadcast;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
