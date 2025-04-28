@@ -136,4 +136,12 @@ public class IssuedCouponService {
     return couponPolicy;
 
   }
+
+  public UsedIssuedCouponResponse useCouponAndPublishEvent(UUID couponId,
+      RequestUserDetails userDetails) {
+    UUID userId = userDetails.getUserId();
+    IssuedCoupon issued = useCoupon(couponId, userDetails);
+    publishCouponUsedEventPort.publishCouponUsedEvent(couponId, userId);
+    return UsedIssuedCouponResponse.from(issued);
+  }
 }
