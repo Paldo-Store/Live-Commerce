@@ -1,7 +1,7 @@
 package com.live_commerce.product.inventory.presentation.controller;
 
 
-import com.live_commerce.product.inventory.application.service.OrderCreatedEvent;
+import com.live_commerce.product.inventory.application.dto.event.OrderCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,10 +20,11 @@ public class InventoryTestProducerController {
 
     @PostMapping("/order-created")
     public String sendOrderCreatedEvent(
-            @RequestParam int quantity
+            @RequestParam int quantity,
+            @RequestParam UUID productId
     ) {
         UUID orderId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        UUID productId = UUID.fromString("30000000-0000-0000-0000-00000000001e");
+        //UUID productId = UUID.fromString("30000000-0000-0000-0000-00000000001e");
         OrderCreatedEvent event = new OrderCreatedEvent(orderId, productId, quantity);
         kafkaTemplate.send("order-created", event);
 

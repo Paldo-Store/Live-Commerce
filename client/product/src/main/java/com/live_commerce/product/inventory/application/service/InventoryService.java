@@ -1,5 +1,6 @@
 package com.live_commerce.product.inventory.application.service;
 
+import com.live_commerce.product.inventory.application.dto.event.InventorySoldOutEvent;
 import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
@@ -14,6 +15,7 @@ import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class InventoryService {
     private final ProductRepository productRepository;
     private final InventoryValidator inventoryValidator;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
@@ -77,6 +80,9 @@ public class InventoryService {
         if (updated == 0) {
             throw InventoryException.forInventoryOutOfStock();
         }
+
+        String soldCountKey = "product:sold_count:" + productId;
+        redisTemplate.opsForValue().increment(soldCountKey, quantity);
 
         Inventory inventory = inventoryValidator.validateAndGetActiveInventory(productId);
 
