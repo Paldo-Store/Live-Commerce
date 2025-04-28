@@ -64,31 +64,30 @@ public class KafkaConfig {
     return new KafkaTemplate<>(producerFactory);
   }
 
-  @Bean
-  public ConsumerFactory<String, Object> consumerFactory() {
-    JsonDeserializer<Object> deser = new JsonDeserializer<>(Object.class)
-        .trustedPackages("*");
-    Map<String, Object> cfg = props.buildConsumerProperties();
-    return new DefaultKafkaConsumerFactory<>(
+  // 공통 로직을 묶어둔 헬퍼
+  private <T> ConcurrentKafkaListenerContainerFactory<String, T>
+  createListenerFactory(Class<T> payloadType) {
+
+    Map<String,Object> cfg = props.buildConsumerProperties();
+
+    // 페이로드별 JsonDeserializer
+    JsonDeserializer<T> deser = new JsonDeserializer<>(payloadType)
+        .trustedPackages(props.getConsumer().getProperties().getOrDefault(
+            "spring.json.trusted.packages", "*").toString());
+
+    // ConsumerFactory 에 주입
+    ConsumerFactory<String, T> cf = new DefaultKafkaConsumerFactory<>(
         cfg,
         new StringDeserializer(),
         deser
     );
-  }
 
-  private <T> ConcurrentKafkaListenerContainerFactory<String, T>
-  createListenerFactory(Class<T> payloadType) {
-    JsonDeserializer<T> deserializer = new JsonDeserializer<>(payloadType).trustedPackages("*");
-
-    DefaultKafkaConsumerFactory<String, T> config = new DefaultKafkaConsumerFactory<>(
-        props.buildConsumerProperties(),
-        new StringDeserializer(),
-        deserializer
-    );
-
+    //  ListenerContainerFactory 에 붙여주기
     ConcurrentKafkaListenerContainerFactory<String, T> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
-    factory.setConsumerFactory(config);
+    factory.setConsumerFactory(cf);
+
+
     return factory;
   }
 

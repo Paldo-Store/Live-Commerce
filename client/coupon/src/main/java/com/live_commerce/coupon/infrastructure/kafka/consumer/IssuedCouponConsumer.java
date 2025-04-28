@@ -18,10 +18,10 @@ public class IssuedCouponConsumer {
   @KafkaListener(
       topics = KafkaConfig.FIRST_COUPON_TOPIC,
       groupId = "coupon-first-join-group",
-      containerFactory = "kafkaListenerContainerFactory"
+      containerFactory = "firstJoinListenerContainerFactory"
   )
   public void onFirstJoin(FirstJoinCouponMessage msg) {
-    issuedCouponService.issueFirstCouponOnSignup(msg.userId());
+    issuedCouponService.issueFirstCouponDirectly(msg.userId());
     log.info("✅ 회원가입 쿠폰이 정상 발급되었습니다.(kafka): userId={}", msg.userId());
 
   }

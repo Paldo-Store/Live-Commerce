@@ -30,10 +30,9 @@ public class IssuedCouponControllerV2 {
 
 
   // 첫 회원가입 쿠폰 발급(kafka)
-  // TODO : KafkaListener가 구독하는 TOPIC을 추후 User TOPIC으로 수정 필요(후순위)
-  @PostMapping("/kafka/{userId}/signup-first")
-  public ResponseEntity<ApiResponse<String>> signupFirstCoupon(@PathVariable UUID userId) {
+  @PostMapping("/{userId}/signup-first")
+  public ResponseEntity<ApiResponse<Void>> signupFirstCoupon(@PathVariable UUID userId) {
     issuedCouponService.issueFirstCouponOnSignup(userId);
-    return ResponseUtil.success(null);
+    return ResponseUtil.noContent();
   }
 }

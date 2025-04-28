@@ -146,6 +146,15 @@ public class IssuedCouponService {
     firstJoinCouponPort.publishFirstJoinEvent(userId);
   }
 
+  public void issueFirstCouponDirectly(UUID userId) {
+    String couponCode = "FIRST_COUPON";
+    CouponPolicy couponPolicy = createFirstCouponPolicy(couponCode);
+
+    IssuedCouponRequest request = new IssuedCouponRequest(couponCode);
+    IssuedCoupon issuedCoupon = issueFirstCoupon(request, userId);
+    FirstJoinCouponResponse.from(issuedCoupon);
+  }
+
   public UsedIssuedCouponResponse useCouponAndPublishEvent(UUID couponId,
       RequestUserDetails userDetails) {
     UUID userId = userDetails.getUserId();

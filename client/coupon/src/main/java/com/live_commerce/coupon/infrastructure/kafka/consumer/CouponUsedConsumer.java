@@ -13,7 +13,7 @@ public class CouponUsedConsumer {
   @KafkaListener(
       topics = KafkaConfig.COUPON_USED_TOPIC,
       groupId = "coupon-used-group",
-      containerFactory = "kafkaListenerContainerFactory")
+      containerFactory = "couponUsedListenerContainerFactory")
   public void onCouponUsed(CouponUsedMessage msg) {
     log.info("✅ 쿠폰 사용 성공 이벤트 수신(kafka): couponId={}, userId={}", msg.couponId(), msg.userId());
   }
