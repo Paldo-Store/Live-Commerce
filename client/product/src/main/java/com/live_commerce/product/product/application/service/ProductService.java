@@ -10,18 +10,17 @@ import com.live_commerce.product.product.domain.exception.ProductException;
 import com.live_commerce.product.product.domain.model.Product;
 import com.live_commerce.product.product.domain.repository.ProductQueryRepository;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
-import com.live_commerce.product.product.infrastructure.client.CompanyClient;
-import com.live_commerce.product.product.infrastructure.client.ExternalCompanyResponseDto;
 import com.live_commerce.product.product.infrastructure.security.RequestUserDetails;
-import com.live_commerce.product.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.Authenticator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -119,5 +118,13 @@ public class ProductService {
         return productRepository.findAllByProductIdInAndDeletedStatusFalse(productIds).stream()
                 .map(ProductSummaryDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 내부 상품정보 조회용
+     */
+    @Transactional(readOnly = true)
+    public Product findProductEntity(UUID productId) {
+        return productValidator.validateAndFindProduct(productId);
     }
 }

@@ -1,12 +1,12 @@
 package com.live_commerce.product.product.presentation.controller;
 
+import com.live_commerce.product.inventory.application.service.ProductRankingService;
 import com.live_commerce.product.product.application.dto.*;
 import com.live_commerce.product.product.application.service.ProductService;
 import com.live_commerce.product.product.infrastructure.common.ResponseUtil;
 import com.live_commerce.product.product.infrastructure.security.RequestUserDetails;
 import com.live_commerce.product.product.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +22,7 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductRankingService productRankingService;
 
     @PreAuthorize("hasAnyRole('MASTER','SELLER')")
     @PostMapping
@@ -77,5 +78,11 @@ public class ProductController {
     ) {
         List<ProductSummaryDto> result = productService.getProductsByIds(productIds);
         return ResponseUtil.success(result);
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<ApiResponse<List<PopularProductsResponseDto>>> getPopularProducts() {
+        List<PopularProductsResponseDto> top10Products = productRankingService.getTop10PopularProducts();
+        return ResponseUtil.success(top10Products);
     }
 }
