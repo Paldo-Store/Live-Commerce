@@ -1,5 +1,8 @@
 package com.live_commerce.product.inventory.application.service;
 
+import com.live_commerce.product.inventory.application.dto.event.InventoryDecreasedEvent;
+import com.live_commerce.product.inventory.application.dto.event.InventoryFailedEvent;
+import com.live_commerce.product.inventory.application.dto.event.OrderCreatedEvent;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

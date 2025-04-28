@@ -16,7 +16,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 @Configuration
 public class KafkaConsumerConfig {
 
-	public static final String GROUP_ID = "payment-service-group";
+	public static final String GROUP_ID = "payment-group";
 
 	@Bean
 	public ConsumerFactory<String, String> paymentConsumerFactory() {

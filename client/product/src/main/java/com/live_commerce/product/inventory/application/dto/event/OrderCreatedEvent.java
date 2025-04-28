@@ -1,4 +1,4 @@
-package com.live_commerce.product.inventory.application.service;
+package com.live_commerce.product.inventory.application.dto.event;
 
 import java.util.UUID;
 

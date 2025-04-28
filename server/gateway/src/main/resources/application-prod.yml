@@ -34,7 +34,7 @@ spring:
         - id: coupon
           uri: lb://coupon
           predicates:
-            - Path=/api/v1/coupon-policies/**, /api/v1/issued-coupons/**, /v3/api-docs/coupon
+            - Path=/api/v1/coupon-policies/**, /api/v1/issued-coupons/**, /api/v2/issued-coupons/**, /api/v2/coupon-policies/**, /v3/api-docs/coupon
         - id: livebroadcast
           uri: lb://livebroadcast
           predicates:
@@ -50,7 +50,7 @@ spring:
         - id: payment
           uri: lb://payment
           predicates:
-            - Path=/api/v1/payments/**, /v3/api-docs/payment
+            - Path=/api/v1/payments/**, /api/v2/payments/**, /v3/api-docs/payment
         - id: product
           uri: lb://product
           predicates:

@@ -1,5 +1,7 @@
 package com.live_commerce.coupon.application.service;
 
+import com.live_commerce.coupon.application.port.IssueFirstJoinCouponPort;
+import com.live_commerce.coupon.application.port.PublishCouponUsedEventPort;
 import com.live_commerce.coupon.domain.exception.IssuedCouponException;
 import com.live_commerce.coupon.domain.model.CouponPolicy;
 import com.live_commerce.coupon.domain.model.DISCOUNT_TYPE;
@@ -11,6 +13,7 @@ import com.live_commerce.coupon.presentation.dto.request.IssuedCouponRequest;
 import com.live_commerce.coupon.presentation.dto.response.FirstJoinCouponResponse;
 import com.live_commerce.coupon.presentation.dto.response.GetIssuedCouponResponse;
 import com.live_commerce.coupon.presentation.dto.response.IssuedCouponListResponse;
+import com.live_commerce.coupon.presentation.dto.response.UsedIssuedCouponResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -27,6 +30,8 @@ public class IssuedCouponService {
 
   private final IssuedCouponRepository issuedCouponRepository;
   private final CouponPolicyRepository couponPolicyRepository;
+  private final IssueFirstJoinCouponPort firstJoinCouponPort;
+  private final PublishCouponUsedEventPort publishCouponUsedEventPort;
 
   public IssuedCoupon issueCoupon(IssuedCouponRequest request, RequestUserDetails userDetails) {
 
@@ -135,5 +140,26 @@ public class IssuedCouponService {
     couponPolicyRepository.save(couponPolicy);
     return couponPolicy;
 
+  }
+
+  public void issueFirstCouponOnSignup(UUID userId) {
+    firstJoinCouponPort.publishFirstJoinEvent(userId);
+  }
+
+  public void issueFirstCouponDirectly(UUID userId) {
+    String couponCode = "FIRST_COUPON";
+    CouponPolicy couponPolicy = createFirstCouponPolicy(couponCode);
+
+    IssuedCouponRequest request = new IssuedCouponRequest(couponCode);
+    IssuedCoupon issuedCoupon = issueFirstCoupon(request, userId);
+    FirstJoinCouponResponse.from(issuedCoupon);
+  }
+
+  public UsedIssuedCouponResponse useCouponAndPublishEvent(UUID couponId,
+      RequestUserDetails userDetails) {
+    UUID userId = userDetails.getUserId();
+    IssuedCoupon issued = useCoupon(couponId, userDetails);
+    publishCouponUsedEventPort.publishCouponUsedEvent(couponId, userId);
+    return UsedIssuedCouponResponse.from(issued);
   }
 }
