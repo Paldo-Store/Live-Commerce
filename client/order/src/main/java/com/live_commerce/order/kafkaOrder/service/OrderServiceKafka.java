@@ -14,6 +14,8 @@ import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.client.request.InventoryDecreaseRequestDto;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
 import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
+import com.live_commerce.order.kafkaOrder.product.InventoryEventProducer;
+import com.live_commerce.order.kafkaOrder.product.OrderCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -51,6 +53,7 @@ public class OrderServiceKafka {
 
     //kafka
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final InventoryEventProducer inventoryEventProducer;
 
     //주문 생성 service
     @Transactional
@@ -163,7 +166,10 @@ public class OrderServiceKafka {
 
         //TODO KAFKA 처리
         //재고 감소 진행
-        productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+        //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+        OrderCreatedEvent eventInventory = new OrderCreatedEvent(order.getId(), order.getProductId(), order.getProductQuantity());
+        inventoryEventProducer.sendOrderCreatedEvent(eventInventory);
+        log.info("재고 감소 성공!!");
 
         //TODO KAFKA
         // 7. 쿠폰 사용 처리
