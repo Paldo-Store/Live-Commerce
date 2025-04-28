@@ -10,21 +10,16 @@ import com.live_commerce.order.infrastructure.client.feign.CouponClient;
 import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.client.feignEnum.BroadcastStatus;
 import com.live_commerce.order.infrastructure.client.response.*;
-import com.live_commerce.order.kafkaOrder.broadcast.*;
-import com.live_commerce.order.kafkaOrder.product.consumer.ProductResponseConsumer;
-import com.live_commerce.order.kafkaOrder.product.producer.ProductRequestProducer;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.kafka.core.KafkaTemplate;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
 
 //주문 생성 service
 @Slf4j
@@ -35,18 +30,6 @@ public class OrderCreateServiceKafka {
     private final ProductClient productClient;
     private final OrderRepository orderRepository;
     private final CouponClient couponClient;
-
-    //kafka
-    private final KafkaTemplate<String, BroadcastStatusRequestMessage> kafkaTemplate;
-    private final BroadcastStatusResponseStore broadcastStatusResponseStore;
-    private final BroadcastStatusResponseConsumer broadcastStatusResponseConsumer;
-    private final BroadcastStatusRequestProducer broadcastStatusRequestProducer;
-
-    //kafka - product
-    private final ProductRequestProducer productRequestProducer;
-    private final ProductResponseConsumer productResponseConsumer;
-
-
 
     //주문 생성 함수
     @Transactional
@@ -59,20 +42,19 @@ public class OrderCreateServiceKafka {
         // kafka Topic 생성
         //broadcast-status-request(order) : 주문 서비스 → 방송 서비스로 상태 요청
         //broadcast-status-response(broadcast) : 방송 서비스 → 주문 서비스로 상태 응답
-//        ApiResponse<BroadcastStatusResponse> response = broadcastClient.getBroadcast(request.broadcastId());
-//        BroadcastStatusResponse statusResponse = response.getData();
-//        if (statusResponse == null || statusResponse.getBroadcastStatus() != BroadcastStatus.LIVE) {
-//            throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
-//        }
-        validateBroadcastStatus(request.broadcastId());
+        ApiResponse<BroadcastStatusResponse> response = broadcastClient.getBroadcast(request.broadcastId());
+        BroadcastStatusResponse statusResponse = response.getData();
+        if (statusResponse == null || statusResponse.getBroadcastStatus() != BroadcastStatus.LIVE) {
+            throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
+        }
         log.info("방송 체크 완료");
 
         // 1. [productClient] 상품 쪽으로 검증 요청 필요 (상품의 개수랑 상품 ID를 같이 넘김)
         // 재고가 없거나 상품이 없다면 Exception
         // order -> product (productId, productQuantity)
-//        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
-//        ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
-        ProductCreateResponseDto productResponseByOrder = getProductKafka(request.productId());
+        ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
+        ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
+
         log.info("상품 정보 들고오기" + productResponseByOrder);
 
         // productId에 해당하는 상품이 아예 없는 경우
@@ -177,49 +159,5 @@ public class OrderCreateServiceKafka {
         Order savedOrder = orderRepository.save(order);
         log.info("주문 생성 저장 완료!!!!!");
         return OrderCreateResponse.of(savedOrder);
-    }
-
-    //kafka broadcastStatus 검증 - Live면 주문 가능
-    public void validateBroadcastStatus(UUID broadcastId) {
-        // 1. 요청 식별을 위한 고유 requestId 생성
-        String requestId = UUID.randomUUID().toString();
-
-        // 2. 요청을 등록하고 future를 받는다
-        CompletableFuture<BroadcastStatusResponseMessage> future = broadcastStatusResponseConsumer.waitForResponse(requestId);
-
-        // 3. 방송 상태 요청 메시지 전송-kafka로 메시지 보내기
-        broadcastStatusRequestProducer.requestBroadcastStatus(requestId, broadcastId);
-
-        try {
-            // 4. future를 통해 응답 대기 (3초 타임아웃)
-            BroadcastStatusResponseMessage responseMessage = future.get(3, TimeUnit.SECONDS);
-
-            // 5. 방송 상태 확인
-            if (responseMessage.broadcastStatus() != BroadcastStatus.LIVE) {
-                throw new OrderException("방송 중일 때만 주문이 가능합니다.", HttpStatus.BAD_REQUEST);
-            }
-        } catch (TimeoutException e) {
-            throw new OrderException("방송 상태 확인 타임아웃", HttpStatus.REQUEST_TIMEOUT);
-        } catch (Exception e) {
-            throw new RuntimeException("방송 상태 확인 실패", e);
-        }
-    }
-
-    // kafka product - 상품 조회 메서드
-    public ProductCreateResponseDto getProductKafka(UUID productId) {
-        String requestId = UUID.randomUUID().toString();
-
-        // 1. 요청을 Kafka로 전송
-        productRequestProducer.requestProduct(productId);
-
-        // 응답을 기다림 (타임아웃 설정 가능)
-        try {
-            CompletableFuture<ProductCreateResponseDto> future = productResponseConsumer.waitForResponse(requestId);
-            return future.get(5, TimeUnit.SECONDS);  // 5초 대기
-        } catch (TimeoutException e) {
-            throw new RuntimeException("상품 조회 타임아웃");
-        } catch (Exception e) {
-            throw new RuntimeException("상품 조회 실패", e);
-        }
     }
 }

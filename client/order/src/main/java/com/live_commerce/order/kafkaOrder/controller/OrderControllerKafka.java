@@ -108,15 +108,16 @@ public class OrderControllerKafka {
         return ResponseUtil.success(response);
     }
 
-    //payment -> order 로 받는 controller 생성
-    // 결제 성공 응답 받는 Api
-    @PostMapping("/{orderId}/payment-success")
-    public ResponseEntity<ApiResponse<PaymentSuccessResponseOrder>> notifyPaymentSuccess(
-            @PathVariable UUID orderId,
-            @RequestBody PaymentSuccessRequest request){
-        PaymentSuccessResponseOrder response=  orderServiceKafka.updatePaymentSuccess(orderId, request);
-        return ResponseUtil.success(response);
-    }
+    //KAFKA -> controller 없이 진행
+//    //payment -> order 로 받는 controller 생성
+//    // 결제 성공 응답 받는 Api
+//    @PostMapping("/{orderId}/payment-success")
+//    public ResponseEntity<ApiResponse<PaymentSuccessResponseOrder>> notifyPaymentSuccess(
+//            @PathVariable UUID orderId,
+//            @RequestBody PaymentSuccessRequest request){
+//        PaymentSuccessResponseOrder response=  orderServiceKafka.updatePaymentSuccess(orderId, request);
+//        return ResponseUtil.success(response);
+//    }
 
     //kafka
     @GetMapping("/send")
