@@ -43,11 +43,19 @@ public class NotificationController {
     return ResponseUtil.success("알림 삭제가 성공적으로 완료되었습니다.");
   }
 
-  // 직접 스케줄러 호출을 위한 API 추가
+  // 직접 스케줄러 호출을 위한 API 추가 (테스트용)
   @PostMapping("/trigger-scheduled-notifications")
   public ResponseEntity<ApiResponse<String>> triggerScheduledNotifications() throws IOException {
     notificationService.triggerScheduledNotifications();  // 메서드 호출
     return ResponseUtil.success("🔥🔥🔥"+"테스트 알림 호출!");
   }
+
+  // 직접 스케줄러 호출을 위한 API 추가 (테스트용, kafka)
+  @PostMapping("/trigger-kafka-notifications")
+  public ResponseEntity<ApiResponse<String>> triggerKafkaNotifications() throws IOException {
+   notificationService.triggerKafkaNotifications();
+   return ResponseUtil.success("kafka 알림 발생 정상 트리거 성공");
+  }
+
 
 }

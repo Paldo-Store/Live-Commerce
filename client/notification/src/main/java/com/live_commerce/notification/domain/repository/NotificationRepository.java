@@ -1,7 +1,6 @@
 package com.live_commerce.notification.domain.repository;
 
 import com.live_commerce.notification.domain.model.Notification;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
