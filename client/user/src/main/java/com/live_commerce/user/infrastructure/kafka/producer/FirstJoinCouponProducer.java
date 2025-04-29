@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FirstJoinCouponProducer {
 
 	private final KafkaTemplate<String, FirstJoinCouponEvent> kafkaTemplate;
-	private static final String FIRST_COUPON_TOPIC = "first-coupon-topic";
+	private static final String FIRST_COUPON_TOPIC = "first-join-coupon";
 
 	public void send(FirstJoinCouponEvent event) {
 		kafkaTemplate.send(FIRST_COUPON_TOPIC, event.userId().toString(), event);
