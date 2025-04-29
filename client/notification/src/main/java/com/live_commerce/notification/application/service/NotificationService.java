@@ -4,11 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.live_commerce.notification.application.alert.AlertSender;
 import com.live_commerce.notification.application.alert.ConsoleAlertSender;
-import com.live_commerce.notification.application.dto.NotificationMessage;
+import com.live_commerce.notification.infrastructure.kafka.event.NotificationCreatedEvent;
 import com.live_commerce.notification.domain.model.Notification;
 import com.live_commerce.notification.domain.model.NotificationType;
 import com.live_commerce.notification.domain.repository.NotificationRepository;
-import com.live_commerce.notification.infrastructure.kafka.producer.NotificationProducer;
+import com.live_commerce.notification.infrastructure.kafka.producer.NotificationEventProducer;
 import com.live_commerce.notification.presentation.dto.request.BroadcastNotificationContext;
 import com.live_commerce.notification.presentation.dto.request.NotificationCreateRequest;
 import com.live_commerce.notification.presentation.dto.request.UserInfo;
@@ -33,7 +33,7 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
 
   private final ConsoleAlertSender consoleAlertSender;
-  private final NotificationProducer producer;
+  private final NotificationEventProducer producer;
   private final ObjectMapper objectMapper;
   private final AlertSender alertSender;
 
@@ -152,14 +152,14 @@ public class NotificationService {
     List<Notification> list = notificationRepository.findAllByScheduledAtLessThanEqualAndIsSentFalse(
         LocalDateTime.now());
     for (Notification n : list) {
-      NotificationMessage msg = new NotificationMessage(
+      NotificationCreatedEvent msg = new NotificationCreatedEvent(
           n.getId(), n.getType(), n.getTargetId(), n.getScheduledAt()
       );
-      producer.send(msg);
+      producer.sendNotificationCreated(msg);
     }
   }
 
-  public void processByMessage(NotificationMessage msg) throws IOException {
+  public void processByMessage(NotificationCreatedEvent msg) throws IOException {
     Notification notification = notificationRepository.findById(msg.notificationId())
         .orElseThrow(() -> new IllegalArgumentException("알림 없음: " + msg.notificationId()));
 
@@ -172,7 +172,7 @@ public class NotificationService {
     boolean allSuccess = true;
     for (UserInfo user : users) {
       try {
-        alertSender.send(user.id(), user.name(), "kafka messsage 테스트");
+        alertSender.send(user.id(), user.name(), "[kafka] messsage 테스트");
       } catch (Exception e) {
         allSuccess = false;
         log.warn("⚠️ 알림 전송 실패: userId={}, {}", user.id(), e.getMessage());

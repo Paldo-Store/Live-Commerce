@@ -21,12 +21,24 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   kafka:
-    bootstrap-servers: localhost:9092  # 카프카 브로커 URL
-    consumer:
-      group-id: notification-group  # 소비자 그룹 ID (필요에 따라 설정)
+    bootstrap-servers: localhost:9092
     producer:
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: >
+          notification-created: com.live_commerce.notification.infrastructure.kafka.event.NotificationCreatedEvent
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.live_commerce.notification.infrastructure.kafka.event
+        spring.json.type.mapping: >
+          notification-created: com.live_commerce.notification.infrastructure.kafka.event.NotificationCreatedEvent
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
 
 eureka:
   client:
