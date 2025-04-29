@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentEventConsumer {
 
+    //payment -> order
     private static final String COMPLETED_TOPIC = "payment-completed";
 
     @KafkaListener(
