@@ -1,15 +1,10 @@
 spring:
-  config:
-    import: "configserver:http://localhost:18080"
   application:
     name: livebroadcast
-  profiles:
-    active: dev
-
-#spring:
-#  profiles:
-#    active: prod
-#  cloud:
-#    config:
-#      enabled: false
-
+  config:
+    import: "optional:configserver:http://config:18080/"
+  cloud:
+    config:
+      name: livebroadcast
+      profile: prod
+      fail-fast: true

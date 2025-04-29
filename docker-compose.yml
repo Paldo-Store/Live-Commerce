@@ -9,20 +9,26 @@ services:
     networks:
       - 8do-network
 
-
   eureka:
     build:
       context: ./server/eureka
     container_name: eureka
+    hostname: eureka
     ports:
-      - "19090:19090"
+      - "8761:8761"
     networks:
       - 8do-network
     depends_on:
       - config
     environment:
+      - SPRING_APPLICATION_NAME=eureka
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Dfile.encoding=UTF-8
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/eureka/apps" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 #  gateway:
 #    build:
@@ -117,8 +123,12 @@ services:
     networks:
       - 8do-network
     depends_on:
-      - postgres
-      - eureka
+      eureka:
+        condition: service_healthy
+      config:
+        condition: service_started
+      postgres:
+        condition: service_started
     env_file:
       - ./client/livebroadcast/.env.prod
     environment:
@@ -158,24 +168,25 @@ services:
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
-#  coupon:
-#    build:
-#      context: ./client/coupon
-#    container_name: coupon
-#    ports:
-#      - "19100:19100"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/coupon/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
+
+  coupon:
+    build:
+      context: ./client/coupon
+    container_name: coupon
+    ports:
+      - "19100:19100"
+    networks:
+      - 8do-network
+    depends_on:
+      - config
+      - postgres
+      - eureka
+    env_file:
+      - ./client/coupon/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
 #  notification:
 #    build:
 #      context: ./client/notification
@@ -193,22 +204,23 @@ services:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
 #
-#  user:
-#    build:
-#      context: ./client/user
-#    container_name: user
-#    ports:
-#      - "19120:19120"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/user/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+  user:
+    build:
+      context: ./client/user
+    container_name: user
+    ports:
+      - "19120:19120"
+    networks:
+      - 8do-network
+    depends_on:
+      - config
+      - postgres
+      - eureka
+    env_file:
+      - ./client/user/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
 
   postgres:
     image: postgres:15
