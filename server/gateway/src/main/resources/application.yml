@@ -1,28 +1,10 @@
-#spring:
-#  config:
-#    import: "configserver:http://localhost:18080"
-#  application:
-#    name: gateway
-#  profiles:
-#    active: dev
-
-#spring:
-#  profiles:
-#    active: prod
-#  cloud:
-#    config:
-#      enabled: false
-
-
 spring:
-  application:
-    name: gateway
   main:
     web-application-type: reactive
   config:
-    import: "configserver:http://localhost:18080"
+    import: "configserver:http://config:18080"
   cloud:
     config:
       name: gateway
-      profile: dev
+      profile: prod
       fail-fast: true

@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: gateway
-  config:
-    import: optional:file:.env[.properties]
   main:
     web-application-type: reactive
   webflux:
@@ -64,7 +62,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka:19090/eureka/
+      defaultZone: http://eureka:8761/eureka/
 
 service:
   jwt:

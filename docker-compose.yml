@@ -30,21 +30,21 @@ services:
       timeout: 5s
       retries: 5
 
-#  gateway:
-#    build:
-#      context: ./server/gateway
-#    container_name: gateway
-#    ports:
-#      - "19091:19091"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - eureka
-#    env_file:
-#      - ./client/gateway/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+  gateway:
+    build:
+      context: ./server/gateway
+    container_name: gateway
+    ports:
+      - "19091:19091"
+    networks:
+      - 8do-network
+    depends_on:
+      - eureka
+    env_file:
+      - ./server/gateway/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
 
 #  company:
 #    build:
@@ -79,23 +79,23 @@ services:
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
-#  chat:
-#    build:
-#      context: ./client/chat
-#    container_name: chat
-#    ports:
-#      - "19040:19040"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/chat/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
+  chat:
+    build:
+      context: ./client/chat
+    container_name: chat
+    ports:
+      - "19040:19040"
+    networks:
+      - 8do-network
+    depends_on:
+      - postgres
+      - eureka
+    env_file:
+      - ./client/chat/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
 
   ai:
     build:
