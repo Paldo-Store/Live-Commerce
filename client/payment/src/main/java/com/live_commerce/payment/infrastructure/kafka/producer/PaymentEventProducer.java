@@ -3,10 +3,8 @@ package com.live_commerce.payment.infrastructure.kafka.producer;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.live_commerce.payment.infrastructure.kafka.dto.PaymentCompletedEvent;
-import com.live_commerce.payment.infrastructure.kafka.dto.PaymentFailedEvent;
+import com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent;
+import com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentEventProducer {
 
-	private final KafkaTemplate<String, String> kafkaTemplate;
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 
 	private static final String COMPLETED_TOPIC = "payment-completed";
 	private static final String FAILED_TOPIC    = "payment-failed";
@@ -30,14 +27,8 @@ public class PaymentEventProducer {
 		send(FAILED_TOPIC, event.orderId().toString(), event);
 	}
 
-	// 공통 전송 로직
 	private void send(String topic, String key, Object payload) {
-		try {
-			String json = objectMapper.writeValueAsString(payload);
-			kafkaTemplate.send(topic, key, json);
-			log.info("[Kafka] {} → {}", topic, json);
-		} catch (JsonProcessingException e) {
-			log.error("[Kafka] 직렬화 오류: {}", e.getMessage(), e);
-		}
+		kafkaTemplate.send(topic, key, payload);
+		log.info("[Kafka] 전송 완료 - topic: {}, key: {}, payload: {}", topic, key, payload);
 	}
 }

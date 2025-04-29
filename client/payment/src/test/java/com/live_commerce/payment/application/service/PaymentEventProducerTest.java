@@ -12,12 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.kafka.core.KafkaTemplate;
 
-import com.live_commerce.payment.infrastructure.kafka.dto.PaymentCompletedEvent;
+import com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent;
 import com.live_commerce.payment.infrastructure.kafka.producer.PaymentEventProducer;
 
 public class PaymentEventProducerTest {
 
-	private KafkaTemplate<String, String> kafkaTemplate = mock(KafkaTemplate.class);
+	private KafkaTemplate<String, Object> kafkaTemplate = mock(KafkaTemplate.class);
 	private PaymentEventProducer producer;
 
 	@BeforeEach
