@@ -1,14 +1,8 @@
 spring:
   config:
-    import: "configserver:http://localhost:18080"
-  application:
-    name: chat
-  profiles:
-    active: dev
-
-#spring:
-#  profiles:
-#    active: prod
-#  cloud:
-#    config:
-#      enabled: false
+    import: "configserver:http://config:18080"
+  cloud:
+    config:
+      name: chat
+      profile: prod
+      fail-fast: true

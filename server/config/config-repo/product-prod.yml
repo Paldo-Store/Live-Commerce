@@ -20,8 +20,6 @@ management:
 spring:
   application:
     name: product
-  config:
-    import: optional:file:.env.prod[.properties]
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
     hibernate:

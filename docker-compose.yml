@@ -46,23 +46,23 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Dfile.encoding=UTF-8
 
-#  company:
-#    build:
-#      context: ./client/company
-#    container_name: company
-#    ports:
-#      - "19020:19020"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/company/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
+  company:
+    build:
+      context: ./client/company
+    container_name: company
+    ports:
+      - "19020:19020"
+    networks:
+      - 8do-network
+    depends_on:
+      - postgres
+      - eureka
+    env_file:
+      - ./client/company/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
 #  order:
 #    build:
 #      context: ./client/order
@@ -89,6 +89,7 @@ services:
     networks:
       - 8do-network
     depends_on:
+      - config
       - postgres
       - eureka
     env_file:

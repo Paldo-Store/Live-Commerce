@@ -22,8 +22,6 @@ management:
 spring:
   application:
     name: livebroadcast
-#  config:
-#    import: optional:file:.env.prod[.properties]
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
     hibernate:

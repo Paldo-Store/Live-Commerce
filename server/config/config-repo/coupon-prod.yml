@@ -9,8 +9,6 @@ eureka:
 spring:
   application:
     name: coupon
-  config:
-    import: optional:file:.env[.properties]
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
