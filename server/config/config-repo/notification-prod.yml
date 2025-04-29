@@ -9,8 +9,6 @@ eureka:
 spring:
   application:
     name: notification
-  config:
-    import: optional:file:.env[.properties]
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -26,12 +24,40 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: kafka:29092
+    consumer:
+      group-id: notification-group  # 소비자 그룹 ID (필요에 따라 설정)
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 management:
+  endpoint:
+    prometheus:
+      access: unrestricted
+    health:
+      show-details: always
+
   endpoints:
     web:
       exposure:
-        include: refresh
+        include: [ health, info, prometheus ]
+
+  prometheus:
+    metrics.export.enabled: true
+
+  metrics:
+    distribution:
+      # 1) 히스토그램
+      percentiles-histogram:
+        "[http.server.requests]": true        # 대괄호 → IDE 경고 X
+      # 2) 퍼센타일
+      percentiles:
+        "[http.server.requests]": 0.95,0.99
+      # 3) SLO 버킷
+      slo:
+        "[http.server.requests]": 100ms,300ms,500ms,1s,3s
   tracing:
     sampling:
       probability: 1.0

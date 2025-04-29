@@ -192,23 +192,27 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Dfile.encoding=UTF-8
 
-#  notification:
-#    build:
-#      context: ./client/notification
-#    container_name: notification
-#    ports:
-#      - "19110:19110"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/notification/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
+  notification:
+    build:
+      context: ./client/notification
+    container_name: notification
+    ports:
+      - "19110:19110"
+    networks:
+      - 8do-network
+    depends_on:
+      eureka:
+        condition: service_healthy
+      config:
+        condition: service_started
+      postgres:
+        condition: service_started
+    env_file:
+      - ./client/notification/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
   user:
     build:
       context: ./client/user
