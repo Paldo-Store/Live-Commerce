@@ -28,7 +28,7 @@ spring:
       properties:
         spring.json.type.mapping: >
           payment-completed:com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent,
-          coupon-used:com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage
+          coupon-used:com.live_commerce.order.kafkaOrder.coupon.CouponUsedEvent
     consumer:
       group-id: ${spring.application.name}
       auto-offset-reset: earliest
@@ -38,7 +38,7 @@ spring:
         spring.json.trusted.packages: '*'
         spring.json.type.mapping: >
           payment-completed:com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent,
-          coupon-used:com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage
+          coupon-used:com.live_commerce.order.kafkaOrder.coupon.CouponUsedEvent
 
     listener:
       ack-mode: MANUAL_IMMEDIATE

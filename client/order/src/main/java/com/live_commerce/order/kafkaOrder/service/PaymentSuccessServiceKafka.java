@@ -4,7 +4,7 @@ import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage;
+import com.live_commerce.order.kafkaOrder.coupon.CouponUsedEvent;
 import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
 import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
@@ -43,17 +43,19 @@ public class PaymentSuccessServiceKafka {
         order.changeStatus(PAID);
         log.info("READY 에서 PAID로 변경 성공!");
 
+        //여기서 제가 producer로 쏴드릴까요?
+
         //TODO KAFKA 처리
-        //재고 감소 진행
+        // 재고 감소 진행 - order(producer) -> product(consumer)
         //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
 //        OrderCreatedEvent eventInventory = new OrderCreatedEvent(order.getId(), order.getProductId(), order.getProductQuantity());
 //        inventoryEventProducer.sendOrderCreatedEvent(eventInventory);
         log.info("재고 감소 성공!!");
 
         //TODO KAFKA
-        // 7. 쿠폰 사용 처리
+        // 7. 쿠폰 사용 처리 order(producer) -> coupon(consumer)
         if(order.getCouponId() != null){
-            CouponUsedMessage eventCoupon = new CouponUsedMessage(order.getCouponId(), userId);
+            CouponUsedEvent eventCoupon = new CouponUsedEvent(order.getCouponId(), userId);
             couponUsedProducer.sendCouponUsedEvent(eventCoupon);
         }
         return "결제 성공 처리 완료";
