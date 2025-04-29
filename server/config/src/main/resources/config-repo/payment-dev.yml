@@ -49,7 +49,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: com.live_commerce
+        spring.json.trusted.packages: '*'
         spring.json.type.mapping: >
           payment-completed:com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent,
           payment-failed:com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent

@@ -30,8 +30,8 @@ public class IssuedCouponService {
 
   private final IssuedCouponRepository issuedCouponRepository;
   private final CouponPolicyRepository couponPolicyRepository;
-  private final IssueFirstJoinCouponPort firstJoinCouponPort;
-  private final PublishCouponUsedEventPort publishCouponUsedEventPort;
+  // private final IssueFirstJoinCouponPort firstJoinCouponPort;
+  // private final PublishCouponUsedEventPort publishCouponUsedEventPort;
 
   public IssuedCoupon issueCoupon(IssuedCouponRequest request, RequestUserDetails userDetails) {
 
@@ -142,9 +142,9 @@ public class IssuedCouponService {
 
   }
 
-  public void issueFirstCouponOnSignup(UUID userId) {
-    firstJoinCouponPort.publishFirstJoinEvent(userId);
-  }
+  // public void issueFirstCouponOnSignup(UUID userId) {
+  //   firstJoinCouponPort.publishFirstJoinEvent(userId);
+  // }
 
   public void issueFirstCouponDirectly(UUID userId) {
     String couponCode = "FIRST_COUPON";
@@ -159,7 +159,7 @@ public class IssuedCouponService {
       RequestUserDetails userDetails) {
     UUID userId = userDetails.getUserId();
     IssuedCoupon issued = useCoupon(couponId, userDetails);
-    publishCouponUsedEventPort.publishCouponUsedEvent(couponId, userId);
+    // publishCouponUsedEventPort.publishCouponUsedEvent(couponId, userId);
     return UsedIssuedCouponResponse.from(issued);
   }
 }

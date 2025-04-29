@@ -32,7 +32,7 @@ public class IssuedCouponControllerV2 {
   // 첫 회원가입 쿠폰 발급(kafka)
   @PostMapping("/{userId}/signup-first")
   public ResponseEntity<ApiResponse<Void>> signupFirstCoupon(@PathVariable UUID userId) {
-    issuedCouponService.issueFirstCouponOnSignup(userId);
+    issuedCouponService.issueFirstCouponDirectly(userId);
     return ResponseUtil.noContent();
   }
 }
