@@ -1,4 +1,4 @@
-package com.live_commerce.product.inventory.infrastructure.kafka.event;
+package com.live_commerce.product.product.infrastructure.kafka.event;
 
 import java.util.UUID;
 

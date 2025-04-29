@@ -1,7 +1,7 @@
 package com.live_commerce.product.product.infrastructure.kafka.consumer;
 
 
-import com.live_commerce.product.inventory.infrastructure.kafka.event.InventorySoldOutEvent;
+import com.live_commerce.product.product.infrastructure.kafka.event.InventorySoldOutEvent;
 import com.live_commerce.product.product.application.validation.ProductValidator;
 import com.live_commerce.product.product.domain.model.Product;
 import com.live_commerce.product.product.domain.model.ProductStatus;
@@ -21,7 +21,7 @@ public class ProductSoldOutListener {
     private final ProductValidator productValidator;
 
     @Transactional
-    @KafkaListener(topics = "inventory-sold-out", groupId = "product-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "inventory-sold-out")
     public void consumeSoldOut(InventorySoldOutEvent event) {
         log.info("inventory-sold-out 이벤트 수신: {}", event);
 

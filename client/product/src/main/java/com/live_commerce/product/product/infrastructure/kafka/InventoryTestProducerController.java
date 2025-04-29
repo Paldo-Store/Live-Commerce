@@ -1,7 +1,7 @@
-package com.live_commerce.product.inventory.presentation.controller;
+package com.live_commerce.product.product.infrastructure.kafka;
 
 
-import com.live_commerce.product.inventory.infrastructure.kafka.event.OrderCreatedEvent;
+import com.live_commerce.product.product.infrastructure.kafka.event.OrderRequestedInventoryEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,16 +18,16 @@ public class InventoryTestProducerController {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @PostMapping("/order-created")
+    @PostMapping("/inventory-decrease")
     public String sendOrderCreatedEvent(
             @RequestParam int quantity,
             @RequestParam UUID productId
     ) {
         UUID orderId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         //UUID productId = UUID.fromString("30000000-0000-0000-0000-00000000001e");
-        OrderCreatedEvent event = new OrderCreatedEvent(orderId, productId, quantity);
-        kafkaTemplate.send("order-created", event);
+        OrderRequestedInventoryEvent event = new OrderRequestedInventoryEvent(orderId, productId, quantity);
+        kafkaTemplate.send("inventory-decrease", event);
 
-        return "order-created 이벤트 발행 완료";
+        return "inventory-decrease 이벤트 발행 완료";
     }
 }
