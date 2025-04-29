@@ -59,7 +59,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: com.live_commerce
+        spring.json.trusted.packages: '*'
         spring.json.type.mapping: >
           first-coupon-topic:com.live_commerce.user.infrastructure.kafka.event.FirstJoinCouponMessage
 
