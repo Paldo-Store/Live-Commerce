@@ -1,6 +1,6 @@
 package com.live_commerce.product.inventory.application.service;
 
-import com.live_commerce.product.inventory.application.dto.event.InventorySoldOutEvent;
+
 import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
@@ -11,6 +11,7 @@ import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.model.InventoryStatus;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
+import com.live_commerce.product.inventory.infrastructure.kafka.event.InventorySoldOutEvent;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
 import lombok.RequiredArgsConstructor;
