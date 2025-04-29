@@ -1,4 +1,5 @@
-package com.live_commerce.order.application.service;
+package com.live_commerce.order.kafkaOrder.service;
+
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
 import com.live_commerce.order.application.dto.response.OrderCreateResponse;
@@ -14,16 +15,18 @@ import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+
 //주문 생성 service
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderCreateService {
+public class OrderCreateServiceKafka {
     private final BroadcastClient broadcastClient;
     private final ProductClient productClient;
     private final OrderRepository orderRepository;
@@ -47,16 +50,13 @@ public class OrderCreateService {
         ApiResponse<ProductCreateResponseDto> responseProduct = productClient.getProduct(request.productId()); //주문 요청 상품 id -> product
         ProductCreateResponseDto productResponseByOrder = responseProduct.getData();
 
+        log.info("상품 정보 들고오기" + productResponseByOrder);
+
         // productId에 해당하는 상품이 아예 없는 경우
         if (productResponseByOrder == null) {
             throw new OrderException("해당 상품이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
-
-        //product 로직에서 이미 품절된 상품일 경우,
-//        if(productResponseByOrder.getSoldOut()){
-//            throw new OrderException("해당 상품은 품절된 상품입니다", HttpStatus.BAD_REQUEST);
-//        }
-        log.info("상품 조회 완료");
+        log.info("상품 검증 완료");
 
         // 2. 재고가 주문보다 많나 체크 - 주문이 현재 가능한 상태인지 확인 로직
         ApiResponse<InventoryCheckResponseDto> responseInventory = productClient.checkOrderableInventory(request.productId(), request.orderQuantity());

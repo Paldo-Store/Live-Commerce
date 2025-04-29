@@ -1,17 +1,15 @@
 package com.live_commerce.order.application.service;
 
 import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
-import com.live_commerce.order.application.dto.response.OrderCreateResponse;
-import com.live_commerce.order.application.dto.response.OrderProductResponse;
 import com.live_commerce.order.application.dto.response.OrderUpdateResponse;
 import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.infrastructure.client.*;
-import com.live_commerce.order.infrastructure.client.response.InventoryCheckQuantityResponseDto;
-import com.live_commerce.order.infrastructure.client.response.InventoryCheckResponseDto;
+import com.live_commerce.order.infrastructure.client.feign.CouponClient;
+import com.live_commerce.order.infrastructure.client.feign.ProductClient;
+import com.live_commerce.order.infrastructure.client.response.*;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
