@@ -4,9 +4,11 @@ import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage;
+import com.live_commerce.order.kafkaOrder.coupon.CouponUsedEvent;
 import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
 import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
+import com.live_commerce.order.kafkaOrder.product.InventoryEventProducer;
+import com.live_commerce.order.kafkaOrder.product.OrderRequestedInventoryEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ public class PaymentSuccessServiceKafka {
 
     private final OrderRepository orderRepository;
     private final CouponUsedProducer couponUsedProducer;
+    private final InventoryEventProducer inventoryEventProducer;
 
     //TODO KAFKA
     //결제 처리 응답값 가져오기
@@ -44,16 +47,15 @@ public class PaymentSuccessServiceKafka {
         log.info("READY 에서 PAID로 변경 성공!");
 
         //TODO KAFKA 처리
-        //재고 감소 진행
-        //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
-//        OrderCreatedEvent eventInventory = new OrderCreatedEvent(order.getId(), order.getProductId(), order.getProductQuantity());
-//        inventoryEventProducer.sendOrderCreatedEvent(eventInventory);
+        // 6. 재고 감소 진행
+        OrderRequestedInventoryEvent eventProductDecrease = new OrderRequestedInventoryEvent(order.getId(), order.getProductId(), order.getProductQuantity());
+        inventoryEventProducer.sendOrderRequestedInventoryEvent(eventProductDecrease);
         log.info("재고 감소 성공!!");
 
         //TODO KAFKA
         // 7. 쿠폰 사용 처리
         if(order.getCouponId() != null){
-            CouponUsedMessage eventCoupon = new CouponUsedMessage(order.getCouponId(), userId);
+            CouponUsedEvent eventCoupon = new CouponUsedEvent(order.getCouponId(), userId);
             couponUsedProducer.sendCouponUsedEvent(eventCoupon);
         }
         return "결제 성공 처리 완료";

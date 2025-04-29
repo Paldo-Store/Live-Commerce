@@ -162,4 +162,19 @@ public class IssuedCouponService {
     // publishCouponUsedEventPort.publishCouponUsedEvent(couponId, userId);
     return UsedIssuedCouponResponse.from(issued);
   }
+
+  public void handleCouponUsedEvent(UUID couponId, UUID userId) {
+    log.info("✅ 쿠폰 사용 후처리 시작: couponId={}, userId={}", couponId, userId);
+
+    // 1) 미사용 쿠폰 조회 (Repository 직접 호출)
+    IssuedCoupon issuedCoupon = issuedCouponRepository
+            .findByIdAndUserIdAndIsUsedFalse(couponId, userId)
+            .orElseThrow(() -> {
+              IssuedCouponException.issuedCouponNotFound();
+              return null;
+            });
+
+    checkIfCouponUsed(issuedCoupon);
+    processCouponUsage(issuedCoupon);
+  }
 }

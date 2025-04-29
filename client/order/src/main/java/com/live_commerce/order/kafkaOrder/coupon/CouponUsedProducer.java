@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CouponUsedProducer {
 
-    private final KafkaTemplate<String, CouponUsedMessage> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    private static final String TOPIC = "coupon_used";
+    private static final String TOPIC = "coupon-used";
 
-    public void sendCouponUsedEvent(CouponUsedMessage event) {
+    public void sendCouponUsedEvent(CouponUsedEvent event) {
         kafkaTemplate.send(TOPIC, event.userId().toString(), event);
         log.info("✅ 쿠폰 사용 이벤트 전송 성공: couponId={}, userId={}", event.couponId(), event.userId());
     }

@@ -10,14 +10,9 @@ import com.live_commerce.order.application.exception.OrderExceptionCode;
 import com.live_commerce.order.application.service.OrderModificationService;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
-import com.live_commerce.order.infrastructure.client.feign.CouponClient;
-import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
-import com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage;
 import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
-import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
 import com.live_commerce.order.kafkaOrder.product.InventoryEventProducer;
-import com.live_commerce.order.kafkaOrder.product.OrderCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -32,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import static com.live_commerce.order.domain.model.OrderStatus.PAID;
 
 @Slf4j
 @Service
