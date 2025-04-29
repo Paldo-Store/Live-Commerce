@@ -19,8 +19,7 @@ public class NotificationEventConsumer {
 
   @KafkaListener(
       topics = "notification-created",
-      groupId = "${spring.application.name}",
-      containerFactory = "kafkaListenerContainerFactory"
+      groupId = "${spring.application.name}"
   )
   public void listen(NotificationCreatedEvent msg) throws IOException {
     notificationService.processByMessage(msg);
