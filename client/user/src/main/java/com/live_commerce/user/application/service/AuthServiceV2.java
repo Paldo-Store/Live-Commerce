@@ -19,7 +19,7 @@ import com.live_commerce.user.domain.repository.UserRepository;
 import com.live_commerce.user.infrastructure.common.JwtUtil;
 import com.live_commerce.user.infrastructure.common.PasswordGenerator;
 import com.live_commerce.user.infrastructure.common.RedisUtil;
-import com.live_commerce.user.infrastructure.kafka.event.FirstJoinCouponMessage;
+import com.live_commerce.user.infrastructure.kafka.event.FirstJoinCouponEvent;
 import com.live_commerce.user.infrastructure.kafka.producer.FirstJoinCouponProducer;
 
 import io.jsonwebtoken.Claims;
@@ -64,7 +64,7 @@ public class AuthServiceV2 {
 		User savedUser = userRepository.save(user);
 
 		// Kafka로 첫가입 쿠폰 발급 이벤트 발행
-		firstJoinCouponProducer.send(new FirstJoinCouponMessage(savedUser.getUserId()));
+		firstJoinCouponProducer.send(new FirstJoinCouponEvent(savedUser.getUserId()));
 
 		return UserSignUpResponseDto.from(savedUser);
 	}
