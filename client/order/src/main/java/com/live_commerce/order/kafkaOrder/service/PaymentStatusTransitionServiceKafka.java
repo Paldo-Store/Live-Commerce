@@ -15,10 +15,7 @@ import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.client.request.InventoryIncreaseRequestDto;
 import com.live_commerce.order.infrastructure.client.request.PaymentReadyRequestDto;
 import com.live_commerce.order.infrastructure.client.response.PaymentRefundResponseDto;
-import com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage;
 import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
-import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
-import com.live_commerce.order.kafkaOrder.product.OrderCreatedEvent;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
-import static com.live_commerce.order.domain.model.OrderStatus.PAID;
 
 @Slf4j
 @Service

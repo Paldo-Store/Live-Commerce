@@ -11,6 +11,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 @EnableJpaAuditing
 @EnableDiscoveryClient
 @EnableFeignClients
+@EnableKafka
 public class CouponApplication {
 
 	public static void main(String[] args) {
