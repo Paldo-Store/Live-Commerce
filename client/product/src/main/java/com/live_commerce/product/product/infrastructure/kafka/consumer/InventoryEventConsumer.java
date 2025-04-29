@@ -1,10 +1,9 @@
-package com.live_commerce.product.inventory.infrastructure.kafka.consumer;
+package com.live_commerce.product.product.infrastructure.kafka.consumer;
 
 import com.live_commerce.product.inventory.application.service.InventoryService;
-import com.live_commerce.product.inventory.infrastructure.kafka.event.InventoryDecreasedEvent;
-import com.live_commerce.product.inventory.infrastructure.kafka.event.InventoryFailedEvent;
-import com.live_commerce.product.inventory.infrastructure.kafka.event.OrderCreatedEvent;
 import com.live_commerce.product.inventory.domain.exception.InventoryException;
+import com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent;
+import com.live_commerce.product.product.infrastructure.kafka.event.OrderRequestedInventoryEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,9 +18,9 @@ public class InventoryEventConsumer {
     private final InventoryService inventoryService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @KafkaListener(topics = "order-created", groupId = "inventory-group", containerFactory = "inventoryKafkaListenerContainerFactory")
-    public void consumeOrderCreated(OrderCreatedEvent event) {
-        log.info("order-created 이벤트 수신: {}", event);
+    @KafkaListener(topics = "inventory-decrease")
+    public void consumeOrderCreated(OrderRequestedInventoryEvent event) {
+        log.info("inventory-decrease 이벤트 수신: {}", event);
 
         try {
             inventoryService.decreaseInventoryV2(event.productId(), event.quantity());
