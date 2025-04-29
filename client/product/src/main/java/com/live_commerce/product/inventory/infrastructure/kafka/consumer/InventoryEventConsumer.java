@@ -19,7 +19,7 @@ public class InventoryEventConsumer {
     private final InventoryService inventoryService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @KafkaListener(topics = "order-created", containerFactory = "inventoryKafkaListenerContainerFactory")
+    @KafkaListener(topics = "order-created", groupId = "inventory-group", containerFactory = "inventoryKafkaListenerContainerFactory")
     public void consumeOrderCreated(OrderCreatedEvent event) {
         log.info("order-created 이벤트 수신: {}", event);
 
