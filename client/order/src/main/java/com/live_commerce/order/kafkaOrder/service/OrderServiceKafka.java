@@ -50,8 +50,8 @@ public class OrderServiceKafka {
     private final OrderModificationService orderModificationService;
 
     //feign 요청
-    private final ProductClient productClient;
-    private final CouponClient couponClient;
+//    private final ProductClient productClient;
+//    private final CouponClient couponClient;
 
     //kafka
     private final KafkaTemplate<String, Object> kafkaTemplate;
