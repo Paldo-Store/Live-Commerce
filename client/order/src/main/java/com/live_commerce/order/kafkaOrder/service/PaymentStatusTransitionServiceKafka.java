@@ -79,6 +79,7 @@ public class PaymentStatusTransitionServiceKafka {
         if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.REFUNDED)) {
             log.info("결제 취소 로직에 들어옴");
 
+            //TODO KAFKA
             // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
             ApiResponse<PaymentRefundResponseDto> responseRefund= paymentClient.refundPayment(order.getId());
             log.info("결제 취소 요청 들어감");
@@ -87,6 +88,7 @@ public class PaymentStatusTransitionServiceKafka {
                 throw new OrderException("결제 취소 요청 실패. 다시 시도하기", HttpStatus.BAD_REQUEST);
             }
 
+            //TODO KAFKA
             // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다. 재고 복구는 Product에서 로직 처리
             productClient.increaseInventory(new InventoryIncreaseRequestDto(
                     order.getProductId(),
@@ -120,11 +122,11 @@ public class PaymentStatusTransitionServiceKafka {
 
         // 결제 대기 -> 승인 -> 결제 완료 요청
         // 주문 아이디와 최종 결제 금액을 payment로 보내줌 (order -> Panyemt)
-
         BigDecimal amount = BigDecimal.valueOf(order.getFinalPaidPrice());
         log.info("결제 예상금액 : " + amount);
         log.info("주문 id" + order.getId());
         log.info("결제 상품 id" + order.getId());
+
         /////// 결제 대기 요청
         //결제 대기 feign요청 -> 결제 대기 결과값 응답으로 받기
         ApiResponse<PaymentReadyResponseDto> responseReady= paymentClient.readyPayment(

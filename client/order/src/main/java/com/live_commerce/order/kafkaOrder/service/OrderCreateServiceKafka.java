@@ -36,12 +36,6 @@ public class OrderCreateServiceKafka {
     public OrderCreateResponse orderCreator(OrderCreateRequest request, UUID userId) {
 
         // 0. 방송중인지 확인 - 방송중일때만 주문 가능
-        // 0-1. order (produce) -> broadcast (consume)
-        // 0-2. broadcast -> kafka (consume -> produce)
-        // 0-3. broadcast (produce) -> order (consume)
-        // kafka Topic 생성
-        //broadcast-status-request(order) : 주문 서비스 → 방송 서비스로 상태 요청
-        //broadcast-status-response(broadcast) : 방송 서비스 → 주문 서비스로 상태 응답
         ApiResponse<BroadcastStatusResponse> response = broadcastClient.getBroadcast(request.broadcastId());
         BroadcastStatusResponse statusResponse = response.getData();
         if (statusResponse == null || statusResponse.getBroadcastStatus() != BroadcastStatus.LIVE) {

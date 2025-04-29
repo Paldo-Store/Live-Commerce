@@ -98,6 +98,7 @@ public class OrderServiceKafka {
         return orderModificationService.updateCreator(orderId, request, userId, role);
     }
 
+    //TODO KAFKA
     //주문 상태 변경 SERVICE
     //고객 제외 나머지가 주문 상태 변경
     @Transactional
