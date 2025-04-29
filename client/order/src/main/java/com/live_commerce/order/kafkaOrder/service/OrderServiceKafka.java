@@ -13,6 +13,8 @@ import com.live_commerce.order.infrastructure.client.feign.CouponClient;
 import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.client.request.InventoryDecreaseRequestDto;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
+import com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage;
+import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
 import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
 import com.live_commerce.order.kafkaOrder.product.InventoryEventProducer;
 import com.live_commerce.order.kafkaOrder.product.OrderCreatedEvent;
@@ -54,6 +56,7 @@ public class OrderServiceKafka {
     //kafka
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final InventoryEventProducer inventoryEventProducer;
+    private final CouponUsedProducer couponUsedProducer;
 
     //주문 생성 service
     @Transactional
@@ -173,8 +176,13 @@ public class OrderServiceKafka {
 
         //TODO KAFKA
         // 7. 쿠폰 사용 처리
-        if (order.getCouponId() != null) {
-            couponClient.useCoupon(order.getCouponId());
+//        if (order.getCouponId() != null) {
+//            couponClient.useCoupon(order.getCouponId());
+//        }
+        UUID userId = UUID.randomUUID();
+        if(order.getCouponId() != null){
+            CouponUsedMessage eventCoupon = new CouponUsedMessage(order.getCouponId(), userId);
+            couponUsedProducer.sendCouponUsedEvent(eventCoupon);
         }
         return "결제 성공 처리 완료";
     }
