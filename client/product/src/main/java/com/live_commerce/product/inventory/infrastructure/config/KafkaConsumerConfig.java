@@ -24,9 +24,6 @@ public class KafkaConsumerConfig {
     // 각 컨슈머는 이 팩토리를 통해 생성된 설정을 기반으로 작동합니다.
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
-        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>();
-        jsonDeserializer.addTrustedPackages("*");
-
         // 컨슈머 팩토리 설정을 위한 맵을 생성합니다.
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -38,7 +35,9 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
 
-        return new DefaultKafkaConsumerFactory<>(configProps, new StringDeserializer(), jsonDeserializer);
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
+        return new DefaultKafkaConsumerFactory<>(configProps);
     }
 
     // Kafka 리스너 컨테이너 팩토리를 생성하는 빈을 정의합니다.

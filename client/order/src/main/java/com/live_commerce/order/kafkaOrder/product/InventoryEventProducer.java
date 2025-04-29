@@ -1,27 +1,23 @@
 package com.live_commerce.order.kafkaOrder.product;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.kafka.core.KafkaTemplate;
+
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class InventoryEventProducer {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private static final String ORDER_CREATED_TOPIC = "order-created"; // ✅ 재고 컨슈머가 듣는 토픽 이름 정확히!
 
     public void sendOrderCreatedEvent(OrderCreatedEvent event) {
-        try {
-            String eventJson = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send("order-created", eventJson);
-            log.info("order-created 이벤트 발행 완료: {}", eventJson);
-        } catch (JsonProcessingException e) {
-            log.error("order-created 이벤트 변환 실패", e);
-        }
+        kafkaTemplate.send(ORDER_CREATED_TOPIC, event); // ✅ Object로 그대로 보내야 JsonDeserializer가 파싱 가능
+        log.info("✅ Kafka 이벤트 발행 완료: topic={}, payload={}", ORDER_CREATED_TOPIC, event);
     }
 }

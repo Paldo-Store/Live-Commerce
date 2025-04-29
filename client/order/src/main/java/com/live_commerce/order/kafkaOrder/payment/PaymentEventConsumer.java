@@ -18,15 +18,14 @@ public class PaymentEventConsumer {
 
 	// 결제 완료 이벤트 수신 (테스트용으로 간단히 구현한 것으로 참고해서 실제 로직 작성하시면 됩니다.)
 	@KafkaListener(topics = "payment-completed", groupId = "order-group")
-	public void listenPaymentCompleted(String message) {
+	public void listenPaymentCompleted(PaymentCompletedEvent event) {
 		try {
-			PaymentCompletedEvent event = objectMapper.readValue(message, PaymentCompletedEvent.class);
 			log.info("[Order] 결제 완료 이벤트 수신 - orderId: {}, message: {}, finalPaidPrice: {}",
 					event.orderId(), event.message(), event.finalPaidPrice());
 
 			orderServiceKafka.updatePaymentSuccessKafka(event);
 		} catch (Exception e) {
-			log.error("[Order] 결제 완료 이벤트 파싱 실패: {}", e.getMessage(), e);
+			log.error("[Order] 결제 완료 이벤트 처리 실패: {}", e.getMessage(), e);
 		}
 	}
 
