@@ -39,6 +39,7 @@ services:
     networks:
       - 8do-network
     depends_on:
+      - config
       - eureka
     env_file:
       - ./server/gateway/.env.prod
@@ -55,6 +56,7 @@ services:
     networks:
       - 8do-network
     depends_on:
+      - config
       - postgres
       - eureka
     env_file:
@@ -153,23 +155,24 @@ services:
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
-#  payment:
-#    build:
-#      context: ./client/payment
-#    container_name: payment
-#    ports:
-#      - "19080:19080"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/payment/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
+  payment:
+    build:
+      context: ./client/payment
+    container_name: payment
+    ports:
+      - "19080:19080"
+    networks:
+      - 8do-network
+    depends_on:
+      - config
+      - postgres
+      - eureka
+    env_file:
+      - ./client/payment/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
 
   coupon:
     build:
