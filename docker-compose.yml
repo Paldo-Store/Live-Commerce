@@ -96,23 +96,24 @@ services:
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
-#  ai:
-#    build:
-#      context: ./client/ai
-#    container_name: ai
-#    ports:
-#      - "19050:19050"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/ai/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
+  ai:
+    build:
+      context: ./client/ai
+    container_name: ai
+    ports:
+      - "19050:19050"
+    networks:
+      - 8do-network
+    depends_on:
+      - config
+      - postgres
+      - eureka
+    env_file:
+      - ./client/ai/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
 
   livebroadcast:
     build:

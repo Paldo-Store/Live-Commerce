@@ -1,14 +1,14 @@
 server:
-  port: 19050
+  port: 19020
 
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka:19090/eureka/
+      defaultZone: http://eureka:8761/eureka/
 
 spring:
   application:
-    name: ai
+    name: company
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -18,28 +18,15 @@ spring:
         show_sql: true
         format_sql: true
         use_sql_comments: true
-        default_schema: ai_core
+        default_schema: companies
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-gemini:
-  api:
-    key: ${GEMINI_API_KEY}
-  model:
-    name: ${GEMINI_MODEL_NAME}
-
-internal:
-  secret: ${INTERNAL_SECRET}
-
-slack:
-  bot-token: ${SLACK_BOT_TOKEN}
-  admin-user-id: ${SLACK_ADMIN_USER_ID}
-
 gateway:
-  base-url: http://gateway:19091
+  base-url: http://localhost:19091
 
 management:
   endpoints:
@@ -52,7 +39,10 @@ management:
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
 
 springdoc:
   api-docs:
-    path: /v3/api-docs/ai
+    path: /v3/api-docs/company
