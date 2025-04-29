@@ -1,4 +1,5 @@
-package com.live_commerce.order.application.service;
+package com.live_commerce.order.kafkaOrder.service;
+
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
 import com.live_commerce.order.application.dto.request.OrderStatusUpdateRequest;
@@ -6,15 +7,17 @@ import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
 import com.live_commerce.order.application.dto.response.*;
 import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.application.exception.OrderExceptionCode;
+import com.live_commerce.order.application.service.OrderModificationService;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.feign.CouponClient;
-import com.live_commerce.order.infrastructure.client.feign.PaymentClient;
 import com.live_commerce.order.infrastructure.client.feign.ProductClient;
-import com.live_commerce.order.infrastructure.client.request.InventoryDecreaseRequestDto;
-import com.live_commerce.order.infrastructure.client.request.PaymentSuccessRequest;
-import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponseOrder;
 import com.live_commerce.order.infrastructure.repository.OrderQueryRepository;
+import com.live_commerce.order.kafkaOrder.coupon.CouponUsedMessage;
+import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
+import com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent;
+import com.live_commerce.order.kafkaOrder.product.InventoryEventProducer;
+import com.live_commerce.order.kafkaOrder.product.OrderCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,25 +38,30 @@ import static com.live_commerce.order.domain.model.OrderStatus.PAID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderService {
+public class OrderServiceKafka {
     //DB 조회
     private final OrderRepository orderRepository;
     private final OrderQueryRepository orderQueryRepository;
+
     //service 호출
+    private final OrderCreateServiceKafka orderCreateServiceKafka;
     @Lazy
-    private final PaymentStatusTransitionService paymentStatusTransitionService;  //@Lazy 적용
-    private final OrderCreateService orderCreateService;
+    private final PaymentStatusTransitionServiceKafka paymentStatusTransitionServiceKafka;  //@Lazy 적용
     private final OrderModificationService orderModificationService;
 
     //feign 요청
     private final ProductClient productClient;
-    private final PaymentClient paymentClient;
     private final CouponClient couponClient;
+
+    //kafka
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final InventoryEventProducer inventoryEventProducer;
+    private final CouponUsedProducer couponUsedProducer;
 
     //주문 생성 service
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request, UUID userId) {
-        return orderCreateService.orderCreator(request, userId);
+        return orderCreateServiceKafka.orderCreator(request, userId);
     }
 
     //주문 전체 조회 service
@@ -89,11 +98,12 @@ public class OrderService {
         return orderModificationService.updateCreator(orderId, request, userId, role);
     }
 
+    //TODO KAFKA
     //주문 상태 변경 SERVICE
     //고객 제외 나머지가 주문 상태 변경
     @Transactional
     public OrderStatusUpdateResponse updateOrderStatus(UUID orderId, OrderStatusUpdateRequest request, UUID userId, String role) {
-        return paymentStatusTransitionService.updateCreator(orderId, request, userId, role);
+        return paymentStatusTransitionServiceKafka.updateCreator(orderId, request, userId, role);
     }
 
     //주문 삭제 SERVICE
@@ -143,47 +153,45 @@ public class OrderService {
         }
     }
 
-    //결제 성공 응답 service 처리
-//    public PaymentSuccessResponseOrder getPaymentSuccess(UUID orderId, boolean request){
-//        boolean paymentSuccess = request.success(); //결제 성공이면 true
-//        return new PaymentSuccessResponseOrder(orderId, paymentSuccess);
-//    }
-
-    //결제 취소 응답 service 처리
-//    public boolean getPaymentFail(UUID orderId, PaymentFailRequest request){
-//        return request.success();  //취소 성공이면 true
-//    }
-
+    //TODO KAFKA
     //결제 처리 응답값 가져오기
     @Transactional
-    public PaymentSuccessResponseOrder updatePaymentSuccess(UUID orderId, PaymentSuccessRequest request){
-        Order order = orderRepository.findById(orderId)
+    public String updatePaymentSuccessKafka(PaymentCompletedEvent event){
+        Order order = orderRepository.findById(event.orderId())
                 .orElseThrow(() -> new OrderException(OrderExceptionCode.NOT_FOUND));
         log.info("주문 들고오기 성공");
-        if(!(request.success())){
+        if(event.message() == null){
             throw new OrderException("결제 상태가 COMPLETED가 아닌 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
         }
 
-        // 생각해보니 feign 통신 할 이유가 없음. 이미 결제 성공 상태이므로 order측 상태변경만 이루어진다.
-//        ApiResponse<PaymentGetResponseDto> response = paymentClient.getPayment(request.paymentId());
-//        PaymentGetResponseDto paymentGetResponseDto = response.getData();
-//        log.info("paymentId에 해당하는 payment를 들고오기.");
-//
-//        //만약 payment의 결제 상태가 COMPLETED가 아니면 결제 안된것이다.
-//        if( !(paymentGetResponseDto.status().equals(PaymentStatus.COMPLETED)) ){
-//            throw new OrderException("결제 상태가 COMPLETED 되지 않은 상태입니다. 다시 결제해주세요 ", HttpStatus.FORBIDDEN);
-//        }
         //상태 변경 PAID로 변경
         order.changeStatus(PAID);
         log.info("READY 에서 PAID로 변경 성공!");
 
+        //TODO KAFKA 처리
         //재고 감소 진행
-        productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+        //productClient.decreaseInventory(new InventoryDecreaseRequestDto(order.getProductId(), order.getProductQuantity()));
+        OrderCreatedEvent eventInventory = new OrderCreatedEvent(order.getId(), order.getProductId(), order.getProductQuantity());
+        inventoryEventProducer.sendOrderCreatedEvent(eventInventory);
+        log.info("재고 감소 성공!!");
 
+        //TODO KAFKA
         // 7. 쿠폰 사용 처리
-        if (order.getCouponId() != null) {
-            couponClient.useCoupon(order.getCouponId());
+//        if (order.getCouponId() != null) {
+//            couponClient.useCoupon(order.getCouponId());
+//        }
+        UUID userId = UUID.randomUUID();
+        if(order.getCouponId() != null){
+            CouponUsedMessage eventCoupon = new CouponUsedMessage(order.getCouponId(), userId);
+            couponUsedProducer.sendCouponUsedEvent(eventCoupon);
         }
-        return new PaymentSuccessResponseOrder(order.getId(), request.success());
+        return "결제 성공 처리 완료";
+    }
+
+    //kafka
+    public void sendMessage(String topic , String key, String message) {
+        for (int i = 0; i < 10; i++) {
+            kafkaTemplate.send(topic, key, message + " " + i);
+        }
     }
 }

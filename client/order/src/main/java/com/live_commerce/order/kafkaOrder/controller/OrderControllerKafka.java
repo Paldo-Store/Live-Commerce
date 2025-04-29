@@ -1,14 +1,15 @@
-package com.live_commerce.order.presentation.controller;
+package com.live_commerce.order.kafkaOrder.controller;
+
 
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
 import com.live_commerce.order.application.dto.request.OrderStatusUpdateRequest;
 import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
 import com.live_commerce.order.application.dto.response.*;
-import com.live_commerce.order.application.service.OrderService;
 import com.live_commerce.order.infrastructure.client.request.PaymentSuccessRequest;
 import com.live_commerce.order.infrastructure.client.response.PaymentSuccessResponseOrder;
 import com.live_commerce.order.infrastructure.common.ResponseUtil;
 import com.live_commerce.order.infrastructure.security.RequestUserDetails;
+import com.live_commerce.order.kafkaOrder.service.OrderServiceKafka;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +22,12 @@ import java.util.UUID;
 
 
 @Slf4j
-@RequestMapping("/api/v1/orders")
+@RequestMapping("/api/v2/orders")  //kafka 적용 버전
 @RestController
 @RequiredArgsConstructor
-public class OrderController {
-    private final OrderService orderService;
+public class OrderControllerKafka {
+
+    private final OrderServiceKafka orderServiceKafka;
 
     //주문 생성 API
     //누구나 주문 가능
@@ -36,9 +38,8 @@ public class OrderController {
 
         //주문한 사람 id 받아오기
         UUID userId = userDetails.getUserId();
-        String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        OrderCreateResponse response = orderService.createOrder(request, userId);
+        OrderCreateResponse response = orderServiceKafka.createOrder(request, userId);
         return ResponseUtil.success(response);
     }
 
@@ -52,7 +53,7 @@ public class OrderController {
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        OrderGetResponse response = orderService.getOrders(page, size, sort, userId, role);
+        OrderGetResponse response = orderServiceKafka.getOrders(page, size, sort, userId, role);
         return ResponseUtil.success(response);
     }
 
@@ -64,7 +65,7 @@ public class OrderController {
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        OrderGetOneResponse response = orderService.getOrder(orderId, userId, role);
+        OrderGetOneResponse response = orderServiceKafka.getOrder(orderId, userId, role);
         return ResponseUtil.success(response);
     }
 
@@ -78,7 +79,7 @@ public class OrderController {
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        OrderUpdateResponse response = orderService.updateOrder(orderId, request, userId, role);
+        OrderUpdateResponse response = orderServiceKafka.updateOrder(orderId, request, userId, role);
         return ResponseUtil.success(response);
     }
 
@@ -91,7 +92,7 @@ public class OrderController {
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        OrderStatusUpdateResponse response = orderService.updateOrderStatus(orderId, request, userId, role);
+        OrderStatusUpdateResponse response = orderServiceKafka.updateOrderStatus(orderId, request, userId, role);
         return ResponseUtil.success(response);
     }
 
@@ -103,17 +104,27 @@ public class OrderController {
         UUID userId = userDetails.getUserId();
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        OrderDeleteResponse response = orderService.deleteOrder(orderId, userId, role);
+        OrderDeleteResponse response = orderServiceKafka.deleteOrder(orderId, userId, role);
         return ResponseUtil.success(response);
     }
 
-    //payment -> order 로 받는 controller 생성
-    // 결제 성공 응답 받는 Api
-    @PostMapping("/{orderId}/payment-success")
-    public ResponseEntity<ApiResponse<PaymentSuccessResponseOrder>> notifyPaymentSuccess(
-            @PathVariable UUID orderId,
-            @RequestBody PaymentSuccessRequest request){
-        PaymentSuccessResponseOrder response=  orderService.updatePaymentSuccess(orderId, request);
-        return ResponseUtil.success(response);
+    //KAFKA -> controller 없이 진행
+//    //payment -> order 로 받는 controller 생성
+//    // 결제 성공 응답 받는 Api
+//    @PostMapping("/{orderId}/payment-success")
+//    public ResponseEntity<ApiResponse<PaymentSuccessResponseOrder>> notifyPaymentSuccess(
+//            @PathVariable UUID orderId,
+//            @RequestBody PaymentSuccessRequest request){
+//        PaymentSuccessResponseOrder response=  orderServiceKafka.updatePaymentSuccess(orderId, request);
+//        return ResponseUtil.success(response);
+//    }
+
+    //kafka
+    @GetMapping("/send")
+    public String sendMessage(@RequestParam("topic") String topic,
+                              @RequestParam("key") String key,
+                              @RequestParam("message") String message) {
+        orderServiceKafka.sendMessage(topic, key, message);
+        return "Message sent to Kafka topic";
     }
 }
