@@ -1,17 +1,29 @@
 services:
 
-#  eureka:
-#    build:
-#      context: ./server/eureka
-#    container_name: eureka
-#    ports:
-#      - "19090:19090"
-#    networks:
-#      - 8do-network
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
+  config:
+    build:
+      context: ./server/config
+    container_name: config
+    ports:
+      - "18080:18080"
+    networks:
+      - 8do-network
+
+
+  eureka:
+    build:
+      context: ./server/eureka
+    container_name: eureka
+    ports:
+      - "19090:19090"
+    networks:
+      - 8do-network
+    depends_on:
+      - config
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
 #  gateway:
 #    build:
 #      context: ./server/gateway
@@ -27,7 +39,7 @@ services:
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
+
 #  company:
 #    build:
 #      context: ./client/company
@@ -95,24 +107,24 @@ services:
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod
 #      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
-#  livebroadcast:
-#    build:
-#      context: ./client/livebroadcast
-#    container_name: livebroadcast
-#    ports:
-#      - "19060:19060"
-#    networks:
-#      - 8do-network
-#    depends_on:
-#      - postgres
-#      - eureka
-#    env_file:
-#      - ./client/livebroadcast/.env.prod
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=prod
-#      - JAVA_OPTS=-Dfile.encoding=UTF-8
-#
+
+  livebroadcast:
+    build:
+      context: ./client/livebroadcast
+    container_name: livebroadcast
+    ports:
+      - "19060:19060"
+    networks:
+      - 8do-network
+    depends_on:
+      - postgres
+      - eureka
+    env_file:
+      - ./client/livebroadcast/.env.prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
+
 #  product:
 #    build:
 #      context: ./client/product
