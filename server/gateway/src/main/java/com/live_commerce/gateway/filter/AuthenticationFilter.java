@@ -52,6 +52,7 @@ public class AuthenticationFilter implements GlobalFilter {
 	private boolean isPublicPath(String path, String method) {
 		return (path.equals("/api/v1/ai") && method.equalsIgnoreCase("POST")) ||
 			path.startsWith("/api/v1/auth/") ||
+			path.startsWith("/api/v2/auth/") ||
 			path.startsWith("/swagger-ui/") ||
 			path.startsWith("/v3/api-docs") ||
 			path.startsWith("/actuator");
