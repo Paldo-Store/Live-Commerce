@@ -1,6 +1,6 @@
 package com.live_commerce.product.inventory;
 
-import com.live_commerce.product.inventory.application.service.ProductRankingService;
+import com.live_commerce.product.product.application.service.ProductRankingService;
 import com.live_commerce.product.product.application.dto.PopularProductsResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

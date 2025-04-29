@@ -1,7 +1,7 @@
-package com.live_commerce.product.product.application.service;
+package com.live_commerce.product.product.infrastructure.kafka.consumer;
 
 
-import com.live_commerce.product.inventory.application.dto.event.InventorySoldOutEvent;
+import com.live_commerce.product.inventory.infrastructure.kafka.event.InventorySoldOutEvent;
 import com.live_commerce.product.product.application.validation.ProductValidator;
 import com.live_commerce.product.product.domain.model.Product;
 import com.live_commerce.product.product.domain.model.ProductStatus;

@@ -1,8 +1,7 @@
-package com.live_commerce.product.inventory.application.service;
+package com.live_commerce.product.product.application.service;
 
 import com.live_commerce.product.inventory.application.dto.cache.ProductSoldCountDto;
 import com.live_commerce.product.product.application.dto.PopularProductsResponseDto;
-import com.live_commerce.product.product.application.service.ProductService;
 import com.live_commerce.product.product.domain.model.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

@@ -1,7 +1,7 @@
 package com.live_commerce.product.inventory.presentation.controller;
 
 
-import com.live_commerce.product.inventory.application.dto.event.OrderCreatedEvent;
+import com.live_commerce.product.inventory.infrastructure.kafka.event.OrderCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
