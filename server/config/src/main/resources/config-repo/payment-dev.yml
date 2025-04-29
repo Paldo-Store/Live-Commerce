@@ -34,16 +34,29 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
-    consumer:
-      group-id: payment-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    properties:
-      spring.json.trusted.packages: "*"
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: >
+          payment-completed:com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent,
+          payment-failed:com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent
+
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.live_commerce
+        spring.json.type.mapping: >
+          payment-completed:com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent,
+          payment-failed:com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent
+
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
 
 kakao:
   pay:

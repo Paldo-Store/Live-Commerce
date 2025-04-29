@@ -43,6 +43,29 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: >
+          first-coupon-topic:com.live_commerce.user.infrastructure.kafka.event.FirstJoinCouponMessage
+
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.live_commerce
+        spring.json.type.mapping: >
+          first-coupon-topic:com.live_commerce.user.infrastructure.kafka.event.FirstJoinCouponMessage
+
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
 management:
   endpoints:
     web:

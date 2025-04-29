@@ -19,8 +19,8 @@ import com.live_commerce.user.domain.repository.UserRepository;
 import com.live_commerce.user.infrastructure.common.JwtUtil;
 import com.live_commerce.user.infrastructure.common.PasswordGenerator;
 import com.live_commerce.user.infrastructure.common.RedisUtil;
-import com.live_commerce.user.infrastructure.kafka.dto.FirstJoinCouponMessage;
-import com.live_commerce.user.infrastructure.kafka.producer.UserSignupEventProducer;
+import com.live_commerce.user.infrastructure.kafka.event.FirstJoinCouponEvent;
+import com.live_commerce.user.infrastructure.kafka.producer.FirstJoinCouponProducer;
 
 import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
@@ -35,7 +35,7 @@ public class AuthServiceV2 {
 	private final JwtUtil jwtUtil;
 	private final RedisUtil redisUtil;
 	private final MailService mailService;
-	private final UserSignupEventProducer userSignupEventProducer;
+	private final FirstJoinCouponProducer firstJoinCouponProducer;
 
 	private static final String REFRESH_KEY_PREFIX = "RT:";
 
@@ -64,7 +64,7 @@ public class AuthServiceV2 {
 		User savedUser = userRepository.save(user);
 
 		// Kafka로 첫가입 쿠폰 발급 이벤트 발행
-		userSignupEventProducer.sendFirstJoinCouponEvent(new FirstJoinCouponMessage(savedUser.getUserId()));
+		firstJoinCouponProducer.send(new FirstJoinCouponEvent(savedUser.getUserId()));
 
 		return UserSignUpResponseDto.from(savedUser);
 	}
