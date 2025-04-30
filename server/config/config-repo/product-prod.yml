@@ -35,6 +35,27 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: kafka:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: >
+          order-created:com.live_commerce.product.product.infrastructure.kafka.event.OrderCreatedEvent,
+          inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+        spring.json.type.mapping: >
+          order-created:com.live_commerce.product.product.infrastructure.kafka.event.OrderCreatedEvent,
+          inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent
+      listener:
+        ack-mode: MANUAL_IMMEDIATE
 
   redis:
     host: redis

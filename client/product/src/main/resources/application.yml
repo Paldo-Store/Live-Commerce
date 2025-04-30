@@ -1,17 +1,8 @@
 spring:
   config:
-    import: "configserver:http://localhost:18080"
-  application:
-    name: product
-  profiles:
-    active: dev
-
-#spring:
-#  profiles:
-#    active: prod
-#  cloud:
-#    config:
-#      enabled: false
-
-
-
+    import: "configserver:http://config:18080"
+  cloud:
+    config:
+      name: product
+      profile: prod
+      fail-fast: true
