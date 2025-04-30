@@ -6,6 +6,7 @@ import com.live_commerce.chat.application.dto.response.ChatDeleteResponse;
 import com.live_commerce.chat.application.dto.response.ChatGetResponse;
 import com.live_commerce.chat.application.service.ChatService;
 import com.live_commerce.chat.infrastructure.common.ResponseUtil;
+import com.live_commerce.chat.infrastructure.redis.ChatRedisPublisher;
 import com.live_commerce.chat.infrastructure.security.CustomWebSocketHandler;
 import com.live_commerce.chat.infrastructure.security.RequestUserDetails;
 import com.live_commerce.chat.presentation.common.ApiResponse;
@@ -25,27 +26,19 @@ public class ChatController {
 
     private final ChatService chatService;
     private final CustomWebSocketHandler webSocketHandler;
+    private final ChatRedisPublisher chatRedisPublisher;  // ✅ 주입 수정
 
-    //chat 생성 API
+    // chat 생성 API
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<ChatCreateResponse>> createChat(
-            @RequestBody ChatCreateRequest request,
-            @AuthenticationPrincipal RequestUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<Void>> createChat(
+        @RequestBody ChatCreateRequest request,
+        @AuthenticationPrincipal RequestUserDetails userDetails) {
 
-        //userId 가져오기
         UUID userId = userDetails.getUserId();
-        log.info("userId 가져오기" + userId);
+        chatRedisPublisher.publishChat(request, userId);  // ✅ 요청을 Redis로 발행
 
-        //권한은 userDetails로 넘겨준다.
-        ChatCreateResponse response = chatService.createChat(request, userId);
-
-        // WebSocket을 통해 메시지 전송
-        webSocketHandler.broadcast(request.liveBroadcastId(), userId, "메시지 전송!");
-        log.info("websocket 통해 메시지 전송" + request.liveBroadcastId());
-
-        return ResponseUtil.success(response);
+        return ResponseUtil.success(null);  // ✅ 빠르게 성공 응답 (비동기 구조)
     }
-
     //chat 전체 조회 API
     //TODO 관리자와 쇼호스트만 가능
     @GetMapping("/")

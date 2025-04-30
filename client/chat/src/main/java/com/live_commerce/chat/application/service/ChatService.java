@@ -1,5 +1,6 @@
 package com.live_commerce.chat.application.service;
 
+import com.live_commerce.chat.application.dto.message.ChatRedisPayload;
 import com.live_commerce.chat.application.dto.request.ChatAnalyzeRequestDto;
 import com.live_commerce.chat.application.dto.request.ChatCreateRequest;
 import com.live_commerce.chat.application.dto.response.ChatCreateResponse;
@@ -46,16 +47,14 @@ public class ChatService {
     //chat 생성 서비스
     @Transactional
     public ChatCreateResponse createChat(ChatCreateRequest request, UUID userId) {
-        //chat 저장
-        log.info("chat 저장!!!!!!!!!");
+        // Redis Subscriber가 이 메서드를 호출해 실제 저장함
         Chat chat = new Chat(userId, request.chatting(), request.liveBroadcastId(), request.messageType());
         Chat saved = chatRepository.save(chat);
 
-        // Redisson을 이용한 채팅 카운팅 + 방송 등록
-        String roomKey = "chat:count:" + request.liveBroadcastId();
-        RAtomicLong counter = redisson.getAtomicLong(roomKey);
+        // Redisson 카운팅 로직
+        RAtomicLong counter = redisson.getAtomicLong("chat:count:" + request.liveBroadcastId());
         long count = counter.incrementAndGet();
-        counter.expire(Duration.ofMinutes(10)); // 10분간 유지
+        counter.expire(Duration.ofMinutes(10));
 
         if (count >= MIN_CHAT_THRESHOLD) {
             RSet<String> activeBroadcastSet = redisson.getSet("chat:active");
@@ -63,9 +62,9 @@ public class ChatService {
             activeBroadcastSet.expire(Duration.ofMinutes(15));
         }
 
-        log.info("chat 저장 성공!!!!!");
         return ChatCreateResponse.of(saved);
     }
+
 
     // chat 전체 채팅 조회
     @Transactional(readOnly = true)
@@ -150,4 +149,6 @@ public class ChatService {
         return userDetails.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_MASTER"));
     }
+
+
 }
