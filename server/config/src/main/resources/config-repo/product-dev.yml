@@ -41,7 +41,8 @@ spring:
       properties:
         spring.json.type.mapping: >
           inventory-decrease:com.live_commerce.product.product.infrastructure.kafka.event.OrderRequestedInventoryEvent,
-          inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent
+          inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent,
+          inventory-rollback:com.live_commerce.product.product.infrastructure.kafka.event.InventoryRollbackEvent
 
     consumer:
       group-id: ${spring.application.name}
@@ -52,7 +53,8 @@ spring:
         spring.json.trusted.packages: '*'
         spring.json.type.mapping: >
           inventory-decrease:com.live_commerce.product.product.infrastructure.kafka.event.OrderRequestedInventoryEvent,
-          inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent
+          inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent,
+          inventory-rollback:com.live_commerce.product.product.infrastructure.kafka.event.InventoryRollbackEvent
       listener:
         ack-mode: MANUAL_IMMEDIATE
 
