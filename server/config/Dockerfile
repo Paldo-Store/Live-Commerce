@@ -1,8 +1,10 @@
 FROM openjdk:17-jdk-slim
+RUN apt-get update && apt-get install -y curl
 WORKDIR /app
 
 COPY build/libs/*.jar configserver.jar
 COPY config-repo /app/config-repo
 
-ENTRYPOINT ["java", "-jar", "configserver.jar"]
 EXPOSE 18080
+ENTRYPOINT ["java", "-jar", "configserver.jar"]
+

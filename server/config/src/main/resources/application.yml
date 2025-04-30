@@ -12,8 +12,8 @@ spring:
         native:
           search-locations:
             - file:/app/config-repo
-#logging:
-#  level:
-#    root: INFO
-#    feign: DEBUG
-#    feign.client: DEBUG
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
