@@ -68,8 +68,6 @@ services:
         condition: service_healthy
       config:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     env_file:
       - ./client/company/.env.prod
     environment:
@@ -88,8 +86,6 @@ services:
       eureka:
         condition: service_healthy
       config:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
     env_file:
       - ./client/order/.env.prod
@@ -110,8 +106,6 @@ services:
         condition: service_healthy
       config:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     env_file:
       - ./client/chat/.env.prod
     environment:
@@ -130,8 +124,6 @@ services:
       eureka:
         condition: service_healthy
       config:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
     env_file:
       - ./client/ai/.env.prod
@@ -152,8 +144,6 @@ services:
         condition: service_healthy
       config:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     env_file:
       - ./client/livebroadcast/.env.prod
     environment:
@@ -172,8 +162,6 @@ services:
       eureka:
         condition: service_healthy
       config:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
     env_file:
       - ./client/product/.env.prod
@@ -194,8 +182,6 @@ services:
         condition: service_healthy
       config:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     env_file:
       - ./client/payment/.env.prod
     environment:
@@ -214,8 +200,6 @@ services:
       eureka:
         condition: service_healthy
       config:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
     env_file:
       - ./client/coupon/.env.prod
@@ -236,8 +220,6 @@ services:
         condition: service_healthy
       config:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     env_file:
       - ./client/notification/.env.prod
     environment:
@@ -257,35 +239,33 @@ services:
         condition: service_healthy
       config:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     env_file:
       - ./client/user/.env.prod
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Dfile.encoding=UTF-8
 
-  postgres:
-    image: postgres:15
-    container_name: live-commerce-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: livecommerce
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 8dostore
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    command: postgres -c max_connections=1000
-    networks:
-      - 8do-network
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#  postgres:
+#    image: postgres:15
+#    container_name: live-commerce-db
+#    restart: unless-stopped
+#    environment:
+#      POSTGRES_DB: livecommerce
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: 8dostore
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres-data:/var/lib/postgresql/data
+#      - ./init-scripts:/docker-entrypoint-initdb.d
+#    command: postgres -c max_connections=1000
+#    networks:
+#      - 8do-network
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
 
   redis:
     image: redis:latest
@@ -390,7 +370,7 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-data:
-    name: postgres_data
+#  postgres-data:
+#    name: postgres_data
   redis_data:
     name: redis_data
