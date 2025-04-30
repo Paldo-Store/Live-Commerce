@@ -1,6 +1,7 @@
 package com.live_commerce.product.product.infrastructure.kafka;
 
 
+import com.live_commerce.product.product.infrastructure.kafka.event.InventoryRollbackEvent;
 import com.live_commerce.product.product.infrastructure.kafka.event.OrderRequestedInventoryEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -24,10 +25,21 @@ public class InventoryTestProducerController {
             @RequestParam UUID productId
     ) {
         UUID orderId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        //UUID productId = UUID.fromString("30000000-0000-0000-0000-00000000001e");
         OrderRequestedInventoryEvent event = new OrderRequestedInventoryEvent(orderId, productId, quantity);
         kafkaTemplate.send("inventory-decrease", event);
 
         return "inventory-decrease 이벤트 발행 완료";
+    }
+
+    @PostMapping("/inventory-rollback")
+    public String sendInventoryRollbackEvent(
+            @RequestParam int quantity,
+            @RequestParam UUID productId
+    ) {
+        UUID orderId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        InventoryRollbackEvent event = new InventoryRollbackEvent(orderId, productId, quantity);
+        kafkaTemplate.send("inventory-rollback", event);
+
+        return "inventory-rollback 이벤트 발행 완료";
     }
 }
