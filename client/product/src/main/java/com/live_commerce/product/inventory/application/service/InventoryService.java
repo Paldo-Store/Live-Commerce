@@ -74,6 +74,15 @@ public class InventoryService {
         }
     }
 
+    @DistributedLock(key = "#productId")
+    @Transactional
+    public void increaseInventoryV2(UUID productId, int quantity) {
+        int updated = inventoryRepository.increaseInventoryAtomically(productId, quantity);
+        if (updated == 0) {
+            throw InventoryException.forInventoryNotFound();
+        }
+    }
+
     @Transactional
     @DistributedLock(key = "#productId")
     public void decreaseInventoryV2(UUID productId, int quantity) {
