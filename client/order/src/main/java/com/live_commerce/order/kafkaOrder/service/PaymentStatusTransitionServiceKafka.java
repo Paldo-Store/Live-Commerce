@@ -84,7 +84,6 @@ public class PaymentStatusTransitionServiceKafka {
         if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.REFUNDED)) {
             log.info("결제 취소 로직에 들어옴");
 
-            //TODO KAFKA
             // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
             ApiResponse<PaymentRefundResponseDto> responseRefund= paymentClient.refundPayment(order.getId());
             log.info("결제 취소 요청 들어감");
