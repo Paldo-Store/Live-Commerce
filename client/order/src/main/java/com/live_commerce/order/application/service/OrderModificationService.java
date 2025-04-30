@@ -66,8 +66,7 @@ public class OrderModificationService {
             throw new OrderException("재고가 없는 상태입니다.", HttpStatus.BAD_REQUEST);
         }
         log.info("재고 존재 여부 확인 완료");
-
-        // TODO 이미 삭제(단종)된 상품일 경우
+        
         // 상품이 품절일 경우
         if(productResponseByOrder == null) {
             throw new OrderException("해당 상품은 품절된 상품입니다.", HttpStatus.BAD_REQUEST);
@@ -76,7 +75,6 @@ public class OrderModificationService {
         // 해당 상품의 남은 재고 수량 들고오기
         ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = productClient.checkInventoryQuantity(productId, request.productQuantity());
         InventoryCheckQuantityResponseDto getInventoryQuantity = responseInventoryByQuantity.getData();
-
 
         int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
         log.info("재고 수량 들고오기");
