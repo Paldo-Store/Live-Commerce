@@ -42,14 +42,8 @@ public class OrderServiceKafka {
     private final PaymentStatusTransitionServiceKafka paymentStatusTransitionServiceKafka;  //@Lazy 적용
     private final OrderModificationService orderModificationService;
 
-    //feign 요청
-//    private final ProductClient productClient;
-//    private final CouponClient couponClient;
-
     //kafka
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final InventoryEventProducer inventoryEventProducer;
-    private final CouponUsedProducer couponUsedProducer;
 
     //주문 생성 service
     @Transactional

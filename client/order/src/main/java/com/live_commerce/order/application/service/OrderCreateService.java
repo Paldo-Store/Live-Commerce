@@ -3,6 +3,7 @@ package com.live_commerce.order.application.service;
 import com.live_commerce.order.application.dto.request.OrderCreateRequest;
 import com.live_commerce.order.application.dto.response.OrderCreateResponse;
 import com.live_commerce.order.application.exception.OrderException;
+import com.live_commerce.order.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.repository.OrderRepository;
 import com.live_commerce.order.infrastructure.client.feign.BroadcastClient;
@@ -128,19 +129,19 @@ public class OrderCreateService {
 
         //8. 최종 결제 금액 계산
         //할인 타입 - fixed, rate
-        String discountType = couponPolicyByCouponCode.discountType();
+        DISCOUNT_TYPE discountType = couponPolicyByCouponCode.discountType();
         log.info("쿠폰 할인 타입" + discountType);
         // 할인률, 할인값
         double discountValue = couponPolicyByCouponCode.discountValue();
         log.info("할인률 혹은 할인값 : " + discountValue);
 
         //할인값으로 계산
-        if(discountType.equalsIgnoreCase("fixed")){
+        if(discountType == DISCOUNT_TYPE.FIXED){
             finalPaidPrice = productTotalPrice - discountValue;  //할인 고정값
         }
 
         //할인률로 계산
-        if(discountType.equalsIgnoreCase("rate")){
+        if(discountType == DISCOUNT_TYPE.RATE){
             double discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
             finalPaidPrice = productTotalPrice - discountAmount;
         }

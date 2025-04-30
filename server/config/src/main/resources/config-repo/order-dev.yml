@@ -29,7 +29,8 @@ spring:
         spring.json.type.mapping: >
           payment-completed:com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent,
           coupon-used:com.live_commerce.order.kafkaOrder.coupon.CouponUsedEvent,
-          inventory-decrease:com.live_commerce.order.kafkaOrder.product.OrderRequestedInventoryEvent
+          inventory-decrease:com.live_commerce.order.kafkaOrder.product.OrderRequestedInventoryEvent,
+          inventory-rollback:com.live_commerce.order.kafkaOrder.product.InventoryRollbackEvent
     consumer:
       group-id: ${spring.application.name}
       auto-offset-reset: earliest
@@ -40,8 +41,8 @@ spring:
         spring.json.type.mapping: >
           payment-completed:com.live_commerce.order.kafkaOrder.payment.PaymentCompletedEvent,
           coupon-used:com.live_commerce.order.kafkaOrder.coupon.CouponUsedEvent,
-          inventory-decrease:com.live_commerce.order.kafkaOrder.product.OrderRequestedInventoryEvent
-
+          inventory-decrease:com.live_commerce.order.kafkaOrder.product.OrderRequestedInventoryEvent,
+          inventory-rollback:com.live_commerce.order.kafkaOrder.product.InventoryRollbackEvent
     listener:
       ack-mode: MANUAL_IMMEDIATE
 

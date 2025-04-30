@@ -13,8 +13,15 @@ public class InventoryEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    //재고 감소(결제 성공시)
     public void sendOrderRequestedInventoryEvent(OrderRequestedInventoryEvent event) {
         log.info("inventory-decrease 이벤트 발행: {}", event);
         kafkaTemplate.send("inventory-decrease", event);
+    }
+
+    //재고 증가(결제 취소시)
+    public void sendInventoryRollbackEvent(InventoryRollbackEvent event) {
+        log.info("inventory-rollback 이벤트 발행: {}", event);
+        kafkaTemplate.send("inventory-rollback", event);
     }
 }

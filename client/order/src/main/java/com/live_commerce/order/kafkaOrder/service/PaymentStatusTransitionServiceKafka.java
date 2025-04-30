@@ -16,6 +16,8 @@ import com.live_commerce.order.infrastructure.client.request.InventoryIncreaseRe
 import com.live_commerce.order.infrastructure.client.request.PaymentReadyRequestDto;
 import com.live_commerce.order.infrastructure.client.response.PaymentRefundResponseDto;
 import com.live_commerce.order.kafkaOrder.coupon.CouponUsedProducer;
+import com.live_commerce.order.kafkaOrder.product.InventoryEventProducer;
+import com.live_commerce.order.kafkaOrder.product.InventoryRollbackEvent;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,7 @@ public class PaymentStatusTransitionServiceKafka {
     boolean changeChangeStatus = false;
 
     //KAFKA
-    private CouponUsedProducer couponUsedProducer;
+    private final InventoryEventProducer inventoryEventProducer;
 
     //pending -> ready -> paid
 
@@ -84,7 +86,6 @@ public class PaymentStatusTransitionServiceKafka {
         if ( (currentStatus==OrderStatus.PAID) &&  (newStatus == OrderStatus.REFUNDED)) {
             log.info("결제 취소 로직에 들어옴");
 
-            //TODO KAFKA
             // 1. [결제 취소 처리] 필요 시 결제 서비스 호출(주문 번호와 쿠폰 적용 후 최종 결제 금액을 payment로 보내준다.)
             ApiResponse<PaymentRefundResponseDto> responseRefund= paymentClient.refundPayment(order.getId());
             log.info("결제 취소 요청 들어감");
@@ -95,9 +96,8 @@ public class PaymentStatusTransitionServiceKafka {
 
             //TODO KAFKA
             // 2. [재고 복구] 상품 서비스 호출 - 주문의 상품 id와 주문 상품 개수를 보내준다. 재고 복구는 Product에서 로직 처리
-            productClient.increaseInventory(new InventoryIncreaseRequestDto(
-                    order.getProductId(),
-                    order.getProductQuantity()));
+            inventoryEventProducer.sendInventoryRollbackEvent
+                    (new InventoryRollbackEvent(order.getId(),order.getProductId(),order.getProductQuantity()));
             log.info("결제 취소 후 재고 복구완료");
             log.info("결제 취소 완료");
 

@@ -4,6 +4,7 @@ import com.live_commerce.order.application.dto.request.OrderUpdateRequest;
 import com.live_commerce.order.application.dto.response.OrderUpdateResponse;
 import com.live_commerce.order.application.exception.OrderException;
 import com.live_commerce.order.application.exception.OrderExceptionCode;
+import com.live_commerce.order.domain.model.DISCOUNT_TYPE;
 import com.live_commerce.order.domain.model.Order;
 import com.live_commerce.order.domain.model.OrderStatus;
 import com.live_commerce.order.domain.repository.OrderRepository;
@@ -65,8 +66,7 @@ public class OrderModificationService {
             throw new OrderException("재고가 없는 상태입니다.", HttpStatus.BAD_REQUEST);
         }
         log.info("재고 존재 여부 확인 완료");
-
-        // TODO 이미 삭제(단종)된 상품일 경우
+        
         // 상품이 품절일 경우
         if(productResponseByOrder == null) {
             throw new OrderException("해당 상품은 품절된 상품입니다.", HttpStatus.BAD_REQUEST);
@@ -75,7 +75,6 @@ public class OrderModificationService {
         // 해당 상품의 남은 재고 수량 들고오기
         ApiResponse<InventoryCheckQuantityResponseDto> responseInventoryByQuantity = productClient.checkInventoryQuantity(productId, request.productQuantity());
         InventoryCheckQuantityResponseDto getInventoryQuantity = responseInventoryByQuantity.getData();
-
 
         int orderQty = request.productQuantity(); // 사용자가 주문한 상품의 수량 (요청 order -> product)
         log.info("재고 수량 들고오기");
@@ -135,17 +134,17 @@ public class OrderModificationService {
         //8. 최종 결제 금액 계산
 
         //할인 타입 - fixed, rate
-        String discountType = couponPolicyByCouponCode.discountType();
+        DISCOUNT_TYPE discountType = couponPolicyByCouponCode.discountType();
         // 할인률, 할인값
         double discountValue = couponPolicyByCouponCode.discountValue();
 
         //할인값으로 계산
-        if(discountType.equalsIgnoreCase("fixed")){
+        if(discountType == DISCOUNT_TYPE.FIXED){
             finalPaidPrice = productTotalPrice - discountValue;  //할인 고정값
         }
 
         //할인률로 계산
-        if(discountType.equalsIgnoreCase("rate")){
+        if(discountType == DISCOUNT_TYPE.RATE){
             double discountAmount = (productTotalPrice * discountValue) / 100;  //할인률로 계산
             finalPaidPrice = productTotalPrice - discountAmount;
         }
