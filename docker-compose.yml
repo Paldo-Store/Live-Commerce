@@ -27,7 +27,6 @@ services:
     depends_on:
       config:
         condition: service_healthy
-        restart: true
     environment:
       - SPRING_APPLICATION_NAME=eureka
       - SPRING_PROFILES_ACTIVE=prod
@@ -48,10 +47,8 @@ services:
     depends_on:
       eureka:
         condition: service_healthy
-        restart: true
       config:
         condition: service_healthy
-        restart: true
     env_file:
       - ./server/gateway/.env.prod
     environment:
@@ -69,10 +66,8 @@ services:
     depends_on:
       eureka:
         condition: service_healthy
-        restart: true
       config:
         condition: service_healthy
-        restart: true
       postgres:
         condition: service_healthy
     env_file:
