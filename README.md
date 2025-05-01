@@ -185,6 +185,7 @@
 
 ---
 ### 📁 인프라 설계도
+![image](https://github.com/user-attachments/assets/1e61a94a-146c-4908-b31e-756270dff31c)
 
 
 ---
