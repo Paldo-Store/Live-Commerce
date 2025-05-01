@@ -270,7 +270,7 @@ POST http:localhost:19091/v2/auth/signup
 
 | 이름       | 역할           | 담당 서비스                       | GitHub                                      | 
 |------------|----------------|------------------------------------|---------------------------------------------|
-| 서태웅 | 🛠 백엔드(팀장)   | 결제(Payment), AI         | [@dev-kim](https://github.com/STW5)       | 
+| 서태웅 | 🛠 백엔드(팀장)   | 유저(User), 결제(Payment), AI         | [@STW5](https://github.com/STW5)       | 
 | 김민주  | 🎨 백엔드(부팀장) | 방송(Broadcast), 상품(Product) |  [@minju-kim](https://github.com/mjjmjmjmj) | 
 | 정아현  | 📡 백엔드(문서담당)     | 주문(order) ,업체(Conpany),  채팅(Chat)         | [@greenblueredgreen](https://github.com/greenblueredgreen) | 
 | 최호진| 📦 백엔드(테크리더)      | 쿠폰(Coupon), 알림(Notification)    | [@gentle-tiger](https://github.com/gentle-tiger) |
