@@ -11,9 +11,8 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:18080/actuator/health || exit 1" ]
       interval: 1s
-#      timeout: 5s
       retries: 120
-#      start_period: 90s
+
 
   eureka:
     build:
@@ -50,7 +49,7 @@ services:
       config:
         condition: service_healthy
     env_file:
-      - ./server/gateway/.env.prod
+      - .env.prod
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Dfile.encoding=UTF-8

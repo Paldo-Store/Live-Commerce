@@ -54,8 +54,8 @@ spring:
         spring.json.type.mapping: >
           inventory-decrease:com.live_commerce.product.product.infrastructure.kafka.event.OrderRequestedInventoryEvent,
           inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent
-      listener:
-        ack-mode: MANUAL_IMMEDIATE
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
 
   redis:
     host: redis

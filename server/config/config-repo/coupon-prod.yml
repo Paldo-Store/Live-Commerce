@@ -31,19 +31,19 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties: { }
 
-      consumer:
-        group-id: ${spring.application.name}m
-        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-        properties:
-          spring.json.trusted.packages: '*'
-          #        com.live_commerce.user.infrastructure.kafka.event, com.live_commerce.coupon.infrastructure.kafka.event
-          spring.json.type.mapping: >
-            first-join-coupon: com.live_commerce.coupon.infrastructure.kafka.event.FirstJoinCouponEvent,
-            coupon-used: com.live_commerce.coupon.infrastructure.kafka.event.CouponUsedEvent
+    consumer:
+      group-id: ${spring.application.name}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+        #        com.live_commerce.user.infrastructure.kafka.event, com.live_commerce.coupon.infrastructure.kafka.event
+        spring.json.type.mapping: >
+          first-join-coupon: com.live_commerce.coupon.infrastructure.kafka.event.FirstJoinCouponEvent,
+          coupon-used: com.live_commerce.coupon.infrastructure.kafka.event.CouponUsedEvent
 
-      listener:
-        ack-mode: MANUAL_IMMEDIATE
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
 
 management:
   endpoints:
