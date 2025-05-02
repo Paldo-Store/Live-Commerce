@@ -19,7 +19,7 @@ public class InventoryEventConsumer {
     private final InventoryService inventoryService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @KafkaListener(topics = "inventory-decrease")
+    @KafkaListener(topics = "inventory-decrease", concurrency = "4", containerFactory = "kafkaListenerContainerFactory")
     public void consumeOrderCreated(OrderRequestedInventoryEvent event) {
         log.info("inventory-decrease 이벤트 수신: {}", event);
 
@@ -31,7 +31,7 @@ public class InventoryEventConsumer {
                     event.productId(),
                     event.quantity()
             );
-            kafkaTemplate.send("inventory-decreased", decreasedEvent);
+            kafkaTemplate.send("inventory-decreased", event.productId().toString(), decreasedEvent);
             log.info("inventory-decreased 이벤트 발행 완료: {}", decreasedEvent);
         } catch (InventoryException e) {
             log.error("재고 차감 실패: {}, 이유: {}", event.orderId(), e.getMessage());
