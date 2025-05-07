@@ -2,6 +2,7 @@ package com.live_commerce.order.infrastructure.client.feign;
 
 import com.live_commerce.order.infrastructure.client.request.InventoryDecreaseRequestDto;
 import com.live_commerce.order.infrastructure.client.request.InventoryIncreaseRequestDto;
+import com.live_commerce.order.infrastructure.client.request.ProductOrderPriceDto;
 import com.live_commerce.order.infrastructure.client.response.ProductCreateResponseDto;
 import com.live_commerce.order.infrastructure.client.response.InventoryCheckQuantityResponseDto;
 import com.live_commerce.order.infrastructure.client.response.InventoryCheckResponseDto;
@@ -40,4 +41,8 @@ public interface ProductClient {
             @RequestParam("productId") UUID productId,
             @RequestParam("orderQuantity") int orderQuantity
     );
+
+    // 실시간 상품 가격 조회(타임 세일)
+    @GetMapping("/api/v1/products/{productId}/price-for-order")
+    ApiResponse<ProductOrderPriceDto> getPriceForOrder(@PathVariable("productId") UUID productId);
 }

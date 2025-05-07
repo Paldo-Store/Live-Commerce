@@ -139,4 +139,13 @@ public class ProductService {
 
         return new ProductPriceResponseDto(productId, currentPrice, isDiscounted);
     }
+
+    @Transactional(readOnly = true)
+    public ProductOrderPriceDto getCurrentPriceForOrder(UUID productId) {
+        Product product = productValidator.validateAndFindProduct(productId);
+
+        Integer currentPrice = productDiscountCacheService.getDiscountPrice(productId).orElse(product.getPrice());
+
+        return new ProductOrderPriceDto(productId, currentPrice);
+    }
 }

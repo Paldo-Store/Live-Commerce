@@ -109,10 +109,24 @@ public class ProductController {
         return ResponseUtil.success("할인이 적용되었습니다.");
     }
 
+    /**
+     * 사용자용 가격확인 api
+     */
     @GetMapping("/{productId}/price")
     public ResponseEntity<ApiResponse<ProductPriceResponseDto>> getProductPrice(@PathVariable UUID productId) {
         ProductPriceResponseDto responseDto = productService.getProductPrice(productId);
         return ResponseUtil.success(responseDto);
     }
+
+    /**
+     * 주문용 가격확인 api
+     */
+    @GetMapping("/{productId}/price-for-order")
+    public ResponseEntity<ApiResponse<ProductOrderPriceDto>> getPriceForOrder(@PathVariable UUID productId) {
+        ProductOrderPriceDto dto = productService.getCurrentPriceForOrder(productId);
+        return ResponseUtil.success(dto);
+    }
+
+
 
 }
