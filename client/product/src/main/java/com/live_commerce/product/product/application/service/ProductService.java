@@ -35,6 +35,7 @@ public class ProductService {
     private final ProductQueryRepository productQueryRepository;
     private final InventoryService inventoryService;
     private final PermissionValidator permissionValidator;
+    private final ProductDiscountCacheService productDiscountCacheService;
 
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
 
@@ -126,5 +127,16 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Product findProductEntity(UUID productId) {
         return productValidator.validateAndFindProduct(productId);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductPriceResponseDto getProductPrice(UUID productId) {
+        Product product = productValidator.validateAndFindProduct(productId);
+
+        Integer currentPrice = productDiscountCacheService.getDiscountPrice(productId).orElse(product.getPrice());
+
+        boolean isDiscounted = !currentPrice.equals(product.getPrice());
+
+        return new ProductPriceResponseDto(productId, currentPrice, isDiscounted);
     }
 }

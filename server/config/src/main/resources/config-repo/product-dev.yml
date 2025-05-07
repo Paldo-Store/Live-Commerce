@@ -56,6 +56,7 @@ spring:
           inventory-decreased:com.live_commerce.product.product.infrastructure.kafka.event.InventoryDecreasedEvent,
           inventory-rollback:com.live_commerce.product.product.infrastructure.kafka.event.InventoryRollbackEvent
       listener:
+        concurrency: 4
         ack-mode: MANUAL_IMMEDIATE
 
 gateway:
