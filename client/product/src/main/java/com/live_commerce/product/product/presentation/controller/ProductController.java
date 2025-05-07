@@ -1,11 +1,14 @@
 package com.live_commerce.product.product.presentation.controller;
 
+import com.live_commerce.product.product.application.service.ProductDiscountService;
 import com.live_commerce.product.product.application.service.ProductRankingService;
 import com.live_commerce.product.product.application.dto.*;
 import com.live_commerce.product.product.application.service.ProductService;
+import com.live_commerce.product.product.application.validation.ProductValidator;
 import com.live_commerce.product.product.infrastructure.common.ResponseUtil;
 import com.live_commerce.product.product.infrastructure.security.RequestUserDetails;
 import com.live_commerce.product.product.presentation.common.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,8 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductRankingService productRankingService;
+    private final ProductValidator productValidator;
+    private final ProductDiscountService productDiscountService;
 
     @PreAuthorize("hasAnyRole('MASTER','SELLER')")
     @PostMapping
@@ -85,4 +90,29 @@ public class ProductController {
         List<PopularProductsResponseDto> top10Products = productRankingService.getTop10PopularProducts();
         return ResponseUtil.success(top10Products);
     }
+
+    @PreAuthorize("hasAnyRole('MASTER', 'SHOW_HOST')")
+    @PostMapping("/{productId}/live-discount")
+    public ResponseEntity<ApiResponse<String>> applyLiveDiscount(
+            @PathVariable UUID productId,
+            @RequestBody @Valid LiveDiscountRequestDto request,
+            @AuthenticationPrincipal RequestUserDetails userDetails
+    ){
+        productValidator.validateProductExists(productId);
+
+        productDiscountService.applyLiveDiscount(
+                productId,
+                request,
+                userDetails
+        );
+
+        return ResponseUtil.success("할인이 적용되었습니다.");
+    }
+
+    @GetMapping("/{productId}/price")
+    public ResponseEntity<ApiResponse<ProductPriceResponseDto>> getProductPrice(@PathVariable UUID productId) {
+        ProductPriceResponseDto responseDto = productService.getProductPrice(productId);
+        return ResponseUtil.success(responseDto);
+    }
+
 }
