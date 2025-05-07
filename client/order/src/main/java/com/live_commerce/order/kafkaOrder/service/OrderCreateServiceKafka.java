@@ -11,6 +11,7 @@ import com.live_commerce.order.infrastructure.client.feign.BroadcastClient;
 import com.live_commerce.order.infrastructure.client.feign.CouponClient;
 import com.live_commerce.order.infrastructure.client.feign.ProductClient;
 import com.live_commerce.order.infrastructure.client.feignEnum.BroadcastStatus;
+import com.live_commerce.order.infrastructure.client.request.ProductOrderPriceDto;
 import com.live_commerce.order.infrastructure.client.response.*;
 import com.live_commerce.order.presentation.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,11 @@ public class OrderCreateServiceKafka {
 
         log.info("상품 정보 들고오기" + productResponseByOrder);
 
+        // 1.2 실시간 상품 가격 조회
+        ApiResponse<ProductOrderPriceDto> requestProductPrice = productClient.getPriceForOrder(request.productId());
+        ProductOrderPriceDto productOrderPriceDto = requestProductPrice.getData();
+        int unitPrice = productOrderPriceDto.currentPrice();
+
         // productId에 해당하는 상품이 아예 없는 경우
         if (productResponseByOrder == null) {
             throw new OrderException("해당 상품이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
@@ -73,7 +79,8 @@ public class OrderCreateServiceKafka {
         // 5. total 주문 금액 계산
         // 주문한 수량 * 주문한 상품 한 개의 가격
         log.info("상품의 가격 : " + productResponseByOrder.price());
-        double productTotalPrice = orderQty * productResponseByOrder.price();
+        //double productTotalPrice = orderQty * productResponseByOrder.price();
+        double productTotalPrice = orderQty * unitPrice;
         log.info("총 상품 주문 금액 계산 : " + productTotalPrice);
 
         ///////////////////////////////////////////////////////////////////////////////

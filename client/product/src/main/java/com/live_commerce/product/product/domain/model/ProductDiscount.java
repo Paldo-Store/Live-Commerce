@@ -14,7 +14,7 @@ import java.util.UUID;
 @Table(name = "p_product_discount", schema = "products")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ProductDiscount {
+public class ProductDiscount extends BaseEntity {
 
     @Id
     @GeneratedValue
