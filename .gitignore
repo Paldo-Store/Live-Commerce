@@ -10,7 +10,7 @@ out/
 # ========== Gradle ==========
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
+!user/gradle/wrapper/gradle-wrapper.jar
 
 # ========== 로그 및 캐시 ==========
 *.log
