@@ -51,7 +51,12 @@ public class IssuedCouponController {
     return ResponseUtil.success(response);
   }
 
-  // 쿠폰 목록 조회
+  /**
+   * @api [GET] / - 쿠폰 목록 조회
+   * @param userDetails 로그인된 사용자 정보
+   * @desc 발급된 쿠폰 목록을 조회하는 API
+   *       로그인된 사용자의 정보를 바탕으로 쿠폰 리스트를 반환
+   */
   @GetMapping("/")
   public ResponseEntity<ApiResponse<IssuedCouponListResponse>> getIssuedCoupons(
       @AuthenticationPrincipal RequestUserDetails userDetails) {
