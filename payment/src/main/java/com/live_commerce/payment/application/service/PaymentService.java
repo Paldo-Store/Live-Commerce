@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
-import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
@@ -43,6 +43,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentService {
 
+	private static final String PAYMENT_EXPIRE_KEY_PREFIX = "payment:expire:";
+
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
 	private final OrderClient orderClient;
@@ -66,8 +68,7 @@ public class PaymentService {
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
 
-		String key = "payment:expire:" + dto.orderId();
-		RBucket<String> bucket = redissonClient.getBucket(key);
+		RBucket<String> bucket = redissonClient.getBucket(PAYMENT_EXPIRE_KEY_PREFIX + dto.orderId());
 		bucket.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
 
 		return PaymentReadyResponseDto.from(readyDto);

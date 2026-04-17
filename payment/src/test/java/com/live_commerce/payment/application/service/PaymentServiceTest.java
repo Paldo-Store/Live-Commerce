@@ -20,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.exception.CustomException;

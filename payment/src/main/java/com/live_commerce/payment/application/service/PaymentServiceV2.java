@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
-import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
+import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
@@ -44,6 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentServiceV2 {
 
+	private static final String PAYMENT_EXPIRE_KEY_PREFIX = "payment:expire:";
+
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
 	private final OrderClient orderClient;
@@ -67,8 +69,7 @@ public class PaymentServiceV2 {
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
 
-		String key = "payment:expire:" + dto.orderId();
-		RBucket<String> bucket = redissonClient.getBucket(key);
+		RBucket<String> bucket = redissonClient.getBucket(PAYMENT_EXPIRE_KEY_PREFIX + dto.orderId());
 		bucket.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
 
 		return PaymentReadyResponseDto.from(readyDto);
@@ -80,7 +81,6 @@ public class PaymentServiceV2 {
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
 		if (payment.getStatus() != PaymentStatus.PENDING) {
-			payment.updateStatus(PaymentStatus.FAILED);
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
@@ -92,7 +92,6 @@ public class PaymentServiceV2 {
 		} catch (Exception e) {
 			payment.updateStatus(PaymentStatus.FAILED);
 
-			// 카프카로 결제 실패 이벤트 발행
 			paymentEventProducer.sendPaymentFailed(
 				new PaymentFailedEvent(payment.getOrderId(), "카카오페이 승인 실패")
 			);
@@ -102,7 +101,6 @@ public class PaymentServiceV2 {
 
 		payment.updateStatus(PaymentStatus.COMPLETED);
 
-		// 카프카로 결제 완료 이벤트 발행
 		paymentEventProducer.sendPaymentCompleted(
 			new PaymentCompletedEvent(
 				payment.getOrderId(),
@@ -111,14 +109,13 @@ public class PaymentServiceV2 {
 			)
 		);
 
-
 		return PaymentApproveResponseDto.from(approveDto);
 	}
 
 	@Transactional(readOnly = true)
 	public PaymentGetResponseDto getPayment(UUID paymentId, RequestUserDetails userDetails) {
 		Payment payment = findPaymentById(paymentId);
-		validatePaymentGetPermission(payment, userDetails);
+		validatePaymentOwnerPermission(payment, userDetails);
 
 		return PaymentGetResponseDto.from(payment);
 	}
@@ -129,8 +126,6 @@ public class PaymentServiceV2 {
 		RequestUserDetails userDetails,
 		Pageable pageable
 	) {
-		validatePaymentSearchPermission(userDetails);
-
 		int size = pageable.getPageSize();
 		if (size != 10 && size != 30 && size != 50) {
 			pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
@@ -158,7 +153,7 @@ public class PaymentServiceV2 {
 	@Transactional
 	public PaymentRefundResponseDto refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
 		Payment payment = findPaymentByOrderId(orderId);
-		validatePaymentRefundPermission(payment, userDetails);
+		validatePaymentOwnerPermission(payment, userDetails);
 
 		if (payment.getStatus() != PaymentStatus.COMPLETED) {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
@@ -179,7 +174,7 @@ public class PaymentServiceV2 {
 	@Transactional
 	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
 		Payment payment = findPaymentByOrderId(orderId);
-		validatePaymentCancelPermission(payment, userDetails);
+		validatePaymentOwnerPermission(payment, userDetails);
 
 		if (payment.getStatus() != PaymentStatus.PENDING) {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
@@ -210,7 +205,6 @@ public class PaymentServiceV2 {
 		log.info("[Payment] 보상 결제 취소 완료: orderId = {}, message = {}", orderId, message);
 	}
 
-
 	private Payment findPaymentById(UUID paymentId) {
 		return paymentRepository.findById(paymentId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
@@ -221,32 +215,10 @@ public class PaymentServiceV2 {
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 	}
 
-	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
+	private void validatePaymentOwnerPermission(Payment payment, RequestUserDetails userDetails) {
 		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
 			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
 		}
-	}
-
-	private void validatePaymentSearchPermission(RequestUserDetails userDetails) {
-		if (!isSelf(userDetails.getUserId(), userDetails) && !hasMasterRole(userDetails)) {
-			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
-		}
-	}
-
-	private void validatePaymentRefundPermission(Payment payment, RequestUserDetails userDetails) {
-		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
-			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
-		}
-	}
-
-	private void validatePaymentCancelPermission(Payment payment, RequestUserDetails userDetails) {
-		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
-			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
-		}
-	}
-
-	private boolean isSelf(UUID userId, RequestUserDetails userDetails) {
-		return userId.equals(userDetails.getUserId());
 	}
 
 	private boolean hasMasterRole(RequestUserDetails userDetails) {
