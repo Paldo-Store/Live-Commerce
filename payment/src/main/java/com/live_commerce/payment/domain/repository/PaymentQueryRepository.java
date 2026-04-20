@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 
-import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
+import com.live_commerce.payment.domain.repository.PaymentSearchCondition;
 import com.live_commerce.payment.domain.model.Payment;
 
 public interface PaymentQueryRepository {

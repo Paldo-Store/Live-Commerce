@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 
-import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.model.QPayment;
 import com.querydsl.core.BooleanBuilder;
@@ -22,7 +21,6 @@ public class PaymentQueryRepositoryImpl implements PaymentQueryRepository {
 		QPayment payment = QPayment.payment;
 		BooleanBuilder builder = new BooleanBuilder();
 
-		// 삭제되지 않은 항목만 조회
 		builder.and(payment.deletedStatus.isFalse());
 
 		if (condition.userId() != null) {
@@ -79,6 +77,4 @@ public class PaymentQueryRepositoryImpl implements PaymentQueryRepository {
 			.where(builder)
 			.fetchOne();
 	}
-
-
 }
