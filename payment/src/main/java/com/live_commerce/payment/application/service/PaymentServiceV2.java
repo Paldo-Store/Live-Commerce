@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestClientException;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
@@ -98,7 +99,7 @@ public class PaymentServiceV2 {
 			approveDto = kakaoPayClient.requestKakaoPayApprove(
 				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(), userId.toString()
 			);
-		} catch (Exception e) {
+		} catch (RestClientException e) {
 			requiresNewTransactionTemplate.executeWithoutResult(status -> {
 				Payment p = paymentRepository.findByOrderId(orderId)
 					.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
@@ -116,11 +117,11 @@ public class PaymentServiceV2 {
 				p.complete();
 				eventPublisher.publishEvent(new PaymentCompletedDomainEvent(p.getOrderId(), p.getAmount()));
 			});
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			log.error("[Payment] DB 업데이트 실패 - 카카오 보상 취소 시작: orderId={}", orderId, e);
 			try {
 				kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-			} catch (Exception ex) {
+			} catch (RestClientException ex) {
 				log.error("[Payment] 보상 취소 실패 - 수동 처리 필요: orderId={}", orderId, ex);
 			}
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
