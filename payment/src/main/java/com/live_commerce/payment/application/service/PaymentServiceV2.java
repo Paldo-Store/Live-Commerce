@@ -12,8 +12,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
+
+import feign.FeignException;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
@@ -25,8 +26,6 @@ import com.live_commerce.payment.application.exception.CustomException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
 import com.live_commerce.payment.application.port.KakaoPayClient;
 import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
-import com.live_commerce.payment.domain.event.PaymentCompletedDomainEvent;
-import com.live_commerce.payment.domain.event.PaymentFailedDomainEvent;
 import com.live_commerce.payment.domain.event.PaymentReadyDomainEvent;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.model.PaymentStatus;
@@ -52,7 +51,7 @@ public class PaymentServiceV2 {
 	private final OrderClient orderClient;
 	private final RedissonClient redissonClient;
 	private final ApplicationEventPublisher eventPublisher;
-	private final TransactionTemplate requiresNewTransactionTemplate;
+	private final PaymentTxProcessor paymentTxProcessor;
 
 	@DistributedLock(key = "#dto.orderId")
 	@Transactional
@@ -100,23 +99,13 @@ public class PaymentServiceV2 {
 				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(), userId.toString()
 			);
 		} catch (RestClientException e) {
-			requiresNewTransactionTemplate.executeWithoutResult(status -> {
-				Payment p = paymentRepository.findByOrderId(orderId)
-					.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-				p.fail();
-				eventPublisher.publishEvent(new PaymentFailedDomainEvent(p.getOrderId(), "카카오페이 승인 실패"));
-			});
+			paymentTxProcessor.fail(orderId, "카카오페이 승인 실패");
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
 		}
 
-		// ── 3. DB 상태 업데이트 [REQUIRES_NEW tx] ──────────────────────
+		// ── 3. DB 상태 업데이트 [REQUIRES_NEW tx] ──────────────────
 		try {
-			requiresNewTransactionTemplate.executeWithoutResult(status -> {
-				Payment p = paymentRepository.findByOrderId(orderId)
-					.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-				p.complete();
-				eventPublisher.publishEvent(new PaymentCompletedDomainEvent(p.getOrderId(), p.getAmount()));
-			});
+			paymentTxProcessor.complete(orderId);
 		} catch (RuntimeException e) {
 			log.error("[Payment] DB 업데이트 실패 - 카카오 보상 취소 시작: orderId={}", orderId, e);
 			try {
@@ -170,8 +159,9 @@ public class PaymentServiceV2 {
 		);
 	}
 
-	@Transactional
+	@DistributedLock(key = "#orderId")
 	public PaymentRefundResponseDto refundPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		// ── 1. 사전 검증 [no tx] ──────────────────────────────────
 		Payment payment = findPaymentByOrderId(orderId);
 		validatePaymentOwnerPermission(payment, userDetails);
 
@@ -179,20 +169,34 @@ public class PaymentServiceV2 {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
-		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-		payment.refund();
+		// ── 2. 카카오 취소 [no tx, 커넥션 미점유] ──────────────────
+		try {
+			kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		} catch (RestClientException e) {
+			throw new CustomException(PaymentExceptionCode.PAYMENT_REFUND_FAIL);
+		}
 
+		// ── 3. DB 업데이트 [REQUIRES_NEW tx] ──────────────────────
+		Payment refunded;
+		try {
+			refunded = paymentTxProcessor.refund(orderId);
+		} catch (RuntimeException e) {
+			log.error("[Payment] 환불 DB 업데이트 실패 - 카카오 취소 완료 상태 불일치: orderId={}", orderId, e);
+			throw new CustomException(PaymentExceptionCode.PAYMENT_REFUND_FAIL);
+		}
+
+		// ── 4. 주문 서비스 알림 [no tx, best-effort] ───────────────
 		try {
 			orderClient.notifyOrderCancel(orderId, new PaymentCancelRequest(false, "결제 취소 처리됨"));
-		} catch (Exception e) {
+		} catch (FeignException e) {
 			log.warn("주문 서비스에 결제 취소 알림 실패: {}", e.getMessage());
 		}
 
-		return PaymentRefundResponseDto.from(payment);
+		return PaymentRefundResponseDto.from(refunded);
 	}
 
-	@Transactional
 	public void cancelPaymentByOrderId(UUID orderId, RequestUserDetails userDetails) {
+		// ── 1. 사전 검증 [no tx] ──────────────────────────────────
 		Payment payment = findPaymentByOrderId(orderId);
 		validatePaymentOwnerPermission(payment, userDetails);
 
@@ -200,29 +204,40 @@ public class PaymentServiceV2 {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
+		// ── 2. DB 업데이트 [REQUIRES_NEW tx] ──────────────────────
+		paymentTxProcessor.cancel(orderId);
+
+		// ── 3. 주문 서비스 알림 [no tx, best-effort] ───────────────
 		try {
 			orderClient.notifyOrderCancel(orderId, new PaymentCancelRequest(false, "결제 취소 처리됨"));
-		} catch (Exception e) {
+		} catch (FeignException e) {
 			log.warn("주문 서비스에 결제 취소 알림 실패: {}", e.getMessage());
 		}
-
-		payment.cancel();
 	}
 
-	@Transactional
 	public void compensateRefundByOrderId(UUID orderId, String message) {
+		// ── 1. 사전 검증 [no tx] ──────────────────────────────────
 		Payment payment = paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
 
 		if (payment.getStatus() != PaymentStatus.COMPLETED) {
-			log.info("[Payment] 보상 처리 스킵: orderId={}, status={}", orderId, payment.getStatus());
 			return;
 		}
 
-		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-		payment.refund();
+		// ── 2. 카카오 취소 [no tx, 커넥션 미점유] ──────────────────
+		try {
+			kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		} catch (RestClientException e) {
+			log.error("[Payment] 보상 카카오 취소 실패: orderId={}", orderId, e);
+			throw new CustomException(PaymentExceptionCode.PAYMENT_REFUND_FAIL);
+		}
 
-		log.info("[Payment] 보상 결제 취소 완료: orderId={}, message={}", orderId, message);
+		// ── 3. DB 업데이트 [REQUIRES_NEW tx] ──────────────────────
+		try {
+			paymentTxProcessor.refund(orderId);
+		} catch (RuntimeException e) {
+			log.error("[Payment] 보상 환불 DB 실패 - 카카오 취소 완료 상태 불일치: orderId={}, message={}", orderId, message, e);
+		}
 	}
 
 	private Payment findPaymentById(UUID paymentId) {

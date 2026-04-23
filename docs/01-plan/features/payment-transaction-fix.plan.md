@@ -52,12 +52,14 @@
 
 ## 완료 조건
 
-- [ ] T1: `refundPaymentByOrderId` — 카카오 API/DB 트랜잭션 분리
-- [ ] T2: `compensateRefundByOrderId` — 카카오 API/DB 트랜잭션 분리
-- [ ] T3: `PaymentExpirationListener` — `payment.fail()` 사용
-- [ ] T4: `DistributedLockAspect` — `@Order(1)` 추가
-- [ ] T5: 성공 경로 `log.info` 제거
-- [ ] 컴파일 통과
+- [x] T1: `refundPaymentByOrderId` — 카카오 API/DB 트랜잭션 분리
+- [x] T2: `compensateRefundByOrderId` — 카카오 API/DB 트랜잭션 분리
+- [x] T3: `PaymentExpirationListener` — `payment.fail()` 사용
+- [x] T4: `DistributedLockAspect` — `@Order(1)` 추가
+- [x] T5: 성공 경로 `log.info` 제거
+- [x] 컴파일 통과
+
+**완료일**: 2026-04-23
 
 ---
 

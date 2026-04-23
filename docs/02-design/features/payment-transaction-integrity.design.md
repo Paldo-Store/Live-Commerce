@@ -177,7 +177,7 @@ Redis key 구성·만료 시간은 `PaymentCacheAdapter` 내부로 캡슐화 —
 
 **추가 필드**
 ```java
-private final TransactionTemplate requiresNewTransactionTemplate;
+private final PaymentTxProcessor paymentTxProcessor;
 ```
 
 **`approvePayment` 재설계**
@@ -208,33 +208,19 @@ public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto request
         approveDto = kakaoPayClient.requestKakaoPayApprove(
             requestDto.tid(), requestDto.pgToken(), requestDto.orderId(), userId.toString()
         );
-    } catch (Exception e) {
-        requiresNewTransactionTemplate.executeWithoutResult(status -> {
-            Payment p = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-            p.fail();
-            eventPublisher.publishEvent(
-                new PaymentFailedDomainEvent(p.getOrderId(), "카카오페이 승인 실패")
-            );
-        });
+    } catch (RestClientException e) {
+        paymentTxProcessor.fail(orderId, "카카오페이 승인 실패");
         throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
     }
 
     // ── 3. DB 상태 업데이트 [REQUIRES_NEW tx] ──────────────────
     try {
-        requiresNewTransactionTemplate.executeWithoutResult(status -> {
-            Payment p = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
-            p.complete();
-            eventPublisher.publishEvent(
-                new PaymentCompletedDomainEvent(p.getOrderId(), p.getAmount())
-            );
-        });
-    } catch (Exception e) {
+        paymentTxProcessor.complete(orderId);
+    } catch (RuntimeException e) {
         log.error("[Payment] DB 업데이트 실패 - 카카오 보상 취소 시작: orderId={}", orderId, e);
         try {
             kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-        } catch (Exception ex) {
+        } catch (RestClientException ex) {
             log.error("[Payment] 보상 취소 실패 - 수동 처리 필요: orderId={}", orderId, ex);
         }
         throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
@@ -247,21 +233,28 @@ public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto request
 }
 ```
 
-### TransactionTemplate 주입
+### PaymentTxProcessor
 
-Spring Boot `TransactionAutoConfiguration`이 기본 전파(`REQUIRED`) `TransactionTemplate`만 자동 등록한다. `REQUIRES_NEW`는 자동 제공되지 않으므로 `TransactionConfig.java`에서 별도 Bean으로 등록한다.
+`@Transactional(propagation = Propagation.REQUIRES_NEW)`를 메서드 단위로 선언한 별도 Spring Bean. `PaymentServiceV2`가 직접 트랜잭션을 제어하지 않고 이 Bean에 위임한다.
 
 ```java
-// infrastructure/config/TransactionConfig.java
-@Bean
-public TransactionTemplate requiresNewTransactionTemplate(PlatformTransactionManager txManager) {
-    TransactionTemplate template = new TransactionTemplate(txManager);
-    template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-    return template;
+@Service
+public class PaymentTxProcessor {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void fail(UUID orderId, String reason) { ... }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void complete(UUID orderId) { ... }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Payment refund(UUID orderId) { ... }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void cancel(UUID orderId) { ... }
 }
 ```
 
-`REQUIRES_NEW`로 설정함으로써 `approvePayment`에 상위 트랜잭션이 생기더라도 항상 독립적인 신규 트랜잭션이 보장된다.
+Spring AOP는 메서드 전체를 감싸는 구조라 하나의 메서드 안에서 구간별로 트랜잭션을 제어할 수 없다. 별도 Bean으로 분리해야 프록시가 `REQUIRES_NEW` 전파를 보장한다. (같은 클래스 내 `private` 메서드 분리는 self-invocation으로 프록시 우회 — 동작 안 함)
 
 ### 완료 조건
 
@@ -278,7 +271,7 @@ public TransactionTemplate requiresNewTransactionTemplate(PlatformTransactionMan
 | 파일 | 설명 |
 |------|------|
 | `infrastructure/redis/PaymentRedisKeys.java` | Redis key prefix 상수 — `EXPIRE_KEY_PREFIX = "payment:expire:"` |
-| `infrastructure/config/TransactionConfig.java` | `REQUIRES_NEW` 전파 `TransactionTemplate` Bean 등록 |
+| `application/service/PaymentTxProcessor.java` | `REQUIRES_NEW` 전파 트랜잭션 처리 Bean |
 | `domain/event/PaymentReadyDomainEvent.java` | 결제 준비 도메인 이벤트 |
 | `domain/event/PaymentCompletedDomainEvent.java` | 결제 완료 도메인 이벤트 |
 | `domain/event/PaymentFailedDomainEvent.java` | 결제 실패 도메인 이벤트 |
@@ -289,7 +282,7 @@ public TransactionTemplate requiresNewTransactionTemplate(PlatformTransactionMan
 |------|----------|
 | `application.yml` | `payment.expire-minutes: 10` 추가 |
 | `application/exception/PaymentExceptionCode.java` | `PAYMENT_EXPIRED` (HTTP 410) 추가 |
-| `application/service/PaymentServiceV2.java` | `requiresNewTransactionTemplate` 주입, `approvePayment` 트랜잭션 분리, Redis 만료 검증 추가 |
+| `application/service/PaymentServiceV2.java` | `PaymentTxProcessor` 주입, `approvePayment` 트랜잭션 분리, Redis 만료 검증 추가 |
 | `infrastructure/listener/PaymentExpirationListener.java` | `PaymentRedisKeys` 상수 참조, `payment.fail()` 도메인 메서드 사용 |
 | `infrastructure/kafka/listener/PaymentDomainEventListener.java` | `onPaymentReady` AFTER_COMMIT 핸들러 추가 (`RetryTemplate` 3회 재시도) |
 
