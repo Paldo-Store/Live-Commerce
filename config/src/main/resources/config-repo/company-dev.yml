@@ -1,0 +1,46 @@
+server:
+  port: 19020
+
+spring:
+  application:
+    name: company
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        default_schema: companies
+  datasource:
+    url: jdbc:postgresql://localhost:5432/livecommerce
+    username: postgres
+    password: 8dostore
+    driver-class-name: org.postgresql.Driver
+#  sql:
+#    init:
+#      mode: always
+#      data-locations: classpath:db/data.sql
+
+gateway:
+  base-url: http://localhost:19091
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/company

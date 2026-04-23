@@ -1,0 +1,92 @@
+server:
+  port: 19080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:19090/eureka/
+
+spring:
+  application:
+    name: payment
+  config:
+    import: optional:file:.env[.properties]
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        default_schema: payments
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: >
+          payment-completed:com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent,
+          payment-failed:com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent
+
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+        spring.json.type.mapping: >
+          payment-completed:com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent,
+          payment-failed:com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent
+
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
+kakao:
+  pay:
+    secret-key: ${KAKAO_PAY_SECRET_KEY}
+    cid: ${KAKAO_PAY_CID}
+
+gateway:
+  base-url: ${GATEWAY_BASE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/payment

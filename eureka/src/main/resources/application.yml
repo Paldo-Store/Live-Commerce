@@ -1,0 +1,15 @@
+#spring:
+#  profiles:
+#    active: prod
+
+
+spring:
+  application:
+    name: eureka
+  config:
+    import: "configserver:http://localhost:18080"
+  cloud:
+    config:
+      name: eureka
+      profile: dev
+      fail-fast: true

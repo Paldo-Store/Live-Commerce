@@ -1,0 +1,14 @@
+spring:
+  config:
+    import: "configserver:http://localhost:18080"
+  application:
+    name: ai
+  profiles:
+    active: dev
+
+#spring:
+#  profiles:
+#    active: prod
+#  cloud:
+#    config:
+#      enabled: false
