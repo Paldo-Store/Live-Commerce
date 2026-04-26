@@ -1,9 +1,12 @@
 package com.live_commerce.company.presentation.controller;
 
-
 import com.live_commerce.company.application.dto.request.CompanyCreateRequest;
 import com.live_commerce.company.application.dto.request.CompanyUpdateRequest;
-import com.live_commerce.company.application.dto.response.*;
+import com.live_commerce.company.application.dto.response.CompanyCreateResponse;
+import com.live_commerce.company.application.dto.response.CompanyDeleteResponse;
+import com.live_commerce.company.application.dto.response.CompanyGetOneResponse;
+import com.live_commerce.company.application.dto.response.CompanyGetResponse;
+import com.live_commerce.company.application.dto.response.CompanyUpdateResponse;
 import com.live_commerce.company.application.service.CompanyService;
 import com.live_commerce.company.infrastructure.common.ResponseUtil;
 import com.live_commerce.company.infrastructure.security.RequestUserDetails;
@@ -29,42 +32,36 @@ public class CompanyController {
     public ResponseEntity<ApiResponse<CompanyCreateResponse>> createCompany(
             @Valid @RequestBody final CompanyCreateRequest request,
             @AuthenticationPrincipal RequestUserDetails userDetails) {
-        UUID userId = userDetails.getUserId();
-        String role = userDetails.getAuthorities().iterator().next().getAuthority();
-        CompanyCreateResponse response = companyService.createCompany(request, userId, role);
-        return ResponseUtil.success(response);
+        return ResponseUtil.success(companyService.createCompany(request, userDetails.getUserId(), userDetails.getRole()));
     }
 
     //업체 전체 조회 API
     //누구나 가능
     @GetMapping("")
-    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompanies (
+    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompanies(
             @RequestParam final int page,
             @RequestParam final int size,
             @RequestParam(required = false) final String sort) {
-        CompanyGetResponse response = companyService.getCompanies(page, size, sort);
-        return ResponseUtil.success(response);
+        return ResponseUtil.success(companyService.getCompanies(page, size, sort));
     }
 
     //업체 단건 조회 API
     //누구나 가능
     @GetMapping("/{companyId}")
-    public ResponseEntity<ApiResponse<CompanyGetOneResponse>> getCompany (
+    public ResponseEntity<ApiResponse<CompanyGetOneResponse>> getCompany(
             @PathVariable final UUID companyId) {
-        CompanyGetOneResponse response = companyService.getCompany(companyId);
-        return ResponseUtil.success(response);
+        return ResponseUtil.success(companyService.getCompany(companyId));
     }
 
     //업체 이름 검색 API
     //누구나 가능
     @GetMapping("/search/{keyword}")
-    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompaniesByKeyword (
+    public ResponseEntity<ApiResponse<CompanyGetResponse>> getCompaniesByKeyword(
             @PathVariable final String keyword,
             @RequestParam final int page,
             @RequestParam final int size,
-            @RequestParam(required = false) final String sort){
-        CompanyGetResponse response = companyService.getCompaniesByKeyword(keyword, page, size, sort);
-        return ResponseUtil.success(response);
+            @RequestParam(required = false) final String sort) {
+        return ResponseUtil.success(companyService.getCompaniesByKeyword(keyword, page, size, sort));
     }
 
     //업체 수정 API
@@ -73,22 +70,16 @@ public class CompanyController {
     public ResponseEntity<ApiResponse<CompanyUpdateResponse>> updateCompany(
             @PathVariable final UUID companyId,
             @Valid @RequestBody CompanyUpdateRequest request,
-            @AuthenticationPrincipal RequestUserDetails userDetails){
-        UUID userId = userDetails.getUserId();
-        String role = userDetails.getAuthorities().iterator().next().getAuthority();
-        CompanyUpdateResponse response = companyService.updateCompany(companyId, request, userId, role);
-        return ResponseUtil.success(response);
+            @AuthenticationPrincipal RequestUserDetails userDetails) {
+        return ResponseUtil.success(companyService.updateCompany(companyId, request, userDetails.getUserId(), userDetails.getRole()));
     }
 
     //업체 삭제 API
     //MASTER과 업체 관리자만
     @DeleteMapping("/{companyId}")
-    public ResponseEntity<ApiResponse<CompanyDeleteResponse>> deleteCompany (
+    public ResponseEntity<ApiResponse<CompanyDeleteResponse>> deleteCompany(
             @PathVariable final UUID companyId,
-            @AuthenticationPrincipal RequestUserDetails userDetails){
-        UUID userId = userDetails.getUserId();
-        String role = userDetails.getAuthorities().iterator().next().getAuthority();
-        CompanyDeleteResponse response = companyService.deleteCompany(companyId, userId, role);
-        return ResponseUtil.success(response);
+            @AuthenticationPrincipal RequestUserDetails userDetails) {
+        return ResponseUtil.success(companyService.deleteCompany(companyId, userDetails.getUserId(), userDetails.getRole()));
     }
 }
