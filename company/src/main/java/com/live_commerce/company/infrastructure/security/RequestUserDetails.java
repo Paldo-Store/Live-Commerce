@@ -22,6 +22,10 @@ public class RequestUserDetails implements UserDetails {
         return userId;
     }
 
+    public String getRole() {
+        return authorities.iterator().next().getAuthority();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
