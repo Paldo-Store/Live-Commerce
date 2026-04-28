@@ -1,5 +1,7 @@
 package com.live_commerce.payment.infrastructure.kafka.producer;
 
+import java.util.concurrent.ExecutionException;
+
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -7,9 +9,7 @@ import com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEven
 import com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PaymentEventProducer {
@@ -20,15 +20,21 @@ public class PaymentEventProducer {
 	private static final String FAILED_TOPIC    = "payment-failed";
 
 	public void sendPaymentCompleted(PaymentCompletedEvent event) {
-		send(COMPLETED_TOPIC, event.orderId().toString(), event);
+		sendSync(COMPLETED_TOPIC, event.orderId().toString(), event);
 	}
 
 	public void sendPaymentFailed(PaymentFailedEvent event) {
-		send(FAILED_TOPIC, event.orderId().toString(), event);
+		sendSync(FAILED_TOPIC, event.orderId().toString(), event);
 	}
 
-	private void send(String topic, String key, Object payload) {
-		kafkaTemplate.send(topic, key, payload);
-		log.info("[Kafka] 전송 완료 - topic: {}, key: {}, payload: {}", topic, key, payload);
+	private void sendSync(String topic, String key, Object payload) {
+		try {
+			kafkaTemplate.send(topic, key, payload).get();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException("Kafka 전송 인터럽트: topic=" + topic, e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException("Kafka 전송 실패: topic=" + topic, e.getCause());
+		}
 	}
 }
