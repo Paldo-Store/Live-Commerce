@@ -3,8 +3,11 @@ package com.live_commerce.payment.application.service;
 import java.util.List;
 import java.util.UUID;
 
+import java.time.LocalDateTime;
+
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -53,6 +56,9 @@ public class PaymentServiceV2 {
 	private final ApplicationEventPublisher eventPublisher;
 	private final PaymentTxProcessor paymentTxProcessor;
 
+	@Value("${payment.expire-minutes:10}")
+	private int paymentExpireMinutes;
+
 	@DistributedLock(key = "#dto.orderId")
 	@Transactional
 	public PaymentReadyResponseDto readyPayment(RequestUserDetails user, PaymentReadyRequestDto dto) {
@@ -68,6 +74,7 @@ public class PaymentServiceV2 {
 
 		Payment payment = dto.toEntity(user.getUserId());
 		payment.assignTid(readyDto.tid());
+		payment.expireAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
 		paymentRepository.save(payment);
 
 		// DB 커밋 완료 후 Redis key 설정 (PaymentDomainEventListener.onPaymentReady)
@@ -112,6 +119,11 @@ public class PaymentServiceV2 {
 				kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
 			} catch (RestClientException ex) {
 				log.error("[Payment] 보상 취소 실패 - 수동 처리 필요: orderId={}", orderId, ex);
+			}
+			try {
+				paymentTxProcessor.fail(orderId, "카카오페이 승인 후 DB 업데이트 실패");
+			} catch (Exception ex) {
+				log.error("[Payment] 실패 Outbox 저장 실패 - 수동 처리 필요: orderId={}", orderId, ex);
 			}
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
 		}

@@ -1,5 +1,7 @@
 package com.live_commerce.payment.domain.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,4 +14,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID>, Payment
 	Optional<Payment> findByOrderId(UUID orderId);
 
 	Optional<Payment> findByOrderIdAndStatus(UUID orderId, PaymentStatus paymentStatus);
+
+	List<Payment> findByStatusAndExpiresAtBefore(PaymentStatus status, LocalDateTime threshold);
 }
