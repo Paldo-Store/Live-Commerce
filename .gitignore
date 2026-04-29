@@ -31,3 +31,13 @@ test-output/
 # ========== 환경변수 ==========
 .env
 .env.*
+
+# ========== Claude Code ==========
+.claude/
+CLAUDE.md
+
+# ========== bkit 툴 상태 ==========
+docs/.bkit-memory.json
+docs/.pdca-status.json
+docs/.pdca-snapshots/
+.bkit/

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -15,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.live_commerce.payment.application.dto.request.PaymentApproveRequestDto;
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
-import com.live_commerce.payment.application.dto.request.PaymentRefundResponseDto;
-import com.live_commerce.payment.application.dto.request.PaymentSearchCondition;
+import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
+import com.live_commerce.payment.domain.repository.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
@@ -32,6 +31,7 @@ import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentCancelRequest;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentFailRequest;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentSuccessRequest;
+import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
 import com.live_commerce.payment.infrastructure.lock.DistributedLock;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
@@ -46,7 +46,6 @@ public class PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final KakaoPayClient kakaoPayClient;
 	private final OrderClient orderClient;
-
 	private final RedissonClient redissonClient;
 
 	@DistributedLock(key = "#dto.orderId")
@@ -66,9 +65,8 @@ public class PaymentService {
 		payment.assignTid(readyDto.tid());
 		paymentRepository.save(payment);
 
-		String key = "payment:expire:" + dto.orderId();
-		RBucket<String> bucket = redissonClient.getBucket(key);
-		bucket.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
+		redissonClient.getBucket(PaymentRedisKeys.EXPIRE_KEY_PREFIX + dto.orderId())
+			.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
 
 		return PaymentReadyResponseDto.from(readyDto);
 	}

@@ -44,7 +44,32 @@ public class Payment extends BaseEntity {
 		this.tid = tid;
 	}
 
-	// 상태 변경 메서드
+	public void complete() {
+		validateTransition(PaymentStatus.COMPLETED);
+		this.status = PaymentStatus.COMPLETED;
+	}
+
+	public void fail() {
+		validateTransition(PaymentStatus.FAILED);
+		this.status = PaymentStatus.FAILED;
+	}
+
+	public void cancel() {
+		validateTransition(PaymentStatus.CANCELED);
+		this.status = PaymentStatus.CANCELED;
+	}
+
+	public void refund() {
+		validateTransition(PaymentStatus.REFUND);
+		this.status = PaymentStatus.REFUND;
+	}
+
+	private void validateTransition(PaymentStatus next) {
+		if (!status.canTransitionTo(next)) {
+			throw new IllegalStateException("유효하지 않은 상태 전이: " + status + " → " + next);
+		}
+	}
+
 	public void updateStatus(PaymentStatus newStatus) {
 		this.status = newStatus;
 	}
