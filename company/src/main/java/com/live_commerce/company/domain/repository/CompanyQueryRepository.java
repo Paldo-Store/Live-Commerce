@@ -22,7 +22,7 @@ public class CompanyQueryRepository {
     public Page<Company> findAll(Pageable pageable) {
         List<Company> companies = queryFactory
                 .selectFrom(company)
-                .where(company.deletedStatus.eq(false)) // 삭제되지 않은 데이터만 조회
+                .where(company.deletedStatus.isFalse())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -30,7 +30,7 @@ public class CompanyQueryRepository {
         long total = queryFactory
                 .select(company.count())
                 .from(company)
-                .where(company.deletedAt.isNull())
+                .where(company.deletedStatus.isFalse())
                 .fetchFirst();
 
         return new PageImpl<>(companies, pageable, total);
@@ -40,9 +40,8 @@ public class CompanyQueryRepository {
     public Page<Company> getCompaniesByKeyword(Pageable pageable, String keyword) {
         List<Company> companies = queryFactory
                 .selectFrom(company)
-                .where(company.name.containsIgnoreCase(keyword)  // 상품 이름에 이름이 포함된 데이터를 조회
-                        .and(company.deletedAt.isNull())
-                        .and(company.deletedStatus.eq(false))
+                .where(company.name.containsIgnoreCase(keyword)
+                        .and(company.deletedStatus.isFalse())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -52,7 +51,7 @@ public class CompanyQueryRepository {
                 .select(company.count())
                 .from(company)
                 .where(company.name.containsIgnoreCase(keyword)
-                        .and(company.deletedStatus.eq(false))
+                        .and(company.deletedStatus.isFalse())
                 )
                 .fetchOne();  // fetchOne()은 단일 값 반환
         return new PageImpl<>(companies, pageable, total);
