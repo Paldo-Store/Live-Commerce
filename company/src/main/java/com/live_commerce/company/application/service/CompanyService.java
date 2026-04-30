@@ -39,7 +39,7 @@ public class CompanyService {
     //업체 생성 Service
     @Transactional
     public CompanyCreateResponse createCompany(CompanyCreateRequest request, UUID userId, String role) {
-        log.info("User role: {}", role);
+        log.info("User: {}, Role: {}", userId, role);
         validateAuthorization(role);
         //업체 생성 저장
         Company company = new Company(request.name(), request.owner(), request.type(), request.address(), request.number(), request.description());
@@ -76,7 +76,7 @@ public class CompanyService {
     //업체 수정 service
     @Transactional
     public CompanyUpdateResponse updateCompany(UUID companyId, CompanyUpdateRequest request, UUID userId, String role) {
-        log.info("User role: {}", role);
+        log.info("User: {}, Role: {}", userId, role);
         validateAuthorization(role);
         final Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));

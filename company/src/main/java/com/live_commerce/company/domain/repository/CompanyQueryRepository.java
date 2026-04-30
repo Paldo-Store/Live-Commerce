@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.live_commerce.company.domain.model.QCompany;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,11 +28,11 @@ public class CompanyQueryRepository {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        long total = queryFactory
+        long total = Optional.ofNullable(queryFactory
                 .select(company.count())
                 .from(company)
                 .where(company.deletedStatus.isFalse())
-                .fetchFirst();
+                .fetchFirst()).orElse(0L);
 
         return new PageImpl<>(companies, pageable, total);
     }
@@ -47,13 +48,13 @@ public class CompanyQueryRepository {
                 .limit(pageable.getPageSize())
                 .fetch();  // 결과 리스트 반환
 
-        long total = queryFactory
+        long total = Optional.ofNullable(queryFactory
                 .select(company.count())
                 .from(company)
                 .where(company.name.containsIgnoreCase(keyword)
                         .and(company.deletedStatus.isFalse())
                 )
-                .fetchOne();  // fetchOne()은 단일 값 반환
+                .fetchOne()).orElse(0L);
         return new PageImpl<>(companies, pageable, total);
     }
 }
