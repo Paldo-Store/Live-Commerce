@@ -2,6 +2,7 @@ package com.live_commerce.product.inventory.application.service;
 
 
 import com.live_commerce.product.inventory.application.dto.request.InventoryCreateRequestDto;
+import com.live_commerce.product.inventory.application.dto.request.InventoryDecreaseRequestDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryCheckQuantityResponseDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryCheckOrderableResponseDto;
 import com.live_commerce.product.inventory.application.dto.response.InventoryResponseDto;
@@ -11,6 +12,7 @@ import com.live_commerce.product.inventory.domain.exception.InventoryException;
 import com.live_commerce.product.inventory.domain.model.Inventory;
 import com.live_commerce.product.inventory.domain.model.InventoryStatus;
 import com.live_commerce.product.inventory.domain.repository.InventoryRepository;
+import com.live_commerce.product.inventory.infrastructure.redis.InventoryRedisService;
 import com.live_commerce.product.product.infrastructure.kafka.event.InventorySoldOutEvent;
 import com.live_commerce.product.product.domain.repository.ProductRepository;
 import com.live_commerce.product.inventory.infrastructure.redisson.DistributedLock;
@@ -33,6 +35,7 @@ public class InventoryService {
     private final InventoryValidator inventoryValidator;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final InventoryRedisService inventoryRedisService;
 
     @Transactional
     public InventoryResponseDto createInventory(InventoryCreateRequestDto requestDto) {
@@ -59,6 +62,40 @@ public class InventoryService {
     @DistributedLock(key = "#productId")
     @Transactional
     public void decreaseInventory(UUID productId, int quantity) {
+        int updated = inventoryRepository.decreaseInventoryAtomically(productId, quantity);
+        if (updated == 0) {
+            throw InventoryException.forInventoryOutOfStock();
+        }
+    }
+
+    /**
+     * Lua 스크립트를 사용하여 Redis 재고를 먼저 차감하고 DB를 업데이트합니다.
+     * DB 업데이트 실패 시 Redis 재고를 복구합니다.
+     */
+    public void decreaseInventoryWithLua(UUID productId, int quantity) {
+        Long result = inventoryRedisService.decreaseStock(productId, quantity);
+
+        if (result == -1L) {
+            // Redis에 재고 정보가 없는 경우 DB에서 로드하는 로직이 필요할 수 있으나,
+            // 여기서는 단순하게 예외 처리합니다.
+            throw InventoryException.forInventoryNotFound();
+        }
+        if (result == -2L) {
+            throw InventoryException.forInventoryOutOfStock();
+        }
+
+        try {
+            // DB 업데이트 (트랜잭션 전파를 위해 별도 메서드 호출)
+            decreaseInventoryInternal(productId, quantity);
+        } catch (Exception e) {
+            log.error("[Inventory] DB 업데이트 실패 - Redis 재고 복구 시작: productId={}, quantity={}", productId, quantity, e);
+            inventoryRedisService.increaseStock(productId, quantity);
+            throw e;
+        }
+    }
+
+    @Transactional
+    public void decreaseInventoryInternal(UUID productId, int quantity) {
         int updated = inventoryRepository.decreaseInventoryAtomically(productId, quantity);
         if (updated == 0) {
             throw InventoryException.forInventoryOutOfStock();
