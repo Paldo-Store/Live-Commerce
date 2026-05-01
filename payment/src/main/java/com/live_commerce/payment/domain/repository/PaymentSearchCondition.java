@@ -1,4 +1,4 @@
-package com.live_commerce.payment.application.dto.request;
+package com.live_commerce.payment.domain.repository;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

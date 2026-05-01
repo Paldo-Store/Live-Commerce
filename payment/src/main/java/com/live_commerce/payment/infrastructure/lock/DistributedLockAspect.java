@@ -8,6 +8,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.core.annotation.Order;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Aspect
+@Order(1)
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -55,7 +57,6 @@ public class DistributedLockAspect {
 				log.warn("락 획득 실패: {}", lockKey);
 				throw new CustomException(PaymentExceptionCode.DUPLICATE_PAYMENT_IN_PROGRESS);
 			}
-			log.info("락 획득 성공: {}", lockKey);
 
 			return joinPoint.proceed();
 
@@ -65,7 +66,6 @@ public class DistributedLockAspect {
 		} finally {
 			if (acquired && lock.isHeldByCurrentThread()) {
 				lock.unlock();
-				log.info("락 해제 완료: {}", lockKey);
 			}
 		}
 	}

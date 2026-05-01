@@ -40,8 +40,14 @@ public class InventoryController {
 
     @PostMapping("/decrease")
     public ResponseEntity<ApiResponse<String>> decreaseInventory(@Valid @RequestBody InventoryDecreaseRequestDto requestDto) {
-        inventoryService.decreaseInventory(requestDto.productId(), requestDto.quantity());
+        inventoryService.decreaseInventoryWithLua(requestDto.productId(), requestDto.quantity());
         return ResponseUtil.success("재고가 차감되었습니다.");
+    }
+
+    @PostMapping("/lua-decrease")
+    public ResponseEntity<ApiResponse<String>> decreaseInventoryWithLua(@Valid @RequestBody InventoryDecreaseRequestDto requestDto) {
+        inventoryService.decreaseInventoryWithLua(requestDto.productId(), requestDto.quantity());
+        return ResponseUtil.success("재고가 차감되었습니다.(lua)");
     }
 
     @PostMapping("/increase")

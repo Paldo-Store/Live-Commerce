@@ -131,6 +131,42 @@ public class InventoryServiceTest {
 
 
     @Test
+    void Lua_스크립트_동시_재고감소_테스트() throws InterruptedException {
+
+        int threadCount = 10;
+        int decreaseAmountPerThread = 1;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        // 초기 재고 확인 (setUp에서 100으로 설정됨)
+        Inventory beforeInventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(PRODUCT_ID).get();
+        int initialAvailable = beforeInventory.getAvailableQuantity();
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    inventoryService.decreaseInventoryWithLua(PRODUCT_ID, decreaseAmountPerThread);
+                } catch (Exception e) {
+                    System.out.println("예외 발생: " + e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        Inventory inventory = inventoryRepository.findByProductIdAndDeletedStatusFalse(PRODUCT_ID)
+                .orElseThrow(() -> new RuntimeException("재고가 존재하지 않습니다."));
+
+        assertEquals(
+                initialAvailable - (threadCount * decreaseAmountPerThread),
+                inventory.getAvailableQuantity()
+        );
+    }
+
+    @Test
     void 락획득실패_테스트() throws InterruptedException {
         UUID productId = PRODUCT_ID;
 

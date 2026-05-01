@@ -2,8 +2,10 @@ package com.live_commerce.product.inventory.infrastructure.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,6 +14,16 @@ import java.util.UUID;
 public class InventoryRedisService {
 
     private final RedisTemplate<String, String>  redisTemplate;
+
+    public Long decreaseStock(UUID productId, int quantity) {
+        String key = RedisKey.availableQuantity(productId);
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>(LuaScripts.STOCK_DECREASE_SCRIPT, Long.class);
+        return redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
+    }
+
+    public void increaseStock(UUID productId, int quantity) {
+        redisTemplate.opsForValue().increment(RedisKey.availableQuantity(productId), quantity);
+    }
 
     public void setAvailableQuantity(UUID productId, int quantity) {
         redisTemplate.opsForValue().set(RedisKey.availableQuantity(productId), String.valueOf(quantity));

@@ -1,4 +1,4 @@
-package com.live_commerce.payment.application.dto.request;
+package com.live_commerce.payment.application.dto.response;
 
 import java.math.BigDecimal;
 import java.util.UUID;
