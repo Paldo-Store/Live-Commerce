@@ -73,7 +73,7 @@ public class PaymentTxProcessor {
 		try {
 			return objectMapper.writeValueAsString(Map.of(
 				"orderId", orderId.toString(),
-				"reason", reason
+				"message", reason
 			));
 		} catch (JsonProcessingException e) {
 			throw new IllegalStateException("outbox payload 직렬화 실패: orderId=" + orderId, e);

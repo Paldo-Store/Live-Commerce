@@ -15,7 +15,7 @@ import com.live_commerce.payment.domain.model.PaymentOutbox;
 public interface PaymentOutboxRepository extends JpaRepository<PaymentOutbox, UUID> {
 	List<PaymentOutbox> findTop50ByStatusOrderByCreatedAt(OutboxStatus status);
 
-	@Modifying
+	@Modifying(clearAutomatically = true)
 	@Query("UPDATE PaymentOutbox o SET o.status = :status, o.publishedAt = :publishedAt, o.retryCount = :retryCount WHERE o.id = :id")
 	void updateRecord(@Param("id") UUID id,
 		@Param("status") OutboxStatus status,

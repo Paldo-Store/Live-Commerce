@@ -1,6 +1,7 @@
 package com.live_commerce.payment.domain.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
@@ -55,12 +56,12 @@ public class PaymentOutbox {
 		this.eventType = eventType;
 		this.payload = payload;
 		this.status = OutboxStatus.PENDING;
-		this.createdAt = LocalDateTime.now();
+		this.createdAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 	}
 
 	public void markPublished() {
 		this.status = OutboxStatus.PUBLISHED;
-		this.publishedAt = LocalDateTime.now();
+		this.publishedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 	}
 
 	public void markFailed() {

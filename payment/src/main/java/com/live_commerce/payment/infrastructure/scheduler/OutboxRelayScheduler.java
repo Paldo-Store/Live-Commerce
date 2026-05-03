@@ -1,6 +1,7 @@
 package com.live_commerce.payment.infrastructure.scheduler;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -28,7 +29,7 @@ public class OutboxRelayScheduler {
 	@Scheduled(fixedDelay = 3000)
 	public void relay() {
 		RLock lock = redissonClient.getLock(RELAY_LOCK_KEY);
-		if (!lock.tryLock()) {
+		if (!lock.tryLock(0, 2, TimeUnit.MINUTES)) {
 			return;
 		}
 		try {

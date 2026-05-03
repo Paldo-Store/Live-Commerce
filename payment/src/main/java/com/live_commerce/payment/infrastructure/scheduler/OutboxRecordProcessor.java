@@ -71,8 +71,8 @@ public class OutboxRecordProcessor {
 				paymentEventProducer.sendPaymentCompleted(new PaymentCompletedEvent(orderId, "결제 완료", amount));
 			}
 			case "PAYMENT_FAILED" -> {
-				String reason = (String) map.get("reason");
-				paymentEventProducer.sendPaymentFailed(new PaymentFailedEvent(orderId, reason));
+				String message = (String) map.get("message");
+				paymentEventProducer.sendPaymentFailed(new PaymentFailedEvent(orderId, message));
 			}
 			default -> throw new IllegalArgumentException("알 수 없는 eventType: " + outbox.getEventType());
 		}
