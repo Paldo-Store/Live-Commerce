@@ -28,13 +28,10 @@ public class FeignClientInterceptor implements RequestInterceptor {
 				username = userDetails.getUsername();
 			}
 
-			System.out.println("FeignClientInterceptor 적용됨 - Authorization 헤더 추가: " + token);
 			requestTemplate.header("Authorization", "Bearer " + token);
 			requestTemplate.header("X-User-Id", userId);
 			requestTemplate.header("X-User-Username", username);
 			requestTemplate.header("X-User-Role", role);
-		} else {
-			System.out.println("FeignClientInterceptor 적용 실패 - SecurityContext에서 토큰을 찾을 수 없음");
 		}
 	}
 }
