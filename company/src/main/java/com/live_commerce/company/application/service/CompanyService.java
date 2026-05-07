@@ -58,6 +58,7 @@ public class CompanyService {
     public CompanyGetOneResponse getCompany(final UUID id) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
+        validateNotDeleted(company);
         return CompanyGetOneResponse.of(company);
     }
 
@@ -81,6 +82,7 @@ public class CompanyService {
         final Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
         validateNotDeleted(company);
+        validateOwnership(company, userId, role);
         company.update(request);
         return CompanyUpdateResponse.of(company);
     }
@@ -93,6 +95,7 @@ public class CompanyService {
         final Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyException(CompanyExceptionCode.NOT_FOUND));
         validateNotDeleted(company);
+        validateOwnership(company, userId, role);
         company.delete(userId.toString());
         return CompanyDeleteResponse.of(company.getId());
     }
@@ -100,6 +103,12 @@ public class CompanyService {
     private void validateAuthorization(String role) {
         if (!ROLE_MASTER.equals(role) && !ROLE_SELLER.equals(role)) {
             throw new AccessDeniedException("업체 관리 권한이 없습니다.");
+        }
+    }
+
+    private void validateOwnership(Company company, UUID userId, String role) {
+        if (ROLE_SELLER.equals(role) && !company.getOwner().equals(userId)) {
+            throw new AccessDeniedException("소속 업체만 관리할 수 있습니다.");
         }
     }
 
