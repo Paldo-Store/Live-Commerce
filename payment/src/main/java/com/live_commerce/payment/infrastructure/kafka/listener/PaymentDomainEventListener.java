@@ -9,13 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
-import com.live_commerce.payment.domain.event.PaymentCompletedDomainEvent;
-import com.live_commerce.payment.domain.event.PaymentFailedDomainEvent;
 import com.live_commerce.payment.domain.event.PaymentReadyDomainEvent;
-import com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent;
-import com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent;
-import com.live_commerce.payment.infrastructure.kafka.producer.PaymentEventProducer;
+import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentDomainEventListener {
 
-	private final PaymentEventProducer paymentEventProducer;
 	private final RedissonClient redissonClient;
 	private final RetryTemplate retryTemplate;
 
@@ -43,19 +37,5 @@ public class PaymentDomainEventListener {
 		} catch (Exception e) {
 			log.error("[Payment] Redis 만료 key 설정 실패 - PENDING 상태 보정 불가: orderId={}", event.orderId(), e);
 		}
-	}
-
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-	public void onPaymentCompleted(PaymentCompletedDomainEvent event) {
-		paymentEventProducer.sendPaymentCompleted(
-			new PaymentCompletedEvent(event.orderId(), "결제 완료", event.amount())
-		);
-	}
-
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-	public void onPaymentFailed(PaymentFailedDomainEvent event) {
-		paymentEventProducer.sendPaymentFailed(
-			new PaymentFailedEvent(event.orderId(), event.reason())
-		);
 	}
 }

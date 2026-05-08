@@ -1,6 +1,7 @@
 package com.live_commerce.payment.domain.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
@@ -38,10 +39,16 @@ public class Payment extends BaseEntity {
 	@Column(nullable = false)
 	private PaymentStatus status;
 
-	private String tid; // 카카오페이 결제 시도 후 발급받을 TID
+	private String tid;
+
+	private LocalDateTime expiresAt;
 
 	public void assignTid(String tid) {
 		this.tid = tid;
+	}
+
+	public void expireAt(LocalDateTime expiresAt) {
+		this.expiresAt = expiresAt;
 	}
 
 	public void complete() {

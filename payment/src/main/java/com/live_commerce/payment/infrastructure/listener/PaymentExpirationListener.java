@@ -5,11 +5,11 @@ import java.util.UUID;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
+import com.live_commerce.payment.application.service.PaymentTxProcessor;
 import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
+import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentExpirationListener implements MessageListener {
 
 	private final PaymentRepository paymentRepository;
+	private final PaymentTxProcessor paymentTxProcessor;
 
 	@Override
-	@Transactional
 	public void onMessage(Message message, byte[] pattern) {
 		String expiredKey = new String(message.getBody());
 
@@ -32,15 +32,17 @@ public class PaymentExpirationListener implements MessageListener {
 
 		try {
 			UUID orderId = UUID.fromString(expiredKey.replace(PaymentRedisKeys.EXPIRE_KEY_PREFIX, ""));
-			log.info("Redis TTL 만료 감지됨 – orderId: {}", orderId);
 
 			paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING)
 				.ifPresent(payment -> {
-					payment.fail();
-					log.info("자동 실패 처리 완료 – paymentId: {}, orderId: {}", payment.getId(), orderId);
+					try {
+						paymentTxProcessor.fail(orderId, "결제 유효시간 만료");
+					} catch (IllegalStateException e) {
+						log.warn("[Expiration] 상태 전이 불가 - 이미 처리됨: orderId={}", orderId);
+					}
 				});
 		} catch (Exception e) {
-			log.error("Redis TTL 처리 중 예외 발생 – key: {}", expiredKey, e);
+			log.error("[Expiration] Redis TTL 처리 중 예외 발생: key={}", expiredKey, e);
 		}
 	}
 }
