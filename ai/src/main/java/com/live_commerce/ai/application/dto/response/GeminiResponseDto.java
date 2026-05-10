@@ -6,6 +6,7 @@ public record GeminiResponseDto(List<Candidate> candidates) {
 	public String extractText() {
 		if (candidates == null || candidates.isEmpty()) return "";
 		Content content = candidates.get(0).content();
+		if (content == null) return "";
 		List<Content.Part> parts = content.parts();
 		return (parts != null && !parts.isEmpty()) ? parts.get(0).text() : "";
 	}
