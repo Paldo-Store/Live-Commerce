@@ -16,19 +16,8 @@ public class CompanyValidator {
 
     private final CompanyClient companyClient;
 
-    public void validateExistsAndActiveOrThrow(UUID companyId) {
-        try {
-            ApiResponse<ExternalCompanyResponseDto> companyResponse = companyClient.getCompany(companyId);
-
-            if (companyResponse.getData() == null) {
-                throw ProductException.forExternalCompanyNotFound();
-            }
-
-        } catch (FeignException.NotFound e) {
-            throw ProductException.forExternalCompanyNotFound();
-        } catch (FeignException e) {
-            throw new RuntimeException("업체 서비스 호출 실패", e);
-        }
+    public void validateExistsOrThrow(UUID companyId) {
+        getValidCompanyOrThrow(companyId);
     }
 
     public ExternalCompanyResponseDto getValidCompanyOrThrow(UUID companyId) {

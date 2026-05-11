@@ -52,7 +52,7 @@ public class ProductService {
 
     @Transactional
     public ProductCreateResponseDto createProduct(ProductCreateRequestDto requestDto, RequestUserDetails user) {
-        companyValidator.validateExistsAndActiveOrThrow(requestDto.companyId());
+        companyValidator.validateExistsOrThrow(requestDto.companyId());
 
         permissionValidator.validateOwnerOrMasterByCompanyId(user, requestDto.companyId());
 
