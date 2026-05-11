@@ -9,6 +9,10 @@ spring:
 payment:
   expire-minutes: 10
 
+toss:
+  pay:
+    secret-key: ${TOSS_PAY_SECRET_KEY:test_sk_placeholder}
+
 #spring:
 #  profiles:
 #    active: prod

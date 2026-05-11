@@ -19,9 +19,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
+import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.infrastructure.kafka.consumer.PaymentEventConsumer;
 import com.live_commerce.payment.infrastructure.kafka.producer.PaymentEventProducer;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
@@ -37,18 +38,13 @@ public class PaymentDuplicateRequestTest {
 	private PaymentRepository paymentRepository;
 
 	@MockitoBean
-	private KakaoPayClient kakaoPayClient;
+	private KakaoPayGateway kakaoPayGateway;
 
 	@BeforeEach
 	void setUp() {
-		KakaoPayReadyDto mockDto = new KakaoPayReadyDto(
-			"T123456789",
-			"https://kakao.pay.pc",
-			"https://kakao.pay.mobile",
-			"2025-04-17T21:20:00"
-		);
-		when(kakaoPayClient.requestKakaoPayReady(any(), any(), any(), any()))
-			.thenReturn(mockDto);
+		when(kakaoPayGateway.supports(PaymentMethod.KAKAO)).thenReturn(true);
+		when(kakaoPayGateway.ready(any(), any(), any(), any()))
+			.thenReturn(new PaymentReadyResult("T123456789", "https://kakao.pay.pc"));
 	}
 
 	@DisplayName("동시 결제 요청 시 중복 결제 방지 테스트")
@@ -56,7 +52,7 @@ public class PaymentDuplicateRequestTest {
 	void duplicatePaymentRequest_should_create_only_one_payment() throws Exception {
 		UUID userId = UUID.randomUUID();
 		UUID orderId = UUID.randomUUID();
-		PaymentReadyRequestDto dto = new PaymentReadyRequestDto(orderId, BigDecimal.valueOf(9999), "중복 테스트");
+		PaymentReadyRequestDto dto = new PaymentReadyRequestDto(orderId, BigDecimal.valueOf(9999), "중복 테스트", PaymentMethod.KAKAO);
 		RequestUserDetails user = new RequestUserDetails(userId, null, Collections.emptyList());
 
 		int threadCount = 5;

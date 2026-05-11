@@ -14,7 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.domain.model.PaymentMethod;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.domain.model.OutboxStatus;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.model.PaymentOutbox;
@@ -35,7 +36,7 @@ class PaymentTxProcessorTest {
 	private PaymentOutboxRepository paymentOutboxRepository;
 
 	@MockitoBean
-	private KakaoPayClient kakaoPayClient;
+	private KakaoPayGateway kakaoPayGateway;
 	@MockitoBean
 	private OrderClient orderClient;
 
@@ -53,9 +54,9 @@ class PaymentTxProcessorTest {
 	@DisplayName("complete - PAYMENT_COMPLETED Outbox 레코드 저장 및 결제 상태 변경")
 	@Test
 	void complete_savesOutboxAndChangesStatus() {
-		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(10000)));
+		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO));
 
-		paymentTxProcessor.complete(orderId);
+		paymentTxProcessor.complete(orderId, "test-payment-key");
 
 		Payment updated = paymentRepository.findByOrderId(orderId).orElseThrow();
 		assertEquals(PaymentStatus.COMPLETED, updated.getStatus());
@@ -72,7 +73,7 @@ class PaymentTxProcessorTest {
 	@DisplayName("fail - PAYMENT_FAILED Outbox 레코드 저장 및 결제 상태 변경")
 	@Test
 	void fail_savesOutboxAndChangesStatus() {
-		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(5000)));
+		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO));
 
 		paymentTxProcessor.fail(orderId, "카드 한도 초과");
 
@@ -90,7 +91,7 @@ class PaymentTxProcessorTest {
 	@DisplayName("refund - 결제 상태 REFUND 변경, Outbox 저장 없음")
 	@Test
 	void refund_changesStatusOnly() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		paymentRepository.save(payment);
 
@@ -103,7 +104,7 @@ class PaymentTxProcessorTest {
 	@DisplayName("cancel - 결제 상태 CANCELED 변경, Outbox 저장 없음")
 	@Test
 	void cancel_changesStatusOnly() {
-		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(3000)));
+		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(3000), PaymentMethod.KAKAO));
 
 		paymentTxProcessor.cancel(orderId);
 

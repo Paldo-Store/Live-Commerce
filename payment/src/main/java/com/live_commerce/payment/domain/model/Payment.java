@@ -39,6 +39,10 @@ public class Payment extends BaseEntity {
 	@Column(nullable = false)
 	private PaymentStatus status;
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private PaymentMethod paymentMethod;
+
 	private String tid;
 
 	private LocalDateTime expiresAt;
@@ -82,16 +86,16 @@ public class Payment extends BaseEntity {
 	}
 
 	// 정적 팩토리 메서드
-	public static Payment of(UUID userId, UUID orderId, BigDecimal amount) {
-		return new Payment(userId, orderId, amount, PaymentStatus.PENDING);
+	public static Payment of(UUID userId, UUID orderId, BigDecimal amount, PaymentMethod paymentMethod) {
+		return new Payment(userId, orderId, amount, PaymentStatus.PENDING, paymentMethod);
 	}
 
-	// 프라이빗 생성자
-	private Payment(UUID userId, UUID orderId, BigDecimal amount, PaymentStatus status) {
+	private Payment(UUID userId, UUID orderId, BigDecimal amount, PaymentStatus status, PaymentMethod paymentMethod) {
 		this.userId = userId;
 		this.orderId = orderId;
 		this.amount = amount;
 		this.status = status;
+		this.paymentMethod = paymentMethod;
 	}
 
 }

@@ -17,7 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.domain.model.PaymentMethod;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 
@@ -35,7 +36,7 @@ public class PaymentDistributedLockTest {
 	private PaymentRepository paymentRepository;
 
 	@MockitoBean
-	private KakaoPayClient kakaoPayClient;
+	private KakaoPayGateway kakaoPayGateway;
 
 	@DisplayName("leaseTime 이후 다른 스레드가 락 재획득 - DB 저장 확인")
 	@Test
@@ -48,7 +49,7 @@ public class PaymentDistributedLockTest {
 		Runnable task1 = () -> {
 			try {
 				if (lock.tryLock(100, 1000, TimeUnit.MILLISECONDS)) {
-					Payment p1 = Payment.of(UUID.randomUUID(), orderId1, BigDecimal.valueOf(1000));
+					Payment p1 = Payment.of(UUID.randomUUID(), orderId1, BigDecimal.valueOf(1000), PaymentMethod.KAKAO);
 					paymentRepository.save(p1);
 					Thread.sleep(2000);
 				}
@@ -67,7 +68,7 @@ public class PaymentDistributedLockTest {
 			try {
 				Thread.sleep(1500);
 				if (lock.tryLock(100, 1000, TimeUnit.MILLISECONDS)) {
-					Payment p2 = Payment.of(UUID.randomUUID(), orderId2, BigDecimal.valueOf(2000));
+					Payment p2 = Payment.of(UUID.randomUUID(), orderId2, BigDecimal.valueOf(2000), PaymentMethod.KAKAO);
 					paymentRepository.save(p2);
 					lock.unlock();
 				}
@@ -187,7 +188,7 @@ public class PaymentDistributedLockTest {
 				try {
 					if (lock.tryLock(100, 1000, TimeUnit.MILLISECONDS)) {
 						log.info("[RETRY] 락 획득 성공");
-						Payment p = Payment.of(UUID.randomUUID(), retryOrderId, BigDecimal.valueOf(7777));
+						Payment p = Payment.of(UUID.randomUUID(), retryOrderId, BigDecimal.valueOf(7777), PaymentMethod.KAKAO);
 						paymentRepository.save(p);
 						lock.unlock();
 						break;

@@ -34,8 +34,11 @@ public class PaymentTxProcessor {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void complete(UUID orderId) {
+	public void complete(UUID orderId, String confirmedTid) {
 		Payment p = findByOrderId(orderId);
+		if (confirmedTid != null) {
+			p.assignTid(confirmedTid);
+		}
 		p.complete();
 		paymentOutboxRepository.save(PaymentOutbox.of(orderId, "PAYMENT_COMPLETED", buildCompletedPayload(p)));
 	}

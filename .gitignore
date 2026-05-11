@@ -1,6 +1,11 @@
 # ========== Java ==========
 *.class
 
+# ========== Node.js ==========
+node_modules/
+dist/
+.vite/
+
 # ========== IntelliJ IDEA ==========
 .idea/
 *.iml
@@ -41,3 +46,4 @@ docs/.bkit-memory.json
 docs/.pdca-status.json
 docs/.pdca-snapshots/
 .bkit/
+.omx/

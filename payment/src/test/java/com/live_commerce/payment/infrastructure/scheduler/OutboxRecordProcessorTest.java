@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.domain.model.OutboxStatus;
 import com.live_commerce.payment.domain.model.PaymentOutbox;
 import com.live_commerce.payment.domain.repository.PaymentOutboxRepository;
@@ -32,7 +32,7 @@ class OutboxRecordProcessorTest {
 	@MockitoBean
 	private PaymentEventProducer paymentEventProducer;
 	@MockitoBean
-	private KakaoPayClient kakaoPayClient;
+	private KakaoPayGateway kakaoPayGateway;
 	@MockitoBean
 	private OrderClient orderClient;
 

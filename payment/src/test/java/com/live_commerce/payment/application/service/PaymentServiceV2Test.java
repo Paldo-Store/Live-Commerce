@@ -26,13 +26,14 @@ import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.exception.CustomException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
 import com.live_commerce.payment.domain.model.Payment;
+import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.domain.repository.PaymentSearchCondition;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.infrastructure.client.OrderClient;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
 import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
@@ -50,7 +51,7 @@ public class PaymentServiceV2Test {
 	@MockitoBean
 	private PaymentTxProcessor paymentTxProcessor;
 	@MockitoBean
-	private KakaoPayClient kakaoPayClient;
+	private KakaoPayGateway kakaoPayGateway;
 	@MockitoBean
 	private OrderClient orderClient;
 
@@ -63,6 +64,7 @@ public class PaymentServiceV2Test {
 		userId = UUID.randomUUID();
 		orderId = UUID.randomUUID();
 		redissonClient.getBucket(PaymentRedisKeys.EXPIRE_KEY_PREFIX + orderId).delete();
+		when(kakaoPayGateway.supports(PaymentMethod.KAKAO)).thenReturn(true);
 	}
 
 	// ── approvePayment ────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 승인 실패 - 결제 없음")
 	@Test
 	void approvePayment_notFound_fail() {
-		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString());
+		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.approvePayment(dto, userId)
 		);
@@ -80,10 +82,10 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 승인 실패 - 상태가 PENDING이 아님")
 	@Test
 	void approvePayment_invalidStatus_fail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		paymentRepository.save(payment);
-		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString());
+		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.approvePayment(dto, userId)
 		);
@@ -93,61 +95,60 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 승인 실패 - Redis 만료 키 없음")
 	@Test
 	void approvePayment_paymentExpired_fail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
-		// Redis key 없는 상태 유지 (setup에서 삭제됨)
-		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString());
+		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.approvePayment(dto, userId)
 		);
 		assertEquals(PaymentExceptionCode.PAYMENT_EXPIRED, ex.getExceptionCode());
 	}
 
-	@DisplayName("결제 승인 실패 - 카카오 API 실패 시 paymentTxProcessor.fail() 호출")
+	@DisplayName("결제 승인 실패 - PG사 API 실패 시 paymentTxProcessor.fail() 호출")
 	@Test
-	void approvePayment_kakaoApiFail_callsTxFail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000));
+	void approvePayment_pgApiFail_callsTxFail() {
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
 		setRedisExpireKey(orderId);
-		when(kakaoPayClient.requestKakaoPayApprove(any(), any(), any(), any()))
-			.thenThrow(new RestClientException("카카오 오류"));
-		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString());
+		when(kakaoPayGateway.approve(any(), any(), any(), any(), any()))
+			.thenThrow(new RestClientException("PG사 오류"));
+		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.approvePayment(dto, userId)
 		);
 		assertEquals(PaymentExceptionCode.PAYMENT_APPROVE_FAIL, ex.getExceptionCode());
-		verify(paymentTxProcessor).fail(orderId, "카카오페이 승인 실패");
+		verify(paymentTxProcessor).fail(orderId, "PG사 승인 실패");
 	}
 
-	@DisplayName("결제 승인 실패 - DB 업데이트 실패 시 카카오 보상 취소 호출")
+	@DisplayName("결제 승인 실패 - DB 업데이트 실패 시 PG사 보상 취소 호출")
 	@Test
-	void approvePayment_dbUpdateFail_callsKakaoCompensation() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000));
+	void approvePayment_dbUpdateFail_callsPgCompensation() {
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO);
 		payment.assignTid("TID");
 		paymentRepository.save(payment);
 		setRedisExpireKey(orderId);
-		KakaoPayApproveDto approveDto = buildKakaoApproveDto(orderId, userId, 10000);
-		when(kakaoPayClient.requestKakaoPayApprove(any(), any(), any(), any())).thenReturn(approveDto);
-		doThrow(new RuntimeException("DB 오류")).when(paymentTxProcessor).complete(orderId);
-		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString());
+		when(kakaoPayGateway.approve(any(), any(), any(), any(), any()))
+			.thenReturn(new PaymentApproveResult("TID", BigDecimal.valueOf(10000), null));
+		doThrow(new RuntimeException("DB 오류")).when(paymentTxProcessor).complete(eq(orderId), any());
+		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.approvePayment(dto, userId)
 		);
 		assertEquals(PaymentExceptionCode.PAYMENT_APPROVE_FAIL, ex.getExceptionCode());
-		verify(kakaoPayClient).requestKakaoPayCancel(eq("TID"), any());
+		verify(kakaoPayGateway).cancel(eq("TID"), any());
 	}
 
 	@DisplayName("결제 승인 성공 - complete 호출 및 Redis 키 삭제")
 	@Test
 	void approvePayment_success() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
 		setRedisExpireKey(orderId);
-		when(kakaoPayClient.requestKakaoPayApprove(any(), any(), any(), any()))
-			.thenReturn(buildKakaoApproveDto(orderId, userId, 10000));
-		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString());
+		when(kakaoPayGateway.approve(any(), any(), any(), any(), any()))
+			.thenReturn(new PaymentApproveResult("TID", BigDecimal.valueOf(10000), null));
+		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		PaymentApproveResponseDto result = paymentServiceV2.approvePayment(dto, userId);
-		verify(paymentTxProcessor).complete(orderId);
+		verify(paymentTxProcessor).complete(eq(orderId), any());
 		assertFalse(redissonClient.getBucket(PaymentRedisKeys.EXPIRE_KEY_PREFIX + orderId).isExists());
 		assertNotNull(result);
 	}
@@ -157,20 +158,20 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 환불 실패 - 상태가 COMPLETED 아님")
 	@Test
 	void refundPayment_notCompleted_fail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
-		paymentRepository.save(payment); // PENDING
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
+		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.refundPaymentByOrderId(orderId, userDetails)
 		);
 		assertEquals(PaymentExceptionCode.INVALID_STATUS, ex.getExceptionCode());
-		verify(kakaoPayClient, never()).requestKakaoPayCancel(any(), any());
+		verify(kakaoPayGateway, never()).cancel(any(), any());
 	}
 
 	@DisplayName("결제 환불 실패 - 권한 없음")
 	@Test
 	void refundPayment_unauthorized_fail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		paymentRepository.save(payment);
 		RequestUserDetails otherUser = new RequestUserDetails(UUID.randomUUID(), null, Collections.emptyList());
@@ -180,15 +181,15 @@ public class PaymentServiceV2Test {
 		assertEquals(PaymentExceptionCode.UNAUTHORIZED, ex.getExceptionCode());
 	}
 
-	@DisplayName("결제 환불 실패 - 카카오 취소 API 실패 시 DB 업데이트 하지 않음")
+	@DisplayName("결제 환불 실패 - PG사 취소 API 실패 시 DB 업데이트 하지 않음")
 	@Test
-	void refundPayment_kakaoFail_noDbUpdate() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
+	void refundPayment_pgFail_noDbUpdate() {
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		payment.assignTid("TID_REF");
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
-		when(kakaoPayClient.requestKakaoPayCancel(any(), any())).thenThrow(new RestClientException("실패"));
+		doThrow(new RestClientException("실패")).when(kakaoPayGateway).cancel(any(), any());
 		CustomException ex = assertThrows(CustomException.class, () ->
 			paymentServiceV2.refundPaymentByOrderId(orderId, userDetails)
 		);
@@ -199,12 +200,12 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 환불 성공 - refund 호출 및 주문 알림 전송")
 	@Test
 	void refundPayment_success() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		payment.assignTid("TID_REF");
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
-		Payment refunded = Payment.of(userId, orderId, BigDecimal.valueOf(8000));
+		Payment refunded = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
 		refunded.updateStatus(PaymentStatus.REFUND);
 		when(paymentTxProcessor.refund(orderId)).thenReturn(refunded);
 		PaymentRefundResponseDto result = paymentServiceV2.refundPaymentByOrderId(orderId, userDetails);
@@ -217,12 +218,12 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 환불 성공 - 마스터가 다른 유저 결제 환불")
 	@Test
 	void refundPayment_byMaster_success() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(12000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(12000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		payment.assignTid("TID_MASTER");
 		paymentRepository.save(payment);
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
-		Payment refunded = Payment.of(userId, orderId, BigDecimal.valueOf(12000));
+		Payment refunded = Payment.of(userId, orderId, BigDecimal.valueOf(12000), PaymentMethod.KAKAO);
 		refunded.updateStatus(PaymentStatus.REFUND);
 		when(paymentTxProcessor.refund(orderId)).thenReturn(refunded);
 		PaymentRefundResponseDto result = paymentServiceV2.refundPaymentByOrderId(orderId, master);
@@ -235,7 +236,7 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 취소 실패 - 상태가 PENDING 아님")
 	@Test
 	void cancelPayment_notPending_fail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
@@ -249,7 +250,7 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 취소 실패 - 권한 없음")
 	@Test
 	void cancelPayment_unauthorized_fail() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
 		RequestUserDetails otherUser = new RequestUserDetails(UUID.randomUUID(), null, Collections.emptyList());
 		CustomException ex = assertThrows(CustomException.class, () ->
@@ -261,7 +262,7 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 취소 성공 - cancel 호출 및 주문 알림 전송")
 	@Test
 	void cancelPayment_success() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		paymentServiceV2.cancelPaymentByOrderId(orderId, userDetails);
@@ -272,7 +273,7 @@ public class PaymentServiceV2Test {
 	@DisplayName("결제 취소 성공 - 마스터가 다른 유저 결제 취소")
 	@Test
 	void cancelPayment_byMaster_success() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
 		paymentServiceV2.cancelPaymentByOrderId(orderId, master);
@@ -281,26 +282,26 @@ public class PaymentServiceV2Test {
 
 	// ── compensateRefundByOrderId ─────────────────────────────────────────
 
-	@DisplayName("보상 환불 - COMPLETED 아니면 카카오 취소 호출 없음 (early return)")
+	@DisplayName("보상 환불 - COMPLETED 아니면 PG사 취소 호출 없음 (early return)")
 	@Test
 	void compensateRefund_notCompleted_skip() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000)); // PENDING
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		paymentRepository.save(payment);
 		paymentServiceV2.compensateRefundByOrderId(orderId, "테스트");
-		verify(kakaoPayClient, never()).requestKakaoPayCancel(any(), any());
+		verify(kakaoPayGateway, never()).cancel(any(), any());
 		verify(paymentTxProcessor, never()).refund(any());
 	}
 
-	@DisplayName("보상 환불 - COMPLETED 상태면 카카오 취소 후 refund 호출")
+	@DisplayName("보상 환불 - COMPLETED 상태면 PG사 취소 후 refund 호출")
 	@Test
 	void compensateRefund_completed_success() {
-		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		payment.updateStatus(PaymentStatus.COMPLETED);
 		payment.assignTid("TID_COMP");
 		paymentRepository.save(payment);
 		when(paymentTxProcessor.refund(orderId)).thenReturn(payment);
 		paymentServiceV2.compensateRefundByOrderId(orderId, "보상 처리");
-		verify(kakaoPayClient).requestKakaoPayCancel(eq("TID_COMP"), any());
+		verify(kakaoPayGateway).cancel(eq("TID_COMP"), any());
 		verify(paymentTxProcessor).refund(orderId);
 	}
 
@@ -310,7 +311,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void getPayments_invalidPageSize_defaultsTo10() {
 		for (int i = 0; i < 12; i++) {
-			paymentRepository.save(Payment.of(userId, UUID.randomUUID(), BigDecimal.valueOf(1000)));
+			paymentRepository.save(Payment.of(userId, UUID.randomUUID(), BigDecimal.valueOf(1000), PaymentMethod.KAKAO));
 		}
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		Page<PaymentGetResponseDto> result = paymentServiceV2.getPayments(
@@ -325,10 +326,10 @@ public class PaymentServiceV2Test {
 	@Test
 	void getPayments_owner_seesOnlyOwn() {
 		for (int i = 0; i < 3; i++) {
-			paymentRepository.save(Payment.of(userId, UUID.randomUUID(), BigDecimal.valueOf(1000)));
+			paymentRepository.save(Payment.of(userId, UUID.randomUUID(), BigDecimal.valueOf(1000), PaymentMethod.KAKAO));
 		}
 		for (int i = 0; i < 2; i++) {
-			paymentRepository.save(Payment.of(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(2000)));
+			paymentRepository.save(Payment.of(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(2000), PaymentMethod.KAKAO));
 		}
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		Page<PaymentGetResponseDto> result = paymentServiceV2.getPayments(
@@ -342,7 +343,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void getPayments_master_seesAll() {
 		for (int i = 0; i < 5; i++) {
-			paymentRepository.save(Payment.of(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(1000)));
+			paymentRepository.save(Payment.of(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(1000), PaymentMethod.KAKAO));
 		}
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
 		Page<PaymentGetResponseDto> result = paymentServiceV2.getPayments(
@@ -356,15 +357,5 @@ public class PaymentServiceV2Test {
 
 	private void setRedisExpireKey(UUID orderId) {
 		redissonClient.getBucket(PaymentRedisKeys.EXPIRE_KEY_PREFIX + orderId).set("1");
-	}
-
-	private KakaoPayApproveDto buildKakaoApproveDto(UUID orderId, UUID userId, int amount) {
-		return new KakaoPayApproveDto(
-			"aid", "TID", "cid",
-			orderId.toString(), userId.toString(),
-			"MONEY",
-			new KakaoPayApproveDto.Amount(amount, 0, 0, 0, 0),
-			"2024-01-01T00:00:00"
-		);
 	}
 }

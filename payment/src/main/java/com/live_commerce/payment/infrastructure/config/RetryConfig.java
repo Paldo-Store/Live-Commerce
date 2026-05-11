@@ -3,6 +3,7 @@ package com.live_commerce.payment.infrastructure.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Configuration
 public class RetryConfig {
@@ -10,8 +11,9 @@ public class RetryConfig {
 	@Bean
 	public RetryTemplate retryTemplate() {
 		return RetryTemplate.builder()
-			.maxAttempts(3)        // 최대 3번 시도
-			.fixedBackoff(1000)    // 1초 간격 (1000ms)
+			.maxAttempts(3)
+			.fixedBackoff(1000)
+			.notRetryOn(HttpClientErrorException.class) // 4xx는 재시도 무의미
 			.build();
 	}
 }

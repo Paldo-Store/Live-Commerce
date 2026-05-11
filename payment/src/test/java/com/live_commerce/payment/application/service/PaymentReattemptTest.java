@@ -16,10 +16,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.live_commerce.payment.application.dto.request.PaymentReadyRequestDto;
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
 import com.live_commerce.payment.domain.model.Payment;
+import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
 
 @SpringBootTest
@@ -33,11 +34,12 @@ public class PaymentReattemptTest {
 	private PaymentRepository paymentRepository;
 
 	@MockitoBean
-	private KakaoPayClient kakaoPayClient;
+	private KakaoPayGateway kakaoPayGateway;
 
 	@BeforeEach
 	void setUp() {
-		reset(kakaoPayClient);
+		reset(kakaoPayGateway);
+		when(kakaoPayGateway.supports(PaymentMethod.KAKAO)).thenReturn(true);
 	}
 
 	@DisplayName("API 실패 후 동일 orderId로 재요청 시 결제 준비 성공")
@@ -46,9 +48,9 @@ public class PaymentReattemptTest {
 		UUID userId = UUID.randomUUID();
 		UUID orderId = UUID.randomUUID();
 		RequestUserDetails user = new RequestUserDetails(userId, null, Collections.emptyList());
-		PaymentReadyRequestDto dto = new PaymentReadyRequestDto(orderId, BigDecimal.valueOf(12000), "재결제 테스트");
+		PaymentReadyRequestDto dto = new PaymentReadyRequestDto(orderId, BigDecimal.valueOf(12000), "재결제 테스트", PaymentMethod.KAKAO);
 
-		when(kakaoPayClient.requestKakaoPayReady(any(), any(), any(), any()))
+		when(kakaoPayGateway.ready(any(), any(), any(), any()))
 			.thenThrow(new RuntimeException("카카오페이 실패"));
 
 		try {
@@ -57,9 +59,10 @@ public class PaymentReattemptTest {
 
 		assertTrue(paymentRepository.findByOrderId(orderId).isEmpty());
 
-		reset(kakaoPayClient);
-		when(kakaoPayClient.requestKakaoPayReady(any(), any(), any(), any()))
-			.thenReturn(new KakaoPayReadyDto("T_OK", "https://ok", "https://ok", "2025-04-19T00:00:00"));
+		reset(kakaoPayGateway);
+		when(kakaoPayGateway.supports(PaymentMethod.KAKAO)).thenReturn(true);
+		when(kakaoPayGateway.ready(any(), any(), any(), any()))
+			.thenReturn(new PaymentReadyResult("T_OK", "https://ok"));
 
 		assertDoesNotThrow(() -> paymentService.readyPayment(user, dto));
 

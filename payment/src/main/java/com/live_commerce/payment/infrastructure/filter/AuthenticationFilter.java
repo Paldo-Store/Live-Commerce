@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -72,7 +73,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		// 인증 정보 설정
 		UsernamePasswordAuthenticationToken authentication =
 			new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(authentication);
+		SecurityContextHolder.setContext(context);
 
 		// 필터 체인으로 넘김
 		filterChain.doFilter(request, response);

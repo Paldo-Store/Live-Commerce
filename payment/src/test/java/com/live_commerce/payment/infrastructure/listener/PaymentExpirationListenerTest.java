@@ -15,6 +15,7 @@ import org.springframework.data.redis.connection.Message;
 
 import com.live_commerce.payment.application.service.PaymentTxProcessor;
 import com.live_commerce.payment.domain.model.Payment;
+import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
@@ -35,7 +36,7 @@ class PaymentExpirationListenerTest {
 	void onMessage_validKey_callsFail() {
 		UUID orderId = UUID.randomUUID();
 		String key = PaymentRedisKeys.EXPIRE_KEY_PREFIX + orderId;
-		Payment payment = Payment.of(UUID.randomUUID(), orderId, java.math.BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(UUID.randomUUID(), orderId, java.math.BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		when(paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING))
 			.thenReturn(Optional.of(payment));
 
@@ -68,7 +69,7 @@ class PaymentExpirationListenerTest {
 	@Test
 	void onMessage_failThrows_noException() {
 		UUID orderId = UUID.randomUUID();
-		Payment payment = Payment.of(UUID.randomUUID(), orderId, java.math.BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(UUID.randomUUID(), orderId, java.math.BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		when(paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING))
 			.thenReturn(Optional.of(payment));
 		doThrow(new IllegalStateException("이미 처리됨")).when(paymentTxProcessor).fail(any(), any());

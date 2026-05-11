@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.retry.ExhaustedRetryException;
 import org.springframework.web.client.RestClientException;
 
 import feign.FeignException;
@@ -26,8 +27,12 @@ import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.exception.CustomException;
+import com.live_commerce.payment.application.exception.PaymentAmountMismatchException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.application.port.PaymentGateway;
+import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
+import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
+import com.live_commerce.payment.application.port.PaymentGatewayFactory;
 import com.live_commerce.payment.infrastructure.redis.PaymentRedisKeys;
 import com.live_commerce.payment.domain.event.PaymentReadyDomainEvent;
 import com.live_commerce.payment.domain.model.Payment;
@@ -35,8 +40,6 @@ import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 import com.live_commerce.payment.domain.repository.PaymentSearchCondition;
 import com.live_commerce.payment.infrastructure.client.OrderClient;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentCancelRequest;
 import com.live_commerce.payment.infrastructure.lock.DistributedLock;
 import com.live_commerce.payment.infrastructure.security.RequestUserDetails;
@@ -50,7 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceV2 {
 
 	private final PaymentRepository paymentRepository;
-	private final KakaoPayClient kakaoPayClient;
+	private final PaymentGatewayFactory gatewayFactory;
 	private final OrderClient orderClient;
 	private final RedissonClient redissonClient;
 	private final ApplicationEventPublisher eventPublisher;
@@ -68,19 +71,18 @@ public class PaymentServiceV2 {
 			}
 		});
 
-		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
-			user.getUserId(), dto.orderId(), dto.amount(), dto.itemName()
-		);
+		PaymentGateway gateway = gatewayFactory.getGateway(dto.paymentMethod());
+		PaymentReadyResult readyResult = gateway.ready(user.getUserId(), dto.orderId(), dto.amount(), dto.itemName());
 
 		Payment payment = dto.toEntity(user.getUserId());
-		payment.assignTid(readyDto.tid());
+		payment.assignTid(readyResult.tid());
 		payment.expireAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
 		paymentRepository.save(payment);
 
 		// DB 커밋 완료 후 Redis key 설정 (PaymentDomainEventListener.onPaymentReady)
 		eventPublisher.publishEvent(new PaymentReadyDomainEvent(dto.orderId(), payment.getId()));
 
-		return PaymentReadyResponseDto.from(readyDto);
+		return PaymentReadyResponseDto.from(readyResult);
 	}
 
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
@@ -99,30 +101,40 @@ public class PaymentServiceV2 {
 			throw new CustomException(PaymentExceptionCode.PAYMENT_EXPIRED);
 		}
 
-		// ── 2. 카카오 API 호출 [no tx, 커넥션 미점유] ──────────────
-		KakaoPayApproveDto approveDto;
+		// ── 2. PG사 API 호출 [no tx, 커넥션 미점유] ──────────────
+		PaymentGateway gateway = gatewayFactory.getGateway(payment.getPaymentMethod());
+		PaymentApproveResult approveResult;
 		try {
-			approveDto = kakaoPayClient.requestKakaoPayApprove(
-				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(), userId.toString()
+			approveResult = gateway.approve(
+				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(),
+				userId, requestDto.amount()
 			);
-		} catch (RestClientException e) {
-			paymentTxProcessor.fail(orderId, "카카오페이 승인 실패");
+		} catch (PaymentAmountMismatchException e) {
+			try {
+				gateway.cancel(e.getConfirmedTid(), payment.getAmount());
+			} catch (RestClientException | ExhaustedRetryException ex) {
+				log.error("[Payment] 금액 불일치 보상 취소 실패: orderId={}", orderId, ex);
+			}
+			paymentTxProcessor.fail(orderId, "PG사 응답 금액 불일치");
+			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
+		} catch (RestClientException | IllegalStateException | ExhaustedRetryException e) {
+			paymentTxProcessor.fail(orderId, "PG사 승인 실패");
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
 		}
 
 		// ── 3. DB 상태 업데이트 [REQUIRES_NEW tx] ──────────────────
 		try {
-			paymentTxProcessor.complete(orderId);
+			paymentTxProcessor.complete(orderId, approveResult.tid());
 		} catch (RuntimeException e) {
-			log.error("[Payment] DB 업데이트 실패 - 카카오 보상 취소 시작: orderId={}", orderId, e);
+			log.error("[Payment] DB 업데이트 실패 - PG사 보상 취소 시작: orderId={}", orderId, e);
 			try {
-				kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-			} catch (RestClientException ex) {
+				gateway.cancel(approveResult.tid(), payment.getAmount());
+			} catch (RestClientException | ExhaustedRetryException ex) {
 				log.error("[Payment] 보상 취소 실패 - 수동 처리 필요: orderId={}", orderId, ex);
 			}
 			try {
-				paymentTxProcessor.fail(orderId, "카카오페이 승인 후 DB 업데이트 실패");
-			} catch (Exception ex) {
+				paymentTxProcessor.fail(orderId, "PG사 승인 후 DB 업데이트 실패");
+			} catch (RuntimeException ex) {
 				log.error("[Payment] 실패 Outbox 저장 실패 - 수동 처리 필요: orderId={}", orderId, ex);
 			}
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
@@ -131,7 +143,7 @@ public class PaymentServiceV2 {
 		// ── 4. Redis key 삭제 [no tx] ─────────────────────────────
 		expireBucket.delete();
 
-		return PaymentApproveResponseDto.from(approveDto);
+		return PaymentApproveResponseDto.from(approveResult);
 	}
 
 	@Transactional(readOnly = true)
@@ -181,10 +193,11 @@ public class PaymentServiceV2 {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
-		// ── 2. 카카오 취소 [no tx, 커넥션 미점유] ──────────────────
+		// ── 2. PG사 취소 [no tx, 커넥션 미점유] ──────────────────
+		PaymentGateway gateway = gatewayFactory.getGateway(payment.getPaymentMethod());
 		try {
-			kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-		} catch (RestClientException e) {
+			gateway.cancel(payment.getTid(), payment.getAmount());
+		} catch (RestClientException | ExhaustedRetryException e) {
 			throw new CustomException(PaymentExceptionCode.PAYMENT_REFUND_FAIL);
 		}
 
@@ -236,11 +249,12 @@ public class PaymentServiceV2 {
 			return;
 		}
 
-		// ── 2. 카카오 취소 [no tx, 커넥션 미점유] ──────────────────
+		// ── 2. PG사 취소 [no tx, 커넥션 미점유] ──────────────────
+		PaymentGateway refundGateway = gatewayFactory.getGateway(payment.getPaymentMethod());
 		try {
-			kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
-		} catch (RestClientException e) {
-			log.error("[Payment] 보상 카카오 취소 실패: orderId={}", orderId, e);
+			refundGateway.cancel(payment.getTid(), payment.getAmount());
+		} catch (RestClientException | ExhaustedRetryException e) {
+			log.error("[Payment] 보상 PG사 취소 실패: orderId={}", orderId, e);
 			throw new CustomException(PaymentExceptionCode.PAYMENT_REFUND_FAIL);
 		}
 

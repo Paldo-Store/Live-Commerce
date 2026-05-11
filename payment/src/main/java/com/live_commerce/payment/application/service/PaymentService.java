@@ -21,13 +21,14 @@ import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
 import com.live_commerce.payment.application.exception.CustomException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
-import com.live_commerce.payment.application.port.KakaoPayClient;
+import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
+import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
 import com.live_commerce.payment.domain.model.Payment;
+import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
+import com.live_commerce.payment.infrastructure.client.KakaoPayGateway;
 import com.live_commerce.payment.infrastructure.client.OrderClient;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayApproveDto;
-import com.live_commerce.payment.infrastructure.client.dto.KakaoPayReadyDto;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentCancelRequest;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentFailRequest;
 import com.live_commerce.payment.infrastructure.client.dto.PaymentSuccessRequest;
@@ -44,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
-	private final KakaoPayClient kakaoPayClient;
+	private final KakaoPayGateway kakaoPayGateway;
 	private final OrderClient orderClient;
 	private final RedissonClient redissonClient;
 
@@ -57,18 +58,18 @@ public class PaymentService {
 			}
 		});
 
-		KakaoPayReadyDto readyDto = kakaoPayClient.requestKakaoPayReady(
+		PaymentReadyResult readyResult = kakaoPayGateway.ready(
 			user.getUserId(), dto.orderId(), dto.amount(), dto.itemName()
 		);
 
-		Payment payment = dto.toEntity(user.getUserId());
-		payment.assignTid(readyDto.tid());
+		Payment payment = Payment.of(user.getUserId(), dto.orderId(), dto.amount(), PaymentMethod.KAKAO);
+		payment.assignTid(readyResult.tid());
 		paymentRepository.save(payment);
 
 		redissonClient.getBucket(PaymentRedisKeys.EXPIRE_KEY_PREFIX + dto.orderId())
 			.set(payment.getId().toString(), 10, TimeUnit.MINUTES);
 
-		return PaymentReadyResponseDto.from(readyDto);
+		return PaymentReadyResponseDto.from(readyResult);
 	}
 
 	@Transactional
@@ -83,13 +84,11 @@ public class PaymentService {
 		}
 
 		// 2) 승인 요청 시도
-		KakaoPayApproveDto approveDto;
+		PaymentApproveResult approveResult;
 		try {
-			approveDto = kakaoPayClient.requestKakaoPayApprove(
-				requestDto.tid(),
-				requestDto.pgToken(),
-				requestDto.orderId(),
-				userId.toString()
+			approveResult = kakaoPayGateway.approve(
+				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(),
+				userId, requestDto.amount()
 			);
 		} catch (Exception e) {
 			// 카카오 API 호출 자체가 실패한 경우
@@ -127,7 +126,7 @@ public class PaymentService {
 		}
 
 		// 4) 응답 DTO 반환
-		return PaymentApproveResponseDto.from(approveDto);
+		return PaymentApproveResponseDto.from(approveResult);
 	}
 
 	@Transactional(readOnly = true)
@@ -187,7 +186,7 @@ public class PaymentService {
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
-		kakaoPayClient.requestKakaoPayCancel(payment.getTid(), payment.getAmount());
+		kakaoPayGateway.cancel(payment.getTid(), payment.getAmount());
 		payment.updateStatus(PaymentStatus.REFUND);
 
 		try {

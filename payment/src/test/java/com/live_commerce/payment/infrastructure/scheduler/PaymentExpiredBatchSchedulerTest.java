@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.live_commerce.payment.application.service.PaymentTxProcessor;
 import com.live_commerce.payment.domain.model.Payment;
+import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.model.PaymentStatus;
 import com.live_commerce.payment.domain.repository.PaymentRepository;
 
@@ -72,7 +73,7 @@ class PaymentExpiredBatchSchedulerTest {
 	}
 
 	private Payment expiredPendingPayment(UUID orderId) {
-		Payment payment = Payment.of(UUID.randomUUID(), orderId, BigDecimal.valueOf(5000));
+		Payment payment = Payment.of(UUID.randomUUID(), orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
 		payment.expireAt(LocalDateTime.now().minusMinutes(1));
 		return payment;
 	}

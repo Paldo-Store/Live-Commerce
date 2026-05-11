@@ -29,7 +29,13 @@ public class OutboxRelayScheduler {
 	@Scheduled(fixedDelay = 3000)
 	public void relay() {
 		RLock lock = redissonClient.getLock(RELAY_LOCK_KEY);
-		if (!lock.tryLock(0, 2, TimeUnit.MINUTES)) {
+		try {
+			if (!lock.tryLock(0, 2, TimeUnit.MINUTES)) {
+				return;
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			log.error("Outbox relay 인터럽트 발생");
 			return;
 		}
 		try {

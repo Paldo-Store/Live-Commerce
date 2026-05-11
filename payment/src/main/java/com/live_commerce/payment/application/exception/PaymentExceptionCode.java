@@ -17,7 +17,8 @@ public enum PaymentExceptionCode implements ExceptionCode {
   DUPLICATE_PAYMENT(HttpStatus.CONFLICT, "이미 결제된 주문입니다."),
   DUPLICATE_PAYMENT_IN_PROGRESS(HttpStatus.CONFLICT, "해당 주문건은 현재 결제가 진행 중입니다."),
   PAYMENT_EXPIRED(HttpStatus.GONE, "결제 유효시간이 만료되었습니다."),
-  PAYMENT_REFUND_FAIL(HttpStatus.BAD_GATEWAY, "결제 환불에 실패했습니다.");
+  PAYMENT_REFUND_FAIL(HttpStatus.BAD_GATEWAY, "결제 환불에 실패했습니다."),
+  UNSUPPORTED_PAYMENT_METHOD(HttpStatus.BAD_REQUEST, "지원하지 않는 결제 수단입니다.");
 
 
   private final HttpStatus httpStatus;
