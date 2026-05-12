@@ -1,18 +1,11 @@
 package com.live_commerce.payment.domain.model;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@Getter
-@RequiredArgsConstructor
 public enum PaymentStatus {
-	PENDING("PENDING"),
-	COMPLETED("COMPLETED"),
-	FAILED("FAILED"),
-	REFUND("REFUND"),
-	CANCELED("CANCELED");
-
-	private final String value;
+	PENDING,
+	COMPLETED,
+	FAILED,
+	REFUND,
+	CANCELED;
 
 	public boolean canTransitionTo(PaymentStatus next) {
 		return switch (this) {

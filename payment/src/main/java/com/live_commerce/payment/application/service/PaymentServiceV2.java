@@ -27,7 +27,7 @@ import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentRefundResponseDto;
 import com.live_commerce.payment.application.exception.CustomException;
-import com.live_commerce.payment.application.exception.PaymentAmountMismatchException;
+import com.live_commerce.payment.domain.exception.PaymentAmountMismatchException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
 import com.live_commerce.payment.application.port.PaymentGateway;
 import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
@@ -75,7 +75,9 @@ public class PaymentServiceV2 {
 		PaymentReadyResult readyResult = gateway.ready(user.getUserId(), dto.orderId(), dto.amount(), dto.itemName());
 
 		Payment payment = dto.toEntity(user.getUserId());
-		payment.assignTid(readyResult.tid());
+		if (readyResult.tid() != null) {
+			payment.assignTid(readyResult.tid());
+		}
 		payment.expireAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
 		paymentRepository.save(payment);
 

@@ -165,7 +165,7 @@ public class PaymentServiceTest {
 	@Test
 	void cancelPayment_alreadyCompleted_fail() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(15000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 
@@ -192,7 +192,7 @@ public class PaymentServiceTest {
 	@Test
 	void refundPayment_completed_success() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(15000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID123");
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
@@ -207,7 +207,7 @@ public class PaymentServiceTest {
 	@Test
 	void refundPayment_byMaster_success() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(20000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID999");
 		paymentRepository.save(payment);
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
@@ -222,7 +222,6 @@ public class PaymentServiceTest {
 	@Test
 	void refundPayment_notCompleted_fail() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(15000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.PENDING);
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 
@@ -236,7 +235,7 @@ public class PaymentServiceTest {
 	@Test
 	void refundPayment_unauthorizedUser_fail() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(9999), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID456");
 		paymentRepository.save(payment);
 		RequestUserDetails otherUser = new RequestUserDetails(UUID.randomUUID(), null, Collections.emptyList());

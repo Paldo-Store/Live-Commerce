@@ -14,11 +14,11 @@ public record KakaoPayApproveDto(
 ) {
 
 	public record Amount(
-		@JsonProperty("total") int total,
-		@JsonProperty("tax_free") int taxFree,
-		@JsonProperty("vat") int vat,
-		@JsonProperty("point") int point,
-		@JsonProperty("discount") int discount
+		@JsonProperty("total") long total,
+		@JsonProperty("tax_free") long taxFree,
+		@JsonProperty("vat") long vat,
+		@JsonProperty("point") long point,
+		@JsonProperty("discount") long discount
 	) {}
 }
 

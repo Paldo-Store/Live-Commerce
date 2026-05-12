@@ -23,7 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.live_commerce.payment.application.exception.PaymentAmountMismatchException;
+import com.live_commerce.payment.domain.exception.PaymentAmountMismatchException;
 import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
 
 class TossPayGatewayTest {

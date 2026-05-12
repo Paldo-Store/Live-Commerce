@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.live_commerce.payment.application.port.PaymentGateway;
+import com.live_commerce.payment.domain.exception.PaymentAmountMismatchException;
 import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
 import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
 import com.live_commerce.payment.domain.model.PaymentMethod;
@@ -101,6 +102,11 @@ public class KakaoPayGateway implements PaymentGateway {
 		if (dto == null) {
 			throw new IllegalStateException("카카오페이 approve 응답이 비어있음: orderId=" + orderId);
 		}
+		BigDecimal approvedAmount = BigDecimal.valueOf(dto.amount().total());
+		if (approvedAmount.compareTo(amount) != 0) {
+			log.warn("[Kakao] 금액 불일치: 요청={}, 응답={}, orderId={}", amount, approvedAmount, orderId);
+			throw new PaymentAmountMismatchException(dto.tid(), "카카오 응답 금액 불일치: orderId=" + orderId);
+		}
 		LocalDateTime approvedAt = null;
 		if (dto.approvedAt() != null) {
 			try {
@@ -111,7 +117,7 @@ public class KakaoPayGateway implements PaymentGateway {
 				log.warn("[Kakao] approvedAt 파싱 실패, null 처리: value={}", dto.approvedAt(), e);
 			}
 		}
-		return new PaymentApproveResult(dto.tid(), BigDecimal.valueOf(dto.amount().total()), approvedAt);
+		return new PaymentApproveResult(dto.tid(), approvedAmount, approvedAt);
 	}
 
 	@Override

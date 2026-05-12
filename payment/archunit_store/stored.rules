@@ -1,0 +1,4 @@
+#
+#Tue May 12 10:16:58 KST 2026
+no\ classes\ that\ reside\ in\ a\ package\ '..domain..'\ should\ depend\ on\ classes\ that\ reside\ in\ any\ package\ ['..application..',\ '..infrastructure..'],\ because\ domain\ \uB808\uC774\uC5B4\uB294\ application/infrastructure\uC5D0\ \uC758\uC874\uD560\ \uC218\ \uC5C6\uC2B5\uB2C8\uB2E4=3e0b6f36-b0ea-4faa-b838-55c222b00faa
+no\ classes\ that\ reside\ in\ a\ package\ '..application..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ '..infrastructure..',\ because\ application\ \uB808\uC774\uC5B4\uB294\ infrastructure\uB97C\ \uC9C1\uC811\ \uCC38\uC870\uD560\ \uC218\ \uC5C6\uC2B5\uB2C8\uB2E4=a9b90c98-efc9-4bc2-9f96-6e827158f432

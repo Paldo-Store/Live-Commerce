@@ -12,7 +12,7 @@ public class RetryConfig {
 	public RetryTemplate retryTemplate() {
 		return RetryTemplate.builder()
 			.maxAttempts(3)
-			.fixedBackoff(1000)
+			.exponentialBackoff(1000, 2, 4000) // 1s → 2s → 4s
 			.notRetryOn(HttpClientErrorException.class) // 4xx는 재시도 무의미
 			.build();
 	}

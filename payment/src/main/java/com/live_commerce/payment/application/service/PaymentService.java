@@ -19,10 +19,14 @@ import com.live_commerce.payment.domain.repository.PaymentSearchCondition;
 import com.live_commerce.payment.application.dto.response.PaymentApproveResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentGetResponseDto;
 import com.live_commerce.payment.application.dto.response.PaymentReadyResponseDto;
+import org.springframework.retry.ExhaustedRetryException;
+import org.springframework.web.client.RestClientException;
+
 import com.live_commerce.payment.application.exception.CustomException;
 import com.live_commerce.payment.application.exception.PaymentExceptionCode;
 import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
 import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
+import com.live_commerce.payment.domain.exception.PaymentAmountMismatchException;
 import com.live_commerce.payment.domain.model.Payment;
 import com.live_commerce.payment.domain.model.PaymentMethod;
 import com.live_commerce.payment.domain.model.PaymentStatus;
@@ -79,7 +83,6 @@ public class PaymentService {
 
 		// 1) 승인 가능한 상태인지 체크
 		if (payment.getStatus() != PaymentStatus.PENDING) {
-			payment.updateStatus(PaymentStatus.FAILED); // 승인 전 상태가 아니면 실패 처리
 			throw new CustomException(PaymentExceptionCode.INVALID_STATUS);
 		}
 
@@ -90,27 +93,31 @@ public class PaymentService {
 				requestDto.tid(), requestDto.pgToken(), requestDto.orderId(),
 				userId, requestDto.amount()
 			);
-		} catch (Exception e) {
-			// 카카오 API 호출 자체가 실패한 경우
-			payment.updateStatus(PaymentStatus.FAILED);
-
-
-			// 주문 서비스에 결제 실패 알림
+		} catch (PaymentAmountMismatchException e) {
 			try {
-				orderClient.notifyPaymentFail(
-					payment.getOrderId(),
-					new PaymentFailRequest(false, "카카오페이 승인 실패")
-				);
+				kakaoPayGateway.cancel(e.getConfirmedTid(), payment.getAmount());
+			} catch (RestClientException | ExhaustedRetryException ex) {
+				log.warn("[Payment] 금액 불일치 보상 취소 실패: orderId={}", payment.getOrderId(), ex);
+			}
+			payment.fail();
+			try {
+				orderClient.notifyPaymentFail(payment.getOrderId(), new PaymentFailRequest(false, "카카오페이 금액 불일치"));
 			} catch (Exception ex) {
 				log.warn("주문 서비스에 결제 실패 알림 전송 실패: {}", ex.getMessage());
 			}
-
-
+			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
+		} catch (RestClientException | IllegalStateException | ExhaustedRetryException e) {
+			payment.fail();
+			try {
+				orderClient.notifyPaymentFail(payment.getOrderId(), new PaymentFailRequest(false, "카카오페이 승인 실패"));
+			} catch (Exception ex) {
+				log.warn("주문 서비스에 결제 실패 알림 전송 실패: {}", ex.getMessage());
+			}
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
 		}
 
 		// 3) 성공적으로 승인됐으면 상태 변경
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 
 		// 주문 서비스에 결제 성공 알림
 		try {
@@ -143,8 +150,6 @@ public class PaymentService {
 		RequestUserDetails userDetails,
 		Pageable pageable
 	) {
-		validatePaymentSearchPermission(userDetails);
-
 		// 페이지 사이즈 검증
 		int size = pageable.getPageSize();
 		if (size != 10 && size != 30 && size != 50) {
@@ -187,7 +192,7 @@ public class PaymentService {
 		}
 
 		kakaoPayGateway.cancel(payment.getTid(), payment.getAmount());
-		payment.updateStatus(PaymentStatus.REFUND);
+		payment.refund();
 
 		try {
 			orderClient.notifyOrderCancel(
@@ -222,18 +227,12 @@ public class PaymentService {
 			log.warn("주문 서비스에 결제 취소 알림 실패: {}", e.getMessage());
 		}
 
-		payment.updateStatus(PaymentStatus.CANCELED);
+		payment.cancel();
 	}
 
 
 	private void validatePaymentGetPermission(Payment payment, RequestUserDetails userDetails) {
 		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
-			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
-		}
-	}
-
-	private void validatePaymentSearchPermission(RequestUserDetails userDetails) {
-		if (!isSelf(userDetails.getUserId(), userDetails) && !hasMasterRole(userDetails)) {
 			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
 		}
 	}
@@ -248,10 +247,6 @@ public class PaymentService {
 		if (!payment.getUserId().equals(userDetails.getUserId()) && !hasMasterRole(userDetails)) {
 			throw new CustomException(PaymentExceptionCode.UNAUTHORIZED);
 		}
-	}
-
-	private boolean isSelf(UUID userId, RequestUserDetails userDetails) {
-		return userId.equals(userDetails.getUserId());
 	}
 
 	private boolean hasMasterRole(RequestUserDetails userDetails) {

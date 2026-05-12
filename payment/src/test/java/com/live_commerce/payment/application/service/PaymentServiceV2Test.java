@@ -83,7 +83,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void approvePayment_invalidStatus_fail() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(10000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		paymentRepository.save(payment);
 		PaymentApproveRequestDto dto = new PaymentApproveRequestDto("TID", "pgToken", orderId.toString(), BigDecimal.valueOf(10000));
 		CustomException ex = assertThrows(CustomException.class, () ->
@@ -172,7 +172,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void refundPayment_unauthorized_fail() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		paymentRepository.save(payment);
 		RequestUserDetails otherUser = new RequestUserDetails(UUID.randomUUID(), null, Collections.emptyList());
 		CustomException ex = assertThrows(CustomException.class, () ->
@@ -185,7 +185,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void refundPayment_pgFail_noDbUpdate() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID_REF");
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
@@ -201,12 +201,13 @@ public class PaymentServiceV2Test {
 	@Test
 	void refundPayment_success() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID_REF");
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		Payment refunded = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
-		refunded.updateStatus(PaymentStatus.REFUND);
+		refunded.complete();
+		refunded.refund();
 		when(paymentTxProcessor.refund(orderId)).thenReturn(refunded);
 		PaymentRefundResponseDto result = paymentServiceV2.refundPaymentByOrderId(orderId, userDetails);
 		verify(paymentTxProcessor).refund(orderId);
@@ -219,12 +220,13 @@ public class PaymentServiceV2Test {
 	@Test
 	void refundPayment_byMaster_success() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(12000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID_MASTER");
 		paymentRepository.save(payment);
 		RequestUserDetails master = new RequestUserDetails(UUID.randomUUID(), null, List.of(() -> "ROLE_MASTER"));
 		Payment refunded = Payment.of(userId, orderId, BigDecimal.valueOf(12000), PaymentMethod.KAKAO);
-		refunded.updateStatus(PaymentStatus.REFUND);
+		refunded.complete();
+		refunded.refund();
 		when(paymentTxProcessor.refund(orderId)).thenReturn(refunded);
 		PaymentRefundResponseDto result = paymentServiceV2.refundPaymentByOrderId(orderId, master);
 		verify(paymentTxProcessor).refund(orderId);
@@ -237,7 +239,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void cancelPayment_notPending_fail() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		paymentRepository.save(payment);
 		RequestUserDetails userDetails = new RequestUserDetails(userId, null, Collections.emptyList());
 		CustomException ex = assertThrows(CustomException.class, () ->
@@ -296,7 +298,7 @@ public class PaymentServiceV2Test {
 	@Test
 	void compensateRefund_completed_success() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(5000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		payment.assignTid("TID_COMP");
 		paymentRepository.save(payment);
 		when(paymentTxProcessor.refund(orderId)).thenReturn(payment);

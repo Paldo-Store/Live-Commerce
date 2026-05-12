@@ -12,8 +12,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.live_commerce.payment.domain.model.PaymentOutbox;
 import com.live_commerce.payment.domain.repository.PaymentOutboxRepository;
+import com.live_commerce.payment.infrastructure.kafka.event.PaymentCanceledEvent;
 import com.live_commerce.payment.infrastructure.kafka.event.PaymentCompletedEvent;
 import com.live_commerce.payment.infrastructure.kafka.event.PaymentFailedEvent;
+import com.live_commerce.payment.infrastructure.kafka.event.PaymentRefundedEvent;
 import com.live_commerce.payment.infrastructure.kafka.producer.PaymentEventProducer;
 
 import lombok.RequiredArgsConstructor;
@@ -74,6 +76,12 @@ public class OutboxRecordProcessor {
 				String message = (String) map.get("message");
 				paymentEventProducer.sendPaymentFailed(new PaymentFailedEvent(orderId, message));
 			}
+			case "PAYMENT_REFUNDED" -> {
+				BigDecimal amount = new BigDecimal((String) map.get("amount"));
+				paymentEventProducer.sendPaymentRefunded(new PaymentRefundedEvent(orderId, amount));
+			}
+			case "PAYMENT_CANCELED" ->
+				paymentEventProducer.sendPaymentCanceled(new PaymentCanceledEvent(orderId));
 			default -> throw new IllegalArgumentException("알 수 없는 eventType: " + outbox.getEventType());
 		}
 	}

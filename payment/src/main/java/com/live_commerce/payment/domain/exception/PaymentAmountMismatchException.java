@@ -1,4 +1,4 @@
-package com.live_commerce.payment.application.exception;
+package com.live_commerce.payment.domain.exception;
 
 public class PaymentAmountMismatchException extends RuntimeException {
 

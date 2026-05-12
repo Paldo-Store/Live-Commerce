@@ -81,10 +81,6 @@ public class Payment extends BaseEntity {
 		}
 	}
 
-	public void updateStatus(PaymentStatus newStatus) {
-		this.status = newStatus;
-	}
-
 	// 정적 팩토리 메서드
 	public static Payment of(UUID userId, UUID orderId, BigDecimal amount, PaymentMethod paymentMethod) {
 		return new Payment(userId, orderId, amount, PaymentStatus.PENDING, paymentMethod);

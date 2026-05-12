@@ -17,7 +17,7 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.live_commerce.payment.application.exception.PaymentAmountMismatchException;
+import com.live_commerce.payment.domain.exception.PaymentAmountMismatchException;
 import com.live_commerce.payment.application.port.PaymentGateway;
 import com.live_commerce.payment.application.port.dto.PaymentApproveResult;
 import com.live_commerce.payment.application.port.dto.PaymentReadyResult;
@@ -49,7 +49,7 @@ public class TossPayGateway implements PaymentGateway {
 
 	@Override
 	public PaymentReadyResult ready(UUID userId, UUID orderId, BigDecimal amount, String itemName) {
-		return new PaymentReadyResult(orderId.toString(), null);
+		return new PaymentReadyResult(null, null);
 	}
 
 	@Override
@@ -102,6 +102,8 @@ public class TossPayGateway implements PaymentGateway {
 		);
 		if (result == null) {
 			log.warn("[Toss] cancel 응답이 비어있음: tid={}", tid);
+		} else if (!"CANCELED".equals(result.status())) {
+			log.warn("[Toss] cancel 상태 이상: tid={}, status={}", tid, result.status());
 		}
 	}
 

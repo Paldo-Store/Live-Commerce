@@ -47,6 +47,7 @@ public class PaymentTxProcessor {
 	public Payment refund(UUID orderId) {
 		Payment p = findByOrderId(orderId);
 		p.refund();
+		paymentOutboxRepository.save(PaymentOutbox.of(orderId, "PAYMENT_REFUNDED", buildRefundedPayload(p)));
 		return p;
 	}
 
@@ -54,6 +55,7 @@ public class PaymentTxProcessor {
 	public void cancel(UUID orderId) {
 		Payment p = findByOrderId(orderId);
 		p.cancel();
+		paymentOutboxRepository.save(PaymentOutbox.of(orderId, "PAYMENT_CANCELED", buildCanceledPayload(orderId)));
 	}
 
 	private Payment findByOrderId(UUID orderId) {
@@ -77,6 +79,27 @@ public class PaymentTxProcessor {
 			return objectMapper.writeValueAsString(Map.of(
 				"orderId", orderId.toString(),
 				"message", reason
+			));
+		} catch (JsonProcessingException e) {
+			throw new IllegalStateException("outbox payload 직렬화 실패: orderId=" + orderId, e);
+		}
+	}
+
+	private String buildRefundedPayload(Payment p) {
+		try {
+			return objectMapper.writeValueAsString(Map.of(
+				"orderId", p.getOrderId().toString(),
+				"amount", p.getAmount().toPlainString()
+			));
+		} catch (JsonProcessingException e) {
+			throw new IllegalStateException("outbox payload 직렬화 실패: orderId=" + p.getOrderId(), e);
+		}
+	}
+
+	private String buildCanceledPayload(UUID orderId) {
+		try {
+			return objectMapper.writeValueAsString(Map.of(
+				"orderId", orderId.toString()
 			));
 		} catch (JsonProcessingException e) {
 			throw new IllegalStateException("outbox payload 직렬화 실패: orderId=" + orderId, e);

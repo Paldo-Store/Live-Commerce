@@ -88,27 +88,32 @@ class PaymentTxProcessorTest {
 		assertTrue(outbox.getPayload().contains(orderId.toString()));
 	}
 
-	@DisplayName("refund - 결제 상태 REFUND 변경, Outbox 저장 없음")
+	@DisplayName("refund - 결제 상태 REFUND 변경, PAYMENT_REFUNDED Outbox 저장")
 	@Test
-	void refund_changesStatusOnly() {
+	void refund_changesStatusAndSavesOutbox() {
 		Payment payment = Payment.of(userId, orderId, BigDecimal.valueOf(8000), PaymentMethod.KAKAO);
-		payment.updateStatus(PaymentStatus.COMPLETED);
+		payment.complete();
 		paymentRepository.save(payment);
 
 		paymentTxProcessor.refund(orderId);
 
 		assertEquals(PaymentStatus.REFUND, paymentRepository.findByOrderId(orderId).orElseThrow().getStatus());
-		assertEquals(0, paymentOutboxRepository.count());
+		List<PaymentOutbox> records = paymentOutboxRepository.findAll();
+		assertEquals(1, records.size());
+		assertEquals("PAYMENT_REFUNDED", records.get(0).getEventType());
+		assertTrue(records.get(0).getPayload().contains(orderId.toString()));
 	}
 
-	@DisplayName("cancel - 결제 상태 CANCELED 변경, Outbox 저장 없음")
+	@DisplayName("cancel - 결제 상태 CANCELED 변경, PAYMENT_CANCELED Outbox 저장")
 	@Test
-	void cancel_changesStatusOnly() {
+	void cancel_changesStatusAndSavesOutbox() {
 		paymentRepository.save(Payment.of(userId, orderId, BigDecimal.valueOf(3000), PaymentMethod.KAKAO));
 
 		paymentTxProcessor.cancel(orderId);
 
 		assertEquals(PaymentStatus.CANCELED, paymentRepository.findByOrderId(orderId).orElseThrow().getStatus());
-		assertEquals(0, paymentOutboxRepository.count());
+		List<PaymentOutbox> records = paymentOutboxRepository.findAll();
+		assertEquals(1, records.size());
+		assertEquals("PAYMENT_CANCELED", records.get(0).getEventType());
 	}
 }
