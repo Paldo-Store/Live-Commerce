@@ -1,0 +1,22 @@
+#!/bin/bash
+# git pre-commit 훅: .env 커밋 차단 + 시크릿 패턴 검사
+# 활성화: git config core.hooksPath .githooks
+
+# .env 파일 스테이징 차단
+ENV_FILES=$(git diff --cached --name-only | grep -E '\.env$|\.env\.')
+if [[ -n "$ENV_FILES" ]]; then
+  echo "[harness] 커밋 차단: .env 파일은 커밋할 수 없습니다."
+  echo "$ENV_FILES"
+  exit 1
+fi
+
+# 시크릿 패턴 검사
+SECRET_HIT=$(git diff --cached | grep -iE '^\+.*(password|secret|api.?key)\s*[:=]\s*[^$\{]' \
+  | grep -v 'EXAMPLE\|placeholder\|changeme\|your_' | head -5)
+if [[ -n "$SECRET_HIT" ]]; then
+  echo "[harness] 커밋 차단: 시크릿 패턴이 감지됩니다. 확인 후 진행하세요."
+  echo "$SECRET_HIT"
+  exit 1
+fi
+
+exit 0

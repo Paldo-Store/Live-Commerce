@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        # User Service
+        - id: user-service
+          uri: http://localhost:19093
+          predicates:
+            - Path=/api/**/auth/**, /api/**/users/**
+        # Product Service
+        - id: product-service
+          uri: http://localhost:19092
+          predicates:
+            - Path=/api/**/products/**, /api/**/inventories/**
+        # Order Service
+        - id: order-service
+          uri: http://localhost:19095
+          predicates:
+            - Path=/api/**/orders/**
+        # Payment Service
+        - id: payment-service
+          uri: http://localhost:19080
+          predicates:
+            - Path=/api/**/payments/**
+        # Coupon Service
+        - id: coupon-service
+          uri: http://localhost:19096
+          predicates:
+            - Path=/api/**/coupons/**
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+server:
+  port: 19091
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY:your-256-bit-secret-key-for-jwt-token-generation-and-validation-please-change-this}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

@@ -1,0 +1,27 @@
+#!/bin/bash
+# git commit-msg 훅: 한국어 커밋 메시지 강제
+# 활성화: git config core.hooksPath .githooks
+
+MSG=$(cat "$1")
+
+# 타입 prefix 추출 (feat:, fix: 등)
+PREFIX=$(echo "$MSG" | grep -oE '^[a-z]+:')
+
+# prefix가 있는데 한국어 설명이 없으면 차단
+if [[ -n "$PREFIX" ]]; then
+  DESCRIPTION=$(echo "$MSG" | sed "s/^[a-z]*: *//")
+  if echo "$DESCRIPTION" | grep -qE '^[a-zA-Z]'; then
+    echo "[harness] 커밋 메시지 차단: 설명은 반드시 한국어로 작성하세요."
+    echo "  입력: $MSG"
+    echo "  예시: feat: 결제 서비스 Mock 클라이언트 구현"
+    exit 1
+  fi
+fi
+
+# "with claude", "Co-Authored-By" 금지
+if echo "$MSG" | grep -qiE "(with claude|co-authored-by)"; then
+  echo "[harness] 커밋 메시지 차단: 금지 문구가 포함됩니다."
+  exit 1
+fi
+
+exit 0
