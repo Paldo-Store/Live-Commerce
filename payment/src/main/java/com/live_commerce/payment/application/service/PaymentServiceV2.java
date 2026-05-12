@@ -87,6 +87,7 @@ public class PaymentServiceV2 {
 		return PaymentReadyResponseDto.from(readyResult);
 	}
 
+	@DistributedLock(key = "#requestDto.orderId")
 	public PaymentApproveResponseDto approvePayment(PaymentApproveRequestDto requestDto, UUID userId) {
 		UUID orderId = UUID.fromString(requestDto.orderId());
 
@@ -116,6 +117,7 @@ public class PaymentServiceV2 {
 				gateway.cancel(e.getConfirmedTid(), payment.getAmount());
 			} catch (RestClientException | ExhaustedRetryException ex) {
 				log.error("[Payment] 금액 불일치 보상 취소 실패: orderId={}", orderId, ex);
+				paymentTxProcessor.markRecoveryNeeded(orderId, "금액 불일치 보상 취소 실패");
 			}
 			paymentTxProcessor.fail(orderId, "PG사 응답 금액 불일치");
 			throw new CustomException(PaymentExceptionCode.PAYMENT_APPROVE_FAIL);
@@ -133,6 +135,7 @@ public class PaymentServiceV2 {
 				gateway.cancel(approveResult.tid(), payment.getAmount());
 			} catch (RestClientException | ExhaustedRetryException ex) {
 				log.error("[Payment] 보상 취소 실패 - 수동 처리 필요: orderId={}", orderId, ex);
+				paymentTxProcessor.markRecoveryNeeded(orderId, "DB 업데이트 실패 후 보상 취소 실패");
 			}
 			try {
 				paymentTxProcessor.fail(orderId, "PG사 승인 후 DB 업데이트 실패");
@@ -257,6 +260,7 @@ public class PaymentServiceV2 {
 			refundGateway.cancel(payment.getTid(), payment.getAmount());
 		} catch (RestClientException | ExhaustedRetryException e) {
 			log.error("[Payment] 보상 PG사 취소 실패: orderId={}", orderId, e);
+			paymentTxProcessor.markRecoveryNeeded(orderId, "보상 환불 PG사 취소 실패");
 			throw new CustomException(PaymentExceptionCode.PAYMENT_REFUND_FAIL);
 		}
 

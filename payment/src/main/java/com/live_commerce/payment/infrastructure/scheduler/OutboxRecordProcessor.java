@@ -82,6 +82,10 @@ public class OutboxRecordProcessor {
 			}
 			case "PAYMENT_CANCELED" ->
 				paymentEventProducer.sendPaymentCanceled(new PaymentCanceledEvent(orderId));
+			case "PAYMENT_RECOVERY_NEEDED" -> {
+				String message = (String) map.get("message");
+				log.error("[Outbox] 수동 복구 필요 — PG사 취소 미완료: orderId={}, reason={}", orderId, message);
+			}
 			default -> throw new IllegalArgumentException("알 수 없는 eventType: " + outbox.getEventType());
 		}
 	}

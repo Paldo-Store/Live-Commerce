@@ -62,14 +62,14 @@ public class TossPayGateway implements PaymentGateway {
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, buildHeaders());
 
-		TossPayConfirmDto dto = retryTemplate.execute(ctx -> {
-			try {
-				return restTemplate.postForObject(TOSS_API_BASE + "/confirm", request, TossPayConfirmDto.class);
-			} catch (HttpStatusCodeException e) {
-				log.warn("[Toss] confirm 실패: orderId={}, status={}", orderId, e.getStatusCode());
-				throw e;
-			}
-		});
+		// approve는 멱등성 미보장 → retry 금지 (재시도 시 이중 결제 위험)
+		TossPayConfirmDto dto;
+		try {
+			dto = restTemplate.postForObject(TOSS_API_BASE + "/confirm", request, TossPayConfirmDto.class);
+		} catch (HttpStatusCodeException e) {
+			log.warn("[Toss] confirm 실패: orderId={}, status={}", orderId, e.getStatusCode());
+			throw e;
+		}
 
 		if (dto == null) {
 			throw new IllegalStateException("Toss /confirm 응답이 비어있음: orderId=" + orderId);

@@ -92,12 +92,11 @@ public class KakaoPayGateway implements PaymentGateway {
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, buildHeaders());
 
-		KakaoPayApproveDto dto = retryTemplate.execute(ctx -> {
-			ResponseEntity<KakaoPayApproveDto> response = restTemplate.postForEntity(
-				"https://open-api.kakaopay.com/online/v1/payment/approve", request, KakaoPayApproveDto.class
-			);
-			return response.getBody();
-		});
+		// approve는 pg_token 일회용 → retry 금지 (재시도 시 INVALID_PG_TOKEN으로 오탐 가능)
+		ResponseEntity<KakaoPayApproveDto> approveResponse = restTemplate.postForEntity(
+			"https://open-api.kakaopay.com/online/v1/payment/approve", request, KakaoPayApproveDto.class
+		);
+		KakaoPayApproveDto dto = approveResponse.getBody();
 
 		if (dto == null) {
 			throw new IllegalStateException("카카오페이 approve 응답이 비어있음: orderId=" + orderId);

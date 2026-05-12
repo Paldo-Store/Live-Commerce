@@ -58,6 +58,12 @@ public class PaymentTxProcessor {
 		paymentOutboxRepository.save(PaymentOutbox.of(orderId, "PAYMENT_CANCELED", buildCanceledPayload(orderId)));
 	}
 
+	// PG사 취소 실패 등 자동 복구 불가 상황 — Outbox에 기록해 수동 처리 큐로 위임
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void markRecoveryNeeded(UUID orderId, String reason) {
+		paymentOutboxRepository.save(PaymentOutbox.of(orderId, "PAYMENT_RECOVERY_NEEDED", buildRecoveryNeededPayload(orderId, reason)));
+	}
+
 	private Payment findByOrderId(UUID orderId) {
 		return paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(PaymentExceptionCode.NOT_FOUND));
@@ -100,6 +106,17 @@ public class PaymentTxProcessor {
 		try {
 			return objectMapper.writeValueAsString(Map.of(
 				"orderId", orderId.toString()
+			));
+		} catch (JsonProcessingException e) {
+			throw new IllegalStateException("outbox payload 직렬화 실패: orderId=" + orderId, e);
+		}
+	}
+
+	private String buildRecoveryNeededPayload(UUID orderId, String reason) {
+		try {
+			return objectMapper.writeValueAsString(Map.of(
+				"orderId", orderId.toString(),
+				"message", reason
 			));
 		} catch (JsonProcessingException e) {
 			throw new IllegalStateException("outbox payload 직렬화 실패: orderId=" + orderId, e);
