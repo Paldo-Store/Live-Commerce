@@ -50,6 +50,5 @@ public class Company extends BaseEntity {
         this.address = updateCompany.address();
         this.number = updateCompany.number();
         this.description = updateCompany.description();
-        this.deletedStatus = false;
     }
 }

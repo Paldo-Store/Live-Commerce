@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.live_commerce.company.domain.model.QCompany;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,16 +23,16 @@ public class CompanyQueryRepository {
     public Page<Company> findAll(Pageable pageable) {
         List<Company> companies = queryFactory
                 .selectFrom(company)
-                .where(company.deletedStatus.eq(false)) // 삭제되지 않은 데이터만 조회
+                .where(company.deletedStatus.isFalse())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        long total = queryFactory
+        long total = Optional.ofNullable(queryFactory
                 .select(company.count())
                 .from(company)
-                .where(company.deletedAt.isNull())
-                .fetchFirst();
+                .where(company.deletedStatus.isFalse())
+                .fetchFirst()).orElse(0L);
 
         return new PageImpl<>(companies, pageable, total);
     }
@@ -40,21 +41,20 @@ public class CompanyQueryRepository {
     public Page<Company> getCompaniesByKeyword(Pageable pageable, String keyword) {
         List<Company> companies = queryFactory
                 .selectFrom(company)
-                .where(company.name.containsIgnoreCase(keyword)  // 상품 이름에 이름이 포함된 데이터를 조회
-                        .and(company.deletedAt.isNull())
-                        .and(company.deletedStatus.eq(false))
+                .where(company.name.containsIgnoreCase(keyword)
+                        .and(company.deletedStatus.isFalse())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();  // 결과 리스트 반환
 
-        long total = queryFactory
+        long total = Optional.ofNullable(queryFactory
                 .select(company.count())
                 .from(company)
                 .where(company.name.containsIgnoreCase(keyword)
-                        .and(company.deletedStatus.eq(false))
+                        .and(company.deletedStatus.isFalse())
                 )
-                .fetchOne();  // fetchOne()은 단일 값 반환
+                .fetchOne()).orElse(0L);
         return new PageImpl<>(companies, pageable, total);
     }
 }

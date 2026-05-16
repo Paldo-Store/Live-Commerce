@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum CompanyExceptionCode implements ExceptionCode {
 
-  NOT_FOUND(HttpStatus.NOT_FOUND, "Company Not Found");
+  NOT_FOUND(HttpStatus.NOT_FOUND, "Company Not Found"),
+  ALREADY_DELETED(HttpStatus.GONE, "이미 삭제된 업체입니다.");
 
 
   private final HttpStatus httpStatus;
