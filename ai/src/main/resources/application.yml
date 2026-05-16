@@ -6,6 +6,13 @@ spring:
   profiles:
     active: dev
 
+feign:
+  client:
+    config:
+      geminiClient:
+        connectTimeout: 3000
+        readTimeout: 30000
+
 #spring:
 #  profiles:
 #    active: prod
